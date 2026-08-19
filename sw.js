@@ -14,8 +14,8 @@ self.addEventListener('message', e => {
     const s = String(timeLeft % 60).padStart(2, '0')
     self.registration.showNotification(`⏱ ${m}:${s} — ${presetName}`, {
       body: 'Rest timer running. Tap to open.',
-      icon: '/icon-192.png',
-      badge: '/icon-192.png',
+      icon: new URL('./icon-192.png', self.location).href,
+      badge: new URL('./icon-192.png', self.location).href,
       tag: 'gymlog-tick',
       renotify: false,
       silent: true,
