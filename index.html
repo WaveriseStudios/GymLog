@@ -82,12 +82,12 @@ body{
   display:flex;flex-direction:column;align-items:center;gap:4px;
   padding:8px 4px;
   border-radius:12px;
-  color:var(--ash);
+  color:var(--t2);
   font-size:10.5px; font-weight:700; letter-spacing:.3px;
   transition:background .15s, color .15s;
 }
 .nb svg{width:20px;height:20px;}
-.nb.on{color:var(--teal); background:var(--acc2);}
+.nb.on{color:var(--acc); background:var(--acc2);}
 
 /* shared */
 .card{background:var(--card);border:1px solid var(--bdr);border-radius:14px;overflow:hidden;transform:translateZ(0);}
@@ -351,27 +351,6 @@ body{
 #toast.show{transform:translateX(-50%) translateY(0);}
 
 /* dark mode */
-@media(prefers-color-scheme:dark){
-  :root:not([data-theme="light"]){
-    --bg:#212529;--bg2:#2b3035;--card:#343a40;--card2:#3d4349;
-    --bdr:#495057;--bdr2:rgba(73,80,87,.35);
-    --text:#f8f9fa;--t2:#adb5bd;--t3:#6c757d;
-    --acc:#7a9e98;--acc2:rgba(122,158,152,.14);--acc3:rgba(122,158,152,.08);
-  }
-}
-:root[data-theme="dark"]{
-  --bg:#212529;--bg2:#2b3035;--card:#343a40;--card2:#3d4349;
-  --bdr:#495057;--bdr2:rgba(73,80,87,.35);
-  --text:#f8f9fa;--t2:#adb5bd;--t3:#6c757d;
-  --acc:#7a9e98;--acc2:rgba(122,158,152,.14);--acc3:rgba(122,158,152,.08);
-}
-:root[data-theme="light"]{
-  --bg:#e0e2db;--bg2:#eaebe6;--card:#f0f1ec;--card2:#e6e8e2;
-  --bdr:#d2d4c8;--bdr2:rgba(95,116,112,.18);
-  --text:#1c2422;--t2:#889696;--t3:#b8bdb5;
-  --acc:#5f7470;--acc2:rgba(95,116,112,.1);--acc3:rgba(95,116,112,.06);
-}
-
 /* settings screen */
 .set-section-lbl{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--t3);margin:24px 0 8px;}
 .set-section-lbl:first-child{margin-top:8px;}
@@ -385,9 +364,12 @@ body{
 .set-row-btn.danger .set-row-lbl{color:#dc2626;}
 .set-row-btn.danger svg{stroke:#dc2626;}
 /* theme segmented control */
-.theme-seg{display:flex;background:var(--bg2);border-radius:10px;padding:3px;gap:2px;border:1px solid var(--bdr);}
-.tseg-btn{font-size:12px;font-weight:700;padding:5px 12px;border-radius:7px;color:var(--t2);transition:background .15s,color .15s;}
-.tseg-btn.on{background:var(--card);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.12);}
+.theme-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;padding:4px 0 8px;}
+.tgrid-btn{display:flex;flex-direction:column;align-items:center;gap:6px;background:none;border:none;cursor:pointer;padding:4px;}
+.tgrid-swatch{width:44px;height:44px;border-radius:14px;border:2px solid transparent;display:flex;align-items:flex-end;justify-content:flex-end;padding:6px;transition:border-color .15s,transform .15s;box-sizing:border-box;}
+.tgrid-swatch span{width:16px;height:16px;border-radius:50%;}
+.tgrid-btn.on .tgrid-swatch{border-color:var(--acc)!important;transform:scale(1.1);}
+.tgrid-name{font-size:10px;font-weight:700;color:var(--t2);letter-spacing:.3px;}
 /* toggle switch */
 .set-toggle{width:46px;height:26px;border-radius:13px;background:var(--bdr);position:relative;flex-shrink:0;transition:background .2s;}
 .set-toggle[aria-pressed="true"]{background:var(--acc);}
@@ -619,16 +601,13 @@ body{
     </div>
     <div class="sheet-body">
 
-      <div class="set-section-lbl">Appearance</div>
-      <div class="card set-card">
-        <div class="set-row">
-          <span class="set-row-lbl">Theme</span>
-          <div class="theme-seg" id="themeSeg">
-            <button class="tseg-btn" data-theme="light">Light</button>
-            <button class="tseg-btn" data-theme="system">System</button>
-            <button class="tseg-btn" data-theme="dark">Dark</button>
-          </div>
-        </div>
+      <div class="set-section-lbl">Theme</div>
+      <div class="theme-grid" id="themeGrid">
+        <button class="tgrid-btn" data-theme="forest"><span class="tgrid-swatch" style="background:#e0e2db;border-color:#d2d4c8"><span style="background:#5f7470"></span></span><span class="tgrid-name">Forest</span></button>
+        <button class="tgrid-btn" data-theme="sand"><span class="tgrid-swatch" style="background:#f5f0e8;border-color:#e8e0d0"><span style="background:#c17f4a"></span></span><span class="tgrid-name">Sand</span></button>
+        <button class="tgrid-btn" data-theme="steel"><span class="tgrid-swatch" style="background:#111111;border-color:#222222"><span style="background:#c8c8c8"></span></span><span class="tgrid-name">Steel</span></button>
+        <button class="tgrid-btn" data-theme="ocean"><span class="tgrid-swatch" style="background:#0d1b2a;border-color:#192d44"><span style="background:#38c4e8"></span></span><span class="tgrid-name">Ocean</span></button>
+        <button class="tgrid-btn" data-theme="ember"><span class="tgrid-swatch" style="background:#1c1612;border-color:#32271e"><span style="background:#e8835a"></span></span><span class="tgrid-name">Ember</span></button>
       </div>
 
       <div class="set-section-lbl">Notifications</div>
@@ -762,7 +741,7 @@ document.querySelectorAll('.nb').forEach(b=>{
   const strip = document.getElementById('daysStrip');
   app.addEventListener('touchstart', e=>{
     // ignore if touch starts on the week day strip (it has its own swipe)
-    locked = strip.contains(e.target);
+    locked = strip.contains(e.target) || !!e.target.closest('.ex-row');
     sx=e.touches[0].clientX; sy=e.touches[0].clientY;
   },{passive:true});
   app.addEventListener('touchend', e=>{
@@ -1546,43 +1525,6 @@ function showToast(msg) {
 
 /* ── TIMER ── */
 const RING_CIRC=553;
-if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js');
-
-async function swMsg(data){
-  if(!('serviceWorker' in navigator)) return;
-  try{ const reg=await navigator.serviceWorker.ready; reg.active?.postMessage(data); }catch(e){}
-}
-
-let _tickNotif=null;
-function timerNotifTick(timeLeft, presetName){
-  if(!db.notif?.enabled) return;
-  if(typeof Notification==='undefined'||Notification.permission!=='granted') return;
-  const m=Math.floor(timeLeft/60), s=String(timeLeft%60).padStart(2,'0');
-  if(_tickNotif) _tickNotif.close();
-  _tickNotif=new Notification(`⏱ ${m}:${s} — ${presetName}`,{
-    body:'Rest timer running. Tap to open.',
-    icon:'/icon-192.png',
-    tag:'gymlog-tick',
-    silent:true,
-  });
-  _tickNotif.onclick=()=>{ window.focus(); _tickNotif.close(); };
-}
-function timerNotifDone(presetName){
-  if(!db.notif?.enabled) return;
-  if(typeof Notification==='undefined'||Notification.permission!=='granted') return;
-  if(_tickNotif){ _tickNotif.close(); _tickNotif=null; }
-  const n=new Notification('💪 Rest done — back to it!',{
-    body:`${presetName} complete. Time to lift.`,
-    icon:'/icon-192.png',
-    tag:'gymlog-timer',
-    vibrate:[200,100,200,100,400],
-  });
-  n.onclick=()=>{ window.focus(); n.close(); };
-}
-function timerNotifCancel(){
-  if(_tickNotif){ _tickNotif.close(); _tickNotif=null; }
-}
-
 let timerTotal=0,timerLeft=0,timerInterval=null,timerRunning=false,timerPresetName='';
 
 function fmtTime(s){return`${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;}
@@ -1610,9 +1552,6 @@ function startTimer(){
   timerRunning=true;
   document.getElementById('tcbPause').textContent='Pause';
   clearInterval(timerInterval);
-  const endsAt = Date.now() + timerLeft * 1000;
-  swMsg({type:'SCHEDULE_TIMER', endsAt, presetName:timerPresetName});
-  timerNotifTick(timerLeft, timerPresetName);
   timerInterval=setInterval(()=>{
     timerLeft--;
     updateTimerRing();
@@ -1622,10 +1561,6 @@ function startTimer(){
       document.getElementById('tcbPause').textContent='Start';
       showToast('Rest done — go!');
       if(navigator.vibrate)navigator.vibrate([200,100,200]);
-      timerNotifDone(timerPresetName);
-      swMsg({type:'CANCEL_TIMER'});
-    } else {
-      timerNotifTick(timerLeft, timerPresetName);
     }
   },1000);
 }
@@ -1656,7 +1591,6 @@ document.getElementById('tcbPause').addEventListener('click',()=>{
   if(timerRunning){
     clearInterval(timerInterval);timerRunning=false;
     document.getElementById('tcbPause').textContent='Resume';
-    timerNotifCancel(); swMsg({type:'CANCEL_TIMER'});
   }else{startTimer();}
 });
 
@@ -1664,20 +1598,38 @@ document.getElementById('tcbReset').addEventListener('click',()=>{
   clearInterval(timerInterval);timerRunning=false;timerLeft=timerTotal;
   document.getElementById('tcbPause').textContent='Start';
   updateTimerRing();
-  timerNotifCancel(); swMsg({type:'CANCEL_TIMER'});
 });
 
 
 /* ── SETTINGS ── */
 const THEME_KEY = 'gymlog_theme';
 
+const THEMES = {
+  forest:   { bg:'#e0e2db', bg2:'#eaebe6', card:'#f0f1ec', card2:'#e6e8e2', bdr:'#d2d4c8', bdr2:'rgba(95,116,112,.18)', text:'#1c2422', t2:'#889696', t3:'#b8bdb5', acc:'#5f7470', acc2:'rgba(95,116,112,.10)', acc3:'rgba(95,116,112,.06)', meta:'#e0e2db' },
+  sand:     { bg:'#f5f0e8', bg2:'#ede8de', card:'#fffef9', card2:'#f7f2ea', bdr:'#ddd6c4', bdr2:'rgba(160,130,90,.18)', text:'#2d2416', t2:'#9a8670', t3:'#c4b8a4', acc:'#c17f4a', acc2:'rgba(193,127,74,.12)', acc3:'rgba(193,127,74,.07)', meta:'#f5f0e8' },
+  steel:    { bg:'#111111', bg2:'#1a1a1a', card:'#222222', card2:'#2a2a2a', bdr:'#383838', bdr2:'rgba(56,56,56,.40)', text:'#f0f0f0', t2:'#888888', t3:'#484848', acc:'#c8c8c8', acc2:'rgba(200,200,200,.12)', acc3:'rgba(200,200,200,.07)', meta:'#111111' },
+  ocean:    { bg:'#0d1b2a', bg2:'#132336', card:'#192d44', card2:'#1f3752', bdr:'#2a4a6a', bdr2:'rgba(42,74,106,.40)', text:'#d4eef8', t2:'#6aaccc', t3:'#3a6a8c', acc:'#38c4e8', acc2:'rgba(56,196,232,.14)', acc3:'rgba(56,196,232,.08)', meta:'#0d1b2a' },
+  ember:    { bg:'#1c1612', bg2:'#261e18', card:'#32271e', card2:'#3e3025', bdr:'#4e3d30', bdr2:'rgba(78,61,48,.40)', text:'#f5e6d6', t2:'#b89880', t3:'#6e5040', acc:'#e8835a', acc2:'rgba(232,131,90,.14)', acc3:'rgba(232,131,90,.08)', meta:'#1c1612' },
+};
+
 function applyTheme(t){
-  if(t==='system') document.documentElement.removeAttribute('data-theme');
-  else document.documentElement.setAttribute('data-theme', t);
-  document.querySelectorAll('.tseg-btn').forEach(b=>b.classList.toggle('on', b.dataset.theme===t));
+  const th = THEMES[t] || THEMES.forest;
+  const r = document.documentElement.style;
+  r.setProperty('--bg',    th.bg);
+  r.setProperty('--bg2',   th.bg2);
+  r.setProperty('--card',  th.card);
+  r.setProperty('--card2', th.card2);
+  r.setProperty('--bdr',   th.bdr);
+  r.setProperty('--bdr2',  th.bdr2);
+  r.setProperty('--text',  th.text);
+  r.setProperty('--t2',    th.t2);
+  r.setProperty('--t3',    th.t3);
+  r.setProperty('--acc',   th.acc);
+  r.setProperty('--acc2',  th.acc2);
+  r.setProperty('--acc3',  th.acc3);
+  document.querySelectorAll('.tgrid-btn').forEach(b=>b.classList.toggle('on', b.dataset.theme===t));
   localStorage.setItem(THEME_KEY, t);
-  const isDark = t==='dark' || (t==='system' && matchMedia('(prefers-color-scheme:dark)').matches);
-  document.querySelector('meta[name="theme-color"]').setAttribute('content', isDark ? '#212529' : '#e0e2db');
+  document.querySelector('meta[name="theme-color"]').setAttribute('content', th.meta);
 }
 
 function updateNotifToggle(){
@@ -1688,7 +1640,7 @@ function updateNotifToggle(){
 
 function openSettings(){
   updateNotifToggle();
-  applyTheme(localStorage.getItem(THEME_KEY)||'system');
+  applyTheme(localStorage.getItem(THEME_KEY)||'forest');
   document.getElementById('settingsOverlay').classList.add('open');
 }
 function closeSettings(){
@@ -1701,8 +1653,8 @@ document.getElementById('settingsOverlay').addEventListener('click', e=>{
   if(e.target===document.getElementById('settingsOverlay')) closeSettings();
 });
 
-document.getElementById('themeSeg').addEventListener('click', e=>{
-  const btn = e.target.closest('.tseg-btn');
+document.getElementById('themeGrid').addEventListener('click', e=>{
+  const btn = e.target.closest('.tgrid-btn');
   if(btn) applyTheme(btn.dataset.theme);
 });
 
@@ -1716,9 +1668,7 @@ document.getElementById('notifToggle').addEventListener('click', async ()=>{
   if(perm !== 'granted') perm = await Notification.requestPermission();
   if(perm!=='granted'){showToast('Permission not granted');return;}
   if(!db.notif) db.notif={};
-  db.notif.enabled=true; persist(); updateNotifToggle();
-  new Notification('GymLog', {body:'Notifications are on!', icon:'/icon-192.png'});
-  showToast('Notifications enabled!');
+  db.notif.enabled=true; persist(); updateNotifToggle(); showToast('Notifications enabled!');
 });
 
 document.getElementById('btnExportData').addEventListener('click', ()=>{
@@ -1744,7 +1694,7 @@ renderRankCard();
 renderTodaySession();
 renderPRs();
 renderBestPRs();
-applyTheme(localStorage.getItem(THEME_KEY)||'system');
+applyTheme(localStorage.getItem(THEME_KEY)||'forest');
 
 /* ── PULL-TO-REFRESH ── */
 (function(){
