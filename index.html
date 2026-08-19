@@ -740,12 +740,16 @@ document.querySelectorAll('.nb').forEach(b=>{
 
 /* ── APP SWIPE LEFT/RIGHT to switch tabs ── */
 (function(){
-  let sx=0, sy=0;
+  let sx=0, sy=0, locked=false;
   const app = document.getElementById('app');
+  const strip = document.getElementById('daysStrip');
   app.addEventListener('touchstart', e=>{
+    // ignore if touch starts on the week day strip (it has its own swipe)
+    locked = strip.contains(e.target);
     sx=e.touches[0].clientX; sy=e.touches[0].clientY;
   },{passive:true});
   app.addEventListener('touchend', e=>{
+    if(locked) return;
     if(document.getElementById('timerOverlay').classList.contains('open')) return;
     if(document.querySelector('.overlay.open')) return;
     const dx=e.changedTouches[0].clientX-sx;
@@ -1695,9 +1699,12 @@ applyTheme(localStorage.getItem(THEME_KEY)||'system');
   let startY=0,pulling=false,triggered=false;
 
   document.addEventListener('touchstart',e=>{
-    // only start if the active scroll body is at the top
+    // bail if any overlay/sheet is open or touch starts inside one
+    if(document.querySelector('.overlay.open')) return;
+    if(e.target.closest('.sheet,.overlay')) return;
+    // only start if the active scroll body is at the very top
     const sb=document.querySelector('.scr.on .sb');
-    if(!sb||sb.scrollTop>0)return;
+    if(!sb||sb.scrollTop>0) return;
     startY=e.touches[0].clientY;
     pulling=true;triggered=false;
   },{passive:true});
