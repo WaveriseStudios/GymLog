@@ -9,7 +9,7 @@ function load() {
 }
 
 function defDB() {
-  return { profile: { weight: null, height: null, age: null, gender: 'm' }, schedule: {}, prs: {}, history: [], dayTags: {}, notif: { enabled: false } };
+  return { profile: { name: '', weight: null, height: null, age: null, gender: 'm' }, schedule: {}, prs: {}, history: [], dayTags: {}, notif: { enabled: false } };
 }
 
 function persist() {
@@ -310,12 +310,64 @@ function rankStepToPercentile(step) {
 }
 
 /* ═══════════════════════════════════════════
+   STREAK
+═══════════════════════════════════════════ */
+function calcStreak() {
+  const history = db.history || [];
+  if (!history.length) return 0;
+  const dayMs = 86400000;
+  const todayMs = new Date().setHours(0,0,0,0);
+  const daySet = new Set(history.map(h => new Date(h.date).setHours(0,0,0,0)));
+  let streak = 0;
+  let check = daySet.has(todayMs) ? todayMs : todayMs - dayMs;
+  while (daySet.has(check)) { streak++; check -= dayMs; }
+  return streak;
+}
+
+/* ═══════════════════════════════════════════
    RENDER: HOME
 ═══════════════════════════════════════════ */
 function renderHome() {
+  // Date label
+  const now = new Date();
+  const DAYS  = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
+  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const dateLbl = document.getElementById('homeDateLbl');
+  if (dateLbl) dateLbl.textContent = `${DAYS[now.getDay()]} · ${MONTHS[now.getMonth()]} ${now.getDate()}`;
+
+  // Streak
+  const streak = calcStreak();
+  const streakEl = document.getElementById('streakChip');
+  if (streakEl) {
+    if (streak > 0) {
+      streakEl.textContent = `🔥 ${streak}`;
+      streakEl.style.display = '';
+    } else {
+      streakEl.style.display = 'none';
+    }
+  }
+
+  // Greeting
+  const hour = now.getHours();
+  const greetTime = hour < 12 ? 'Good morning,' : hour < 17 ? 'Good afternoon,' : 'Good evening,';
+  const subEl = document.getElementById('greetSub');
+  const nameEl = document.getElementById('greetName');
+  if (subEl) subEl.textContent = greetTime;
+  if (nameEl) {
+    const n = db.profile?.name?.trim();
+    nameEl.textContent = n ? n + '.' : 'Athlete.';
+  }
+
+  // Avatar initial
+  const avBtn = document.getElementById('btnProfile');
+  if (avBtn) {
+    const n = db.profile?.name?.trim();
+    avBtn.textContent = n ? n[0].toUpperCase() : 'G';
+  }
+
   renderRankCard();
   renderTodayCard();
-  renderLastPerfCard();
+  renderQuickLog();
 }
 
 function renderRankCard() {
@@ -323,10 +375,11 @@ function renderRankCard() {
   const result = calcOverallRank();
 
   if (!result) {
-    el.innerHTML = `
-      <div class="card-lbl">Strength Rank</div>
+    el.innerHTML = `<div style="padding:14px">
+      <div class="lbl" style="margin-bottom:10px">Strength Rank</div>
       <div class="rank-setup-prompt">Set your profile to unlock your rank — calculated from height, weight, and age.</div>
-      <button class="rank-setup-btn" onclick="openProfile()">Set up profile →</button>`;
+      <button class="rank-setup-btn" onclick="openProfile()">Set up profile →</button>
+    </div>`;
     return;
   }
 
@@ -340,7 +393,7 @@ function renderRankCard() {
   const pctText    = percentile >= 99 ? `top 1% of gym-goers` : `better than ${Math.round(percentile)}% of people that go to the gym`;
 
   el.innerHTML = `
-    <div class="card-lbl">Strength Rank</div>
+    <div class="lbl">Strength Rank</div>
     <div class="rank-card t-${tier.id}" id="rankCardInner" style="cursor:pointer">
       <div class="rank-hex-wrap">
         <div class="rank-hex-bg"></div>
@@ -565,135 +618,218 @@ function closeRankBreakdown() {
 function renderTodayCard() {
   const el     = document.getElementById('todayCard');
   const key    = todayKey();
-  const dayIdx = DAY_KEYS.indexOf(key);
   const exs    = db.schedule?.[key] || [];
   const tag    = db.dayTags?.[key];
+  const p      = db.profile;
+  const totalSets = exs.reduce((s, e) => s + e.sets, 0);
 
-  const tagHtml = tag
-    ? `<span style="font-size:11px;color:var(--acc);font-weight:700;margin-left:6px;letter-spacing:.4px">${tag}</span>`
-    : '';
-
-  el.innerHTML = `<div class="card-lbl">Today · ${DAY_LONG[dayIdx]}${tagHtml}</div>`;
+  const tagPart = tag ? ` · ${tag}` : '';
+  const header = `<div class="session-hd">
+    <span class="lbl">Today's Session${tagPart}</span>
+    <span class="smeta">${exs.length} exercise${exs.length !== 1 ? 's' : ''} · ${totalSets} sets</span>
+  </div>`;
 
   if (!exs.length) {
-    el.innerHTML += `<div class="card-empty">No session planned. Go to <strong>Week</strong> to set one up.</div>`;
+    el.innerHTML = header + `<div class="card"><div class="card-empty">No session planned. Go to <strong>Week</strong> to set one up.</div></div>`;
     return;
   }
 
-  exs.forEach(ex => {
-    const row = document.createElement('div');
-    row.className = 'list-row';
-    row.innerHTML = `
-      <span class="lr-name">${ex.name}</span>
-      <span class="lr-meta">${fmtWeight(ex.weight, ex.name)} · ${ex.sets}×${ex.reps}</span>`;
-    el.appendChild(row);
+  const rows = exs.map(ex => {
+    let badgeHtml = '';
+    if (p?.weight && db.prs?.[ex.name]) {
+      const { tier, div } = scoreToTierDiv(calcExScore(db.prs[ex.name], p, ex.name));
+      badgeHtml = `<span class="bdg t-${tier.id}">${TIER_SHORT[tier.id]} · ${ROMAN[div-1]}</span>`;
+    }
+    return `<div class="ex-row divr">
+      <div class="ex-left">
+        <div class="ex-name">${ex.name}</div>
+        ${badgeHtml}
+      </div>
+      <div class="ex-nums">
+        <span class="ex-w">${fmtWeight(ex.weight, ex.name)} × ${ex.reps}</span>
+        <span class="ex-s">${ex.sets}×</span>
+      </div>
+    </div>`;
+  }).join('');
+
+  el.innerHTML = header + `<div class="card">${rows}<button class="add-row"><span class="add-ic">+</span>Add exercise</button></div>`;
+  el.querySelector('.add-row').addEventListener('click', () => openExModal(key, null));
+}
+
+function renderQuickLog() {
+  const el = document.getElementById('quickLogCard');
+  if (!el) return;
+  const key = todayKey();
+  const exs = db.schedule?.[key] || [];
+  if (!exs.length) { el.innerHTML = ''; return; }
+
+  const ex = exs[0];
+  const valDisp = BODYWEIGHT_EX.has(ex.name)
+    ? (ex.weight === 0 ? 'BW' : `+${ex.weight}`)
+    : ex.weight;
+
+  el.innerHTML = `<div class="qlog">
+    <div class="qlog-hd">
+      <span class="lbl">Quick Log</span>
+      <span class="qlog-ex">${ex.name}</span>
+    </div>
+    <div class="qf-row">
+      <div class="qf"><span class="qfv">${valDisp}</span><span class="qfl">kg</span></div>
+      <div class="qf"><span class="qfv">${ex.reps}</span><span class="qfl">reps</span></div>
+      <div class="qf"><span class="qfv">${ex.sets}</span><span class="qfl">sets</span></div>
+    </div>
+    <button class="qlog-cta" id="qlogBtn">Log this set →</button>
+  </div>`;
+
+  document.getElementById('qlogBtn').addEventListener('click', () => {
+    const name = ex.name, weight = ex.weight, sets = ex.sets, reps = ex.reps;
+    const pr    = db.prs[name];
+    const bw    = db.profile?.weight || 0;
+    const isBW  = BODYWEIGHT_EX.has(name);
+    const bwFrac = BW_FRACTION[name] ?? 1.0;
+    const epCap = isBW ? 0 : 30;
+    const baseNew = isBW ? bw * bwFrac + weight : weight;
+    const baseOld = pr ? (isBW ? bw * bwFrac + pr.weight : pr.weight) : 0;
+    const new1RM  = calcEpley(baseNew, reps, epCap);
+    const old1RM  = pr ? calcEpley(baseOld, pr.reps, epCap) : 0;
+    const isPR    = new1RM > old1RM;
+    if (isPR) db.prs[name] = { weight, sets, reps, date: new Date().toISOString() };
+    if (!db.history) db.history = [];
+    db.history.push({ name, weight, sets, reps, date: new Date().toISOString() });
+    persist();
+    renderHome();
+    renderRecords();
+    if (isPR) {
+      showToast('New PR recorded! 🏆');
+      fireNotif('New Personal Record!', `${name} — ${fmtWeight(weight, name)} × ${reps} reps. Keep pushing!`);
+    } else {
+      showToast('Set logged!');
+    }
   });
 }
 
 function renderLastPerfCard() {
   const el  = document.getElementById('lastPerfCard');
-  el.innerHTML = `<div class="card-lbl">Last Performances</div>`;
-
   const prs = Object.entries(db.prs||{})
     .sort((a,b) => (b[1].date||'').localeCompare(a[1].date||''))
     .slice(0, 5);
 
+  let inner = '';
   if (!prs.length) {
-    el.innerHTML += `<div class="card-empty">No performances yet. Log your first session.</div>`;
-    return;
+    inner = `<div class="card-empty">No performances yet. Log your first session.</div>`;
+  } else {
+    inner = prs.map(([name, pr]) =>
+      `<div class="list-row">
+        <span class="lr-name">${name}</span>
+        <div class="lr-right">
+          <span class="lr-weight">${fmtWeight(pr.weight, name)}</span>
+          <span class="lr-date">${fmtDate(pr.date)}</span>
+        </div>
+      </div>`
+    ).join('');
   }
 
-  prs.forEach(([name, pr]) => {
-    const row = document.createElement('div');
-    row.className = 'list-row';
-    row.innerHTML = `
-      <span class="lr-name">${name}</span>
-      <div class="lr-right">
-        <span class="lr-weight">${fmtWeight(pr.weight, name)}</span>
-        <span class="lr-date">${fmtDate(pr.date)}</span>
-      </div>`;
-    el.appendChild(row);
-  });
+  el.innerHTML = `<div style="padding:14px 14px 4px"><span class="lbl">Last Performances</span></div>${inner}`;
 }
 
 /* ═══════════════════════════════════════════
    RENDER: WEEK
 ═══════════════════════════════════════════ */
+let selectedWeekDay = null;
+
 function renderWeek() {
-  const list  = document.getElementById('weekList');
-  list.innerHTML = '';
-  const today = todayKey();
+  if (!selectedWeekDay) selectedWeekDay = todayKey();
+
+  const strip   = document.getElementById('daysStrip');
+  const content = document.getElementById('weekDayContent');
+  const today   = todayKey();
+  const now     = new Date();
+  const LETTERS = ['M','T','W','T','F','S','S'];
+
+  strip.innerHTML = '';
 
   DAY_KEYS.forEach((key, i) => {
     const exs     = db.schedule?.[key] || [];
     const isToday = key === today;
-    const wasOpen = list.querySelector(`[data-day="${key}"]`)?.classList.contains('open');
+    const isSel   = key === selectedWeekDay;
+    const hasEx   = exs.length > 0;
 
-    const row = document.createElement('div');
-    row.className = 'day-row' + (isToday || wasOpen ? ' open' : '');
-    row.dataset.day = key;
+    // Date number for this day in the current week (Mon-start)
+    const dayOfWeek = [1,2,3,4,5,6,0][i];
+    const diff = dayOfWeek - now.getDay();
+    const d = new Date(now);
+    d.setDate(now.getDate() + diff);
 
-    const dotClass = isToday ? 'today' : (exs.length ? 'filled' : '');
-    const exLabel  = exs.length ? `${exs.length} exercise${exs.length>1?'s':''}` : 'No exercises';
-    const tag      = db.dayTags?.[key];
-    const tagChip  = tag
-      ? `<button class="day-tag-chip" data-day="${key}">${tag}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>`
-      : `<button class="day-tag-chip add" data-day="${key}">+ Focus<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>`;
+    const dayEl = document.createElement('div');
+    let cls = 'day';
+    if (hasEx && !isToday) cls += ' wk';
+    if (isToday) cls += ' td';
+    if (isSel && !isToday) cls += ' sel';
+    dayEl.className = cls;
+    dayEl.innerHTML = `<span class="day-l">${LETTERS[i]}</span><span class="day-n">${d.getDate()}</span><span class="day-dot"></span>`;
+    dayEl.addEventListener('click', () => { selectedWeekDay = key; renderWeekContent(); });
+    strip.appendChild(dayEl);
+  });
 
-    row.innerHTML = `
-      <div class="day-hdr">
-        <div class="day-indicator ${dotClass}"></div>
-        <div class="day-label-wrap">
-          <div class="day-label${isToday?' today':''}">${DAY_LONG[i]}</div>
-          <div class="day-tag-row">${tagChip}<span class="day-count-lbl" style="margin-top:0">${exLabel}</span></div>
-        </div>
-        <span class="day-chevron">▾</span>
+  renderWeekContent();
+}
+
+function renderWeekContent() {
+  const content = document.getElementById('weekDayContent');
+  const key     = selectedWeekDay || todayKey();
+  const dayIdx  = DAY_KEYS.indexOf(key);
+  const exs     = db.schedule?.[key] || [];
+  const today   = todayKey();
+  const tag     = db.dayTags?.[key];
+
+  // Section header
+  const now   = new Date();
+  const dayOfWeek = [1,2,3,4,5,6,0][dayIdx];
+  const diff  = dayOfWeek - now.getDay();
+  const d     = new Date(now);
+  d.setDate(now.getDate() + diff);
+  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const todayStr = key === today ? ' — Today' : '';
+  const dateLabel = `${DAY_SHORT[dayIdx][0]}${DAY_SHORT[dayIdx].slice(1).toLowerCase()}, ${MONTHS[d.getMonth()]} ${d.getDate()}${todayStr}`;
+
+  // Day tag row
+  const tagHtml = tag
+    ? `<button class="day-tag-chip" id="wcTagBtn">${tag}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>`
+    : `<button class="day-tag-chip add" id="wcTagBtn">+ Focus</button>`;
+
+  if (!exs.length) {
+    content.innerHTML = `<div class="wsec" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">${dateLabel} ${tagHtml}</div>
+      <div class="card"><div class="card-empty">No exercises planned.</div></div>`;
+    content.querySelector('#wcTagBtn').addEventListener('click', () => openTagModal(key, dayIdx));
+    return;
+  }
+
+  const rows = exs.map(ex => {
+    const vol  = ex.weight > 0 ? ex.weight * ex.sets : 0;
+    const volStr = vol > 0 ? `<span class="wvol">${vol}</span> <span class="wvol-u">kg</span>` : `<span class="wvol">${ex.sets}×${ex.reps}</span>`;
+    return `<div class="wrow divr" data-id="${ex.id}">
+      <div>
+        <div class="wex-n">${ex.name}</div>
+        <div class="wex-d">${ex.sets} sets · ${fmtWeight(ex.weight, ex.name)}</div>
       </div>
-      <div class="day-body" id="body-${key}"></div>`;
+      <div style="display:flex;align-items:center;gap:8px">
+        ${volStr}
+        <button class="tiny-btn edit-wex" data-day="${key}" data-id="${ex.id}">✏️</button>
+        <button class="tiny-btn del-wex"  data-day="${key}" data-id="${ex.id}">🗑️</button>
+      </div>
+    </div>`;
+  }).join('');
 
-    row.querySelector('.day-hdr').addEventListener('click', () => {
-      row.classList.toggle('open');
-    });
+  content.innerHTML = `<div class="wsec" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px">${dateLabel} ${tagHtml}</div>
+    <div class="card">${rows}</div>`;
 
-    row.querySelector('.day-tag-chip').addEventListener('click', e => {
-      e.stopPropagation();
-      openTagModal(key, i);
-    });
+  content.querySelector('#wcTagBtn').addEventListener('click', () => openTagModal(key, dayIdx));
 
-    list.appendChild(row);
-
-    const body = document.getElementById('body-'+key);
-    exs.forEach(ex => {
-      const item = document.createElement('div');
-      item.className = 'day-ex-item';
-      item.innerHTML = `
-        <div class="day-ex-info">
-          <div class="day-ex-name">${ex.name}</div>
-          <div class="day-ex-sub">${fmtWeight(ex.weight, ex.name)} · ${ex.sets} sets × ${ex.reps} reps</div>
-        </div>
-        <div class="day-ex-actions">
-          <button class="tiny-btn edit-ex" data-day="${key}" data-id="${ex.id}">✏️</button>
-          <button class="tiny-btn del-ex"  data-day="${key}" data-id="${ex.id}">🗑️</button>
-        </div>`;
-
-      item.querySelector('.edit-ex').addEventListener('click', e => {
-        e.stopPropagation();
-        openExModal(key, ex.id);
-      });
-
-      item.querySelector('.del-ex').addEventListener('click', e => {
-        e.stopPropagation();
-        deleteEx(key, ex.id);
-      });
-
-      body.appendChild(item);
-    });
-
-    const addBtn = document.createElement('button');
-    addBtn.className = 'add-ex-row';
-    addBtn.innerHTML = '＋ Add Exercise';
-    addBtn.addEventListener('click', () => openExModal(key, null));
-    body.appendChild(addBtn);
+  content.querySelectorAll('.edit-wex').forEach(btn => {
+    btn.addEventListener('click', () => openExModal(btn.dataset.day, btn.dataset.id));
+  });
+  content.querySelectorAll('.del-wex').forEach(btn => {
+    btn.addEventListener('click', () => deleteEx(btn.dataset.day, btn.dataset.id));
   });
 }
 
@@ -704,6 +840,10 @@ function deleteEx(dayKey, id) {
   renderWeek();
   renderHome();
   showToast('Exercise removed');
+}
+
+function renderWeekIfVisible() {
+  if (document.getElementById('sw').classList.contains('on')) renderWeekContent();
 }
 
 /* ═══════════════════════════════════════════
@@ -751,107 +891,82 @@ function buildChart(exName) {
 /* ═══════════════════════════════════════════
    RENDER: RECORDS
 ═══════════════════════════════════════════ */
-let recTab = 'best'; // 'best' | 'e1rm'
-
 function renderRecords() {
-  const list   = document.getElementById('recList');
-  const prs    = db.prs || {};
+  const list = document.getElementById('recList');
+  const prs  = db.prs || {};
+  const p    = db.profile;
 
   if (!Object.keys(prs).length) {
     list.innerHTML = `<div class="empty-state"><b>No records yet</b>Log exercises in the Week tab — PRs appear here automatically.</div>`;
     return;
   }
 
-  // Tab bar
-  const tabBar = `
-    <div class="rec-tabs">
-      <button class="rec-tab ${recTab==='best'?'active':''}" data-tab="best">Best Set</button>
-      <button class="rec-tab ${recTab==='e1rm'?'active':''}" data-tab="e1rm">Est. 1RM</button>
-    </div>`;
+  // Sort by most recent
+  const entries = Object.entries(prs).sort((a,b) => (b[1].date||'').localeCompare(a[1].date||''));
 
-  // Sort
-  let entries = Object.entries(prs);
-  if (recTab === 'e1rm') {
-    const p = db.profile;
-    if (p?.weight) {
-      entries.sort((a,b) => calcExScore(b[1], p, b[0]) - calcExScore(a[1], p, a[0]));
-    } else {
-      entries.sort((a,b) => {
-        const e1rmOf = ([name, pr]) => {
-          const bwFrac = BW_FRACTION[name] ?? 1.0;
-          const base = BODYWEIGHT_EX.has(name) ? (db.profile?.weight||0)*bwFrac + pr.weight : pr.weight;
-          return calcEpley(base, pr.reps, BODYWEIGHT_EX.has(name) ? 0 : 30);
-        };
-        return e1rmOf(b) - e1rmOf(a);
-      });
-    }
-  } else {
-    entries.sort((a,b) => (b[1].date||'').localeCompare(a[1].date||''));
-  }
-
-  list.innerHTML = tabBar;
+  const ctEl = document.getElementById('recCount');
+  if (ctEl) ctEl.textContent = `${entries.length} PR${entries.length !== 1 ? 's' : ''}`;
+  list.innerHTML = '';
 
   entries.forEach(([name, pr]) => {
-    const p = db.profile;
     let badgeHtml = '';
     if (p?.weight) {
       const { tier, div } = scoreToTierDiv(calcExScore(pr, p, name));
-      badgeHtml = `<span class="rec-rank-badge t-${tier.id}">${TIER_SHORT[tier.id]} ${ROMAN[div-1]}</span>`;
+      badgeHtml = `<span class="rec-rank-badge t-${tier.id}">${TIER_SHORT[tier.id]} · ${ROMAN[div-1]}</span>`;
     }
 
-    // Est 1RM display
-    let e1rmStr = '';
-    if (recTab === 'e1rm') {
-      const bwFrac = BW_FRACTION[name] ?? 1.0;
-      const base = BODYWEIGHT_EX.has(name) ? (p?.weight||0)*bwFrac + pr.weight : pr.weight;
-      const e1rm = calcEpley(base, pr.reps, BODYWEIGHT_EX.has(name) ? 0 : 30);
-      e1rmStr = `<span class="rec-e1rm">~${Math.round(e1rm)} kg</span>`;
-    }
+    // E1RM
+    const bwFrac  = BW_FRACTION[name] ?? 1.0;
+    const isBW    = BODYWEIGHT_EX.has(name);
+    const base    = isBW ? (p?.weight||0)*bwFrac + pr.weight : pr.weight;
+    const e1rm    = calcEpley(base, pr.reps, isBW ? 0 : 30);
+    const e1rmStr = `~${Math.round(e1rm)} kg`;
+
+    const bestStr = `${fmtWeight(pr.weight, name)} × ${pr.reps}`;
 
     const chartHtml = buildChart(name);
-    const hasChart = chartHtml.length > 0;
+    const hasChart  = chartHtml.length > 0;
 
     const wrap = document.createElement('div');
     wrap.className = 'rec-swipe-wrap';
     wrap.innerHTML = `
       <div class="rec-delete-bg"><span>Delete</span></div>
-      <div class="rec-item${hasChart ? ' rec-item--chartable' : ''}">
-        <span class="rec-name">${name}</span>
-        <div class="rec-right">
-          <div class="rec-right-top">
-            ${badgeHtml}
-            ${recTab==='e1rm' ? e1rmStr : `<span class="rec-weight">${fmtWeight(pr.weight, name)}</span>`}
+      <div class="prc${hasChart ? ' prc--chartable' : ''}" style="margin-bottom:0;border-radius:14px;position:relative;will-change:transform">
+        <div class="prc-r1">
+          <span class="prc-name">${name}</span>
+          ${badgeHtml}
+        </div>
+        <div class="prc-r2">
+          <div>
+            <div class="pnum">${bestStr}</div>
+            <div class="pnum-l">Best Set</div>
           </div>
-          <span class="rec-meta">${recTab === 'e1rm' ? `1 rep · ${fmtWeight(pr.weight, name)}` : `${pr.sets}×${pr.reps} · ${fmtWeight(pr.weight, name)} · ${fmtDate(pr.date)}`}</span>
+          <div class="psep">→</div>
+          <div>
+            <div class="pnum a">${e1rmStr}</div>
+            <div class="pnum-l">E1RM est.</div>
+          </div>
         </div>
         ${hasChart ? `<div class="rec-chart-wrap" style="display:none">${chartHtml}</div>` : ''}
       </div>`;
 
-    attachSwipeDelete(wrap, name);
+    // Wire swipe-to-delete on the inner .prc element
+    const itemEl = wrap.querySelector('.prc');
+    attachSwipeDeleteEl(wrap, itemEl, name);
 
     if (hasChart) {
-      const item = wrap.querySelector('.rec-item');
+      itemEl.style.cursor = 'pointer';
       const chartWrap = wrap.querySelector('.rec-chart-wrap');
-      item.addEventListener('click', () => {
-        const open = chartWrap.style.display !== 'none';
-        chartWrap.style.display = open ? 'none' : 'block';
+      itemEl.addEventListener('click', () => {
+        chartWrap.style.display = chartWrap.style.display === 'none' ? 'block' : 'none';
       });
     }
 
     list.appendChild(wrap);
   });
-
-  // Tab click handlers
-  list.querySelectorAll('.rec-tab').forEach(btn => {
-    btn.addEventListener('click', () => {
-      recTab = btn.dataset.tab;
-      renderRecords();
-    });
-  });
 }
 
-function attachSwipeDelete(wrap, exName) {
-  const item = wrap.querySelector('.rec-item');
+function attachSwipeDeleteEl(wrap, item, exName) {
   let startX = 0, curX = 0, dragging = false;
   const THRESHOLD = 80;
 
@@ -1139,12 +1254,14 @@ function selectGender(g) {
 }
 
 function openProfile() {
+  document.getElementById('inName').value   = db.profile?.name   || '';
   document.getElementById('inWeight').value = db.profile?.weight || '';
   document.getElementById('inHeight').value = db.profile?.height || '';
   document.getElementById('inAge').value    = db.profile?.age    || '';
   selectedGender = db.profile?.gender || 'm';
   document.getElementById('gBtnM').classList.toggle('active', selectedGender === 'm');
   document.getElementById('gBtnF').classList.toggle('active', selectedGender === 'f');
+  updateNotifBtn();
   document.getElementById('profileOverlay').classList.add('open');
 }
 
@@ -1164,6 +1281,7 @@ document.getElementById('profileSave').addEventListener('click', () => {
   const a = parseInt(document.getElementById('inAge').value);
   if (!w || w < 30)             { showToast('Enter a valid weight (30–200 kg)'); return; }
   if (!h || h < 140 || h > 220) { showToast('Enter a valid height (140–220 cm)'); return; }
+  db.profile.name   = document.getElementById('inName').value.trim();
   db.profile.weight = w;
   db.profile.height = h;
   db.profile.age    = a || null;
@@ -1335,8 +1453,10 @@ document.getElementById('tagClear').addEventListener('click', () => {
 ═══════════════════════════════════════════ */
 function updateNotifBtn() {
   const btn = document.getElementById('btnNotif');
-  const on  = Notification.permission === 'granted' && db.notif?.enabled;
-  btn.classList.toggle('active', on);
+  if (!btn) return;
+  const on = Notification.permission === 'granted' && db.notif?.enabled;
+  btn.classList.toggle('on', on);
+  btn.textContent = on ? 'On' : 'Enable';
 }
 
 document.getElementById('btnNotif').addEventListener('click', async () => {
@@ -1417,30 +1537,30 @@ function checkMissedReminder() {
 /* ═══════════════════════════════════════════
    NAVIGATION
 ═══════════════════════════════════════════ */
-document.querySelectorAll('.nav-btn').forEach(btn => {
+document.querySelectorAll('.nb').forEach(btn => {
   btn.addEventListener('click', () => {
-    const target = btn.dataset.scr;
-    const current = document.querySelector('.screen.active');
+    const target = btn.dataset.t;
+    const current = document.querySelector('.scr.on');
     if (current && current.id === target) return;
 
-    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
+    document.querySelectorAll('.nb').forEach(b => b.classList.remove('on'));
+    btn.classList.add('on');
 
     const next = document.getElementById(target);
     if (current) {
       current.classList.add('scr-exit');
       current.addEventListener('animationend', () => {
-        current.classList.remove('active', 'scr-exit');
-        next.classList.add('active', 'scr-enter');
+        current.classList.remove('on', 'scr-exit');
+        next.classList.add('on', 'scr-enter');
         next.addEventListener('animationend', () => next.classList.remove('scr-enter'), { once: true });
       }, { once: true });
     } else {
-      next.classList.add('active');
+      next.classList.add('on');
     }
 
-    if (target === 'scr-week')  renderWeek();
-    if (target === 'scr-rec')   renderRecords();
-    if (target === 'scr-timer') updateTimerRing();
+    if (target === 'sw') renderWeek();
+    if (target === 'sp') renderRecords();
+    if (target === 'st') updateTimerRing();
   });
 });
 
