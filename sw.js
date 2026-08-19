@@ -8,14 +8,17 @@ let timerTimeout = null
 self.addEventListener('message', e => {
   const { type } = e.data || {}
 
-  if (type === 'SHOW_NOTIF') {
-    const { title, body } = e.data
-    self.registration.showNotification(title, {
-      body,
+  if (type === 'TICK') {
+    const { timeLeft, presetName } = e.data
+    const m = Math.floor(timeLeft / 60)
+    const s = String(timeLeft % 60).padStart(2, '0')
+    self.registration.showNotification(`⏱ ${m}:${s} — ${presetName}`, {
+      body: 'Rest timer running. Tap to open.',
       icon: '/icon-192.png',
       badge: '/icon-192.png',
-      tag: 'gymlog',
-      vibrate: [200, 100, 200],
+      tag: 'gymlog-tick',
+      renotify: false,
+      silent: true,
     })
   }
 
@@ -24,6 +27,8 @@ self.addEventListener('message', e => {
     clearTimeout(timerTimeout)
     const delay = Math.max(0, endsAt - Date.now())
     timerTimeout = setTimeout(() => {
+      self.registration.getNotifications({ tag: 'gymlog-tick' })
+        .then(ns => ns.forEach(n => n.close()))
       self.registration.showNotification('💪 Rest done — back to it!', {
         body: `${presetName} complete. Time to lift.`,
         icon: '/icon-192.png',
@@ -31,10 +36,6 @@ self.addEventListener('message', e => {
         tag: 'gymlog-timer',
         renotify: true,
         vibrate: [200, 100, 200, 100, 400],
-        actions: [
-          { action: 'open', title: 'Open app' },
-        ],
-        data: { url: '/' },
       })
     }, delay)
   }
@@ -42,6 +43,8 @@ self.addEventListener('message', e => {
   if (type === 'CANCEL_TIMER') {
     clearTimeout(timerTimeout)
     timerTimeout = null
+    self.registration.getNotifications({ tag: 'gymlog-tick' })
+      .then(ns => ns.forEach(n => n.close()))
     self.registration.getNotifications({ tag: 'gymlog-timer' })
       .then(ns => ns.forEach(n => n.close()))
   }

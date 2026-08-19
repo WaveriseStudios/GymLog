@@ -1553,6 +1553,36 @@ async function swMsg(data){
   try{ const reg=await navigator.serviceWorker.ready; reg.active?.postMessage(data); }catch(e){}
 }
 
+let _tickNotif=null;
+function timerNotifTick(timeLeft, presetName){
+  if(!db.notif?.enabled) return;
+  if(typeof Notification==='undefined'||Notification.permission!=='granted') return;
+  const m=Math.floor(timeLeft/60), s=String(timeLeft%60).padStart(2,'0');
+  if(_tickNotif) _tickNotif.close();
+  _tickNotif=new Notification(`⏱ ${m}:${s} — ${presetName}`,{
+    body:'Rest timer running. Tap to open.',
+    icon:'/icon-192.png',
+    tag:'gymlog-tick',
+    silent:true,
+  });
+  _tickNotif.onclick=()=>{ window.focus(); _tickNotif.close(); };
+}
+function timerNotifDone(presetName){
+  if(!db.notif?.enabled) return;
+  if(typeof Notification==='undefined'||Notification.permission!=='granted') return;
+  if(_tickNotif){ _tickNotif.close(); _tickNotif=null; }
+  const n=new Notification('💪 Rest done — back to it!',{
+    body:`${presetName} complete. Time to lift.`,
+    icon:'/icon-192.png',
+    tag:'gymlog-timer',
+    vibrate:[200,100,200,100,400],
+  });
+  n.onclick=()=>{ window.focus(); n.close(); };
+}
+function timerNotifCancel(){
+  if(_tickNotif){ _tickNotif.close(); _tickNotif=null; }
+}
+
 let timerTotal=0,timerLeft=0,timerInterval=null,timerRunning=false,timerPresetName='';
 
 function fmtTime(s){return`${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;}
@@ -1580,7 +1610,9 @@ function startTimer(){
   timerRunning=true;
   document.getElementById('tcbPause').textContent='Pause';
   clearInterval(timerInterval);
-  swMsg({type:'SCHEDULE_TIMER', endsAt:Date.now()+timerLeft*1000, presetName:timerPresetName});
+  const endsAt = Date.now() + timerLeft * 1000;
+  swMsg({type:'SCHEDULE_TIMER', endsAt, presetName:timerPresetName});
+  timerNotifTick(timerLeft, timerPresetName);
   timerInterval=setInterval(()=>{
     timerLeft--;
     updateTimerRing();
@@ -1590,8 +1622,10 @@ function startTimer(){
       document.getElementById('tcbPause').textContent='Start';
       showToast('Rest done — go!');
       if(navigator.vibrate)navigator.vibrate([200,100,200]);
-      // SW already fired the notification; cancel any duplicate
+      timerNotifDone(timerPresetName);
       swMsg({type:'CANCEL_TIMER'});
+    } else {
+      timerNotifTick(timerLeft, timerPresetName);
     }
   },1000);
 }
@@ -1622,7 +1656,7 @@ document.getElementById('tcbPause').addEventListener('click',()=>{
   if(timerRunning){
     clearInterval(timerInterval);timerRunning=false;
     document.getElementById('tcbPause').textContent='Resume';
-    swMsg({type:'CANCEL_TIMER'});
+    timerNotifCancel(); swMsg({type:'CANCEL_TIMER'});
   }else{startTimer();}
 });
 
@@ -1630,7 +1664,7 @@ document.getElementById('tcbReset').addEventListener('click',()=>{
   clearInterval(timerInterval);timerRunning=false;timerLeft=timerTotal;
   document.getElementById('tcbPause').textContent='Start';
   updateTimerRing();
-  swMsg({type:'CANCEL_TIMER'});
+  timerNotifCancel(); swMsg({type:'CANCEL_TIMER'});
 });
 
 
@@ -1682,7 +1716,9 @@ document.getElementById('notifToggle').addEventListener('click', async ()=>{
   if(perm !== 'granted') perm = await Notification.requestPermission();
   if(perm!=='granted'){showToast('Permission not granted');return;}
   if(!db.notif) db.notif={};
-  db.notif.enabled=true; persist(); updateNotifToggle(); showToast('Notifications enabled!');
+  db.notif.enabled=true; persist(); updateNotifToggle();
+  new Notification('GymLog', {body:'Notifications are on!', icon:'/icon-192.png'});
+  showToast('Notifications enabled!');
 });
 
 document.getElementById('btnExportData').addEventListener('click', ()=>{
