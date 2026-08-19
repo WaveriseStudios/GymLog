@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="GymLog">
+<meta name="theme-color" content="#212529">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.svg">
+<title>GymLog</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="gymlog.css">
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ═══════ SCREEN: HOME ═══════ -->
+  <div class="screen active" id="scr-home">
+    <div class="app-hdr">
+      <div class="logo">Gym<em>Log</em></div>
+      <div class="hdr-actions">
+        <button class="hdr-icon" id="btnNotif" title="Notifications">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        </button>
+        <button class="hdr-icon" id="btnProfile" title="Profile">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="scroll-body">
+      <div class="scroll-inner">
+
+        <!-- Rank -->
+        <div class="card" id="rankCard"></div>
+
+        <!-- Today -->
+        <div class="card" id="todayCard"></div>
+
+        <!-- Last performances -->
+        <div class="card" id="lastPerfCard"></div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════ SCREEN: WEEK ═══════ -->
+  <div class="screen" id="scr-week">
+    <div class="screen-title">My Week</div>
+    <div class="scroll-body">
+      <div class="scroll-inner" id="weekList"></div>
+    </div>
+  </div>
+
+  <!-- ═══════ SCREEN: RECORDS ═══════ -->
+  <div class="screen" id="scr-rec">
+    <div class="screen-title">Records</div>
+    <div class="scroll-body">
+      <div class="scroll-inner" id="recList"></div>
+    </div>
+  </div>
+
+  <!-- ═══════ SCREEN: TIMER ═══════ -->
+  <div class="screen" id="scr-timer">
+    <div class="screen-title">Rest Timer</div>
+    <div class="scroll-body">
+      <div class="scroll-inner">
+
+        <!-- Preset cards -->
+        <div id="timerPresets">
+
+          <div class="tpc" data-sec="60" data-name="Quick Rest">
+            <div class="tpc-left">
+              <div class="tpc-dur">1 MIN</div>
+              <div class="tpc-name">Quick Rest</div>
+            </div>
+            <div class="tpc-desc">Isolation work, supersets &amp; high-rep cardio. Keep the pump alive.</div>
+          </div>
+
+          <div class="tpc" data-sec="120" data-name="Hypertrophy">
+            <div class="tpc-left">
+              <div class="tpc-dur">2 MIN</div>
+              <div class="tpc-name">Hypertrophy</div>
+            </div>
+            <div class="tpc-desc">The sweet spot for muscle growth — moderate load, 8–15 reps per set.</div>
+          </div>
+
+          <div class="tpc" data-sec="180" data-name="Full Recovery">
+            <div class="tpc-left">
+              <div class="tpc-dur">3 MIN</div>
+              <div class="tpc-name">Full Recovery</div>
+            </div>
+            <div class="tpc-desc">Heavy compound lifts — deadlifts, squats, bench press. Maximum output.</div>
+          </div>
+
+        </div>
+
+        <!-- Active countdown panel (shown once a preset is selected) -->
+        <div class="timer-panel" id="timerPanel" style="display:none">
+          <div class="timer-ring-wrap">
+            <svg class="timer-ring" viewBox="0 0 200 200">
+              <circle class="tr-bg"   cx="100" cy="100" r="88"/>
+              <circle class="tr-fill" cx="100" cy="100" r="88" id="trFill"/>
+            </svg>
+            <div class="timer-ring-inner">
+              <div class="timer-big-num" id="timerBigNum">2:00</div>
+              <div class="timer-big-lbl" id="timerBigLbl">Hypertrophy</div>
+            </div>
+          </div>
+          <div class="timer-ctrl-row">
+            <button class="tcb pause" id="tcbPause">Pause</button>
+            <button class="tcb reset" id="tcbReset">Reset</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Nav -->
+  <nav class="bot-nav">
+    <button class="nav-btn active" data-scr="scr-home">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <span>Home</span>
+    </button>
+    <button class="nav-btn" data-scr="scr-week">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+      <span>Week</span>
+    </button>
+    <button class="nav-btn" data-scr="scr-rec">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8.21 13.89L7 23l5-3 5 3-1.21-9.12M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+      <span>Records</span>
+    </button>
+    <button class="nav-btn" data-scr="scr-timer">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      <span>Timer</span>
+    </button>
+  </nav>
+</div>
+
+<!-- ═══════ MODAL: Add/Edit Exercise ═══════ -->
+<div class="overlay" id="exOverlay">
+  <div class="sheet">
+    <div class="sheet-pull"></div>
+    <div class="sheet-hdr">
+      <span class="sheet-title" id="exSheetTitle">Add Exercise</span>
+      <button class="sheet-x" id="exClose">×</button>
+    </div>
+    <div class="sheet-body">
+      <input class="ex-search" id="exSearch" type="text" placeholder="Search or create custom…" autocomplete="off" autocorrect="off" autocapitalize="words" spellcheck="false">
+      <div id="exPickerList"></div>
+
+      <div class="input-block" id="exInputBlock" style="display:none">
+        <div class="input-block-lbl" id="exSelectedLbl">Selected Exercise</div>
+
+        <div class="input-block-lbl" id="weightLbl" style="margin-top:0">Weight</div>
+        <div class="weight-big" id="weightBig">60<small> kg</small></div>
+        <input type="range" id="weightSlider" min="0" max="500" step="2.5" value="60">
+        <div class="fine-tune">
+          <button class="fine-btn" id="wMinus">−</button>
+          <span class="fine-lbl">2.5 kg</span>
+          <button class="fine-btn" id="wPlus">＋</button>
+        </div>
+
+        <div class="steppers">
+          <div class="stepper">
+            <span class="stepper-lbl">Sets</span>
+            <div class="stepper-row">
+              <button class="step-btn" id="setsMinus">−</button>
+              <span class="step-val" id="setsVal">3</span>
+              <button class="step-btn" id="setsPlus">＋</button>
+            </div>
+          </div>
+          <div class="stepper">
+            <span class="stepper-lbl">Reps</span>
+            <div class="stepper-row">
+              <button class="step-btn" id="repsMinus">−</button>
+              <span class="step-val" id="repsVal">8</span>
+              <button class="step-btn" id="repsPlus">＋</button>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn-save" id="exSave">Save Exercise</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ MODAL: Profile ═══════ -->
+<div class="overlay" id="profileOverlay">
+  <div class="sheet">
+    <div class="sheet-pull"></div>
+    <div class="sheet-hdr">
+      <span class="sheet-title">My Profile</span>
+      <button class="sheet-x" id="profileClose">×</button>
+    </div>
+    <div class="sheet-body">
+      <p style="font-size:13px;color:var(--text3);margin-bottom:16px;line-height:1.6">Your profile is used to calculate fair strength ranks, accounting for height, weight, and age together.</p>
+      <div class="profile-field">
+        <label class="profile-lbl" for="inWeight">Body Weight (kg)</label>
+        <input class="profile-inp" id="inWeight" type="number" inputmode="decimal" placeholder="75" min="30" max="200" step="0.5">
+      </div>
+      <div class="profile-field">
+        <label class="profile-lbl" for="inHeight">Height (cm)</label>
+        <input class="profile-inp" id="inHeight" type="number" inputmode="numeric" placeholder="175" min="140" max="220">
+      </div>
+      <div class="profile-field">
+        <label class="profile-lbl" for="inAge">Age</label>
+        <input class="profile-inp" id="inAge" type="number" inputmode="numeric" placeholder="25" min="14" max="80">
+      </div>
+      <div class="profile-field">
+        <label class="profile-lbl">Gender</label>
+        <div style="display:flex;gap:8px;margin-top:4px">
+          <button class="gender-btn" id="gBtnM" data-g="m" onclick="selectGender('m')">Male</button>
+          <button class="gender-btn" id="gBtnF" data-g="f" onclick="selectGender('f')">Female</button>
+        </div>
+      </div>
+      <button class="btn-save" id="profileSave">Save Profile</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ MODAL: Day Focus Tag ═══════ -->
+<div class="overlay" id="tagOverlay">
+  <div class="sheet">
+    <div class="sheet-pull"></div>
+    <div class="sheet-hdr">
+      <span class="sheet-title" id="tagSheetTitle">Day Focus</span>
+      <button class="sheet-x" id="tagClose">×</button>
+    </div>
+    <div class="sheet-body">
+      <p style="font-size:13px;color:var(--text3);margin-bottom:14px;line-height:1.6">Label this day's focus. With notifications on, you'll get a reminder at 10 am.</p>
+      <div class="tag-suggestions" id="tagSuggestions"></div>
+      <input class="ex-search" id="tagInput" type="text" placeholder="e.g. Chest + Back, Push Day…" autocomplete="off" autocorrect="off" spellcheck="false" style="margin-top:10px">
+      <div class="btn-row">
+        <button class="btn-save btn-clear" id="tagClear">Clear</button>
+        <button class="btn-save" id="tagSave">Save Focus</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script src="gymlog.js"></script>
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+</script>
+</body>
+</html>
