@@ -1717,6 +1717,42 @@ renderPRs();
 renderBestPRs();
 applyTheme(localStorage.getItem(THEME_KEY)||'forest');
 
+/* ── DAILY NUDGE ── */
+(function scheduleDailyNudge(){
+  if(!db.notif?.enabled) return;
+  if(typeof Notification==='undefined'||Notification.permission!=='granted') return;
+  const today = todayDateStr();
+  const lastSent = localStorage.getItem('gymlog_nudge_date');
+  if(lastSent === today) return;
+
+  const exs = usualExsForDate(today);
+  const pick = exs.length ? exs[Math.floor(Math.random()*exs.length)].name : null;
+
+  const MSGS = pick ? [
+    [`Ready to hit ${pick}? 💪`, 'Your usual session is waiting.'],
+    [`Time to crush ${pick}! 🔥`, "Don't let the bar down."],
+    [`${pick} day! 🏋️`, 'Get after it.'],
+    [`Don't skip ${pick} today`, 'Consistency builds champions.'],
+    [`Let's go — ${pick} is waiting`, 'You got this.'],
+  ] : [
+    ['Time to train 💪', 'Your session is waiting.'],
+    ['Gym day! 🔥', "Don't skip — you'll thank yourself later."],
+  ];
+  const [title, body] = MSGS[Math.floor(Math.random()*MSGS.length)];
+
+  // Schedule for 10:00 today, or 10min from now if already past 10
+  const now = new Date();
+  const target = new Date(now);
+  target.setHours(10, 0, 0, 0);
+  if(target <= now) target.setMinutes(now.getMinutes()+10);
+  const delay = target - now;
+
+  localStorage.setItem('gymlog_nudge_date', today);
+  navigator.serviceWorker.ready.then(reg => {
+    reg.active?.postMessage({type:'SCHEDULE_DAILY', delay, title, body});
+  });
+})();
+
 /* ── PULL-TO-REFRESH ── */
 (function(){
   const ptr=document.getElementById('ptr');
