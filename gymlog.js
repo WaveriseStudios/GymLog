@@ -9,7 +9,7 @@ function load() {
 }
 
 function defDB() {
-  return { profile: { weight: null, height: null, age: null, gender: 'm' }, schedule: {}, prs: {}, dayTags: {}, notif: { enabled: false } };
+  return { profile: { weight: null, height: null, age: null, gender: 'm' }, schedule: {}, prs: {}, history: [], dayTags: {}, notif: { enabled: false } };
 }
 
 function persist() {
@@ -55,6 +55,24 @@ const COMPOUND_LIFTS = ['Bench Press','Squat','Deadlift','Overhead Press','Barbe
    lower = less weight expected (easier to rank relative to body composition).
    This makes each exercise rank independently fair.
 ═══════════════════════════════════════════ */
+const EX_MUSCLE = {
+  'Bench Press':'Chest',       'Incline Bench Press':'Chest',  'Decline Bench Press':'Chest',
+  'Dumbbell Fly':'Chest',      'Cable Fly':'Chest',            'Dips':'Chest',      'Push-up':'Chest',
+  'Deadlift':'Back',           'Pull-up':'Back',               'Chin-up':'Back',
+  'Barbell Row':'Back',        'Lat Pulldown':'Back',          'Seated Row':'Back',
+  'T-Bar Row':'Back',          'Face Pull':'Back',
+  'Squat':'Legs',              'Front Squat':'Legs',           'Leg Press':'Legs',
+  'Romanian Deadlift':'Legs',  'Leg Extension':'Legs',         'Leg Curl':'Legs',
+  'Hip Thrust':'Legs',         'Calf Raise':'Legs',            'Hack Squat':'Legs',
+  'Overhead Press':'Shoulders','Dumbbell Shoulder Press':'Shoulders','Lateral Raise':'Shoulders',
+  'Front Raise':'Shoulders',   'Arnold Press':'Shoulders',     'Shrugs':'Shoulders',
+  'Barbell Curl':'Arms',       'Dumbbell Curl':'Arms',         'Hammer Curl':'Arms',
+  'Preacher Curl':'Arms',      'Tricep Pushdown':'Arms',       'Skull Crusher':'Arms',
+  'Overhead Tricep Extension':'Arms',
+  'Ab Wheel':'Core',           'Hanging Leg Raise':'Core',     'Crunch':'Core',
+  'Russian Twist':'Core',      'Cable Crunch':'Core',
+};
+
 const EX_COEFF = {
   // Chest
   'Bench Press':               1.00,
@@ -252,15 +270,43 @@ function avgIdxToTierDiv(avgIdx) {
   return { tier: RANK_TIERS[tierIdx], div, pct, nextTier, nextDiv, isMaxDiv };
 }
 
-// Overall rank = average of per-exercise rank indices
+// Overall rank = average of raw per-exercise scores → scoreToTierDiv
+// (averaging tier indices loses within-tier position and produces wrong results)
 function calcOverallRank() {
   const p = db.profile;
   if (!p?.weight) return null;
   const prs = Object.entries(db.prs || {});
-  if (!prs.length) return { ...avgIdxToTierDiv(0), count: 0 };
-  const indices = prs.map(([name,pr]) => scoreToRankIdx(calcExScore(pr, p, name)));
-  const avgIdx  = indices.reduce((a,b) => a+b, 0) / indices.length;
-  return { ...avgIdxToTierDiv(avgIdx), count: prs.length };
+  if (!prs.length) return null;
+
+  const scores   = prs.map(([name, pr]) => calcExScore(pr, p, name));
+  const avgScore = scores.reduce((a, b) => a + b, 0) / scores.length;
+  const { tierIdx, tier, div, pct } = scoreToTierDiv(avgScore);
+
+  const isMaxDiv    = tierIdx === RANK_TIERS.length - 1 && div === 3;
+  const nextTierIdx = tierIdx + (div === 3 ? 1 : 0);
+  const nextDiv     = div === 3 ? 1 : div + 1;
+  const nextTier    = RANK_TIERS[Math.min(nextTierIdx, RANK_TIERS.length - 1)];
+
+  return { tier, div, pct, nextTier, nextDiv, isMaxDiv, count: prs.length };
+}
+
+// Rough gym-population percentile for each of the 30 rank steps.
+// Calibrated so Gold I ≈ top 45% (consistent 1-year gym-goer).
+const STEP_PERCENTILE = [
+   2,  4,  6,   // Wood I–III
+   9, 12, 16,   // Iron I–III
+  20, 25, 30,   // Bronze I–III
+  36, 42, 48,   // Silver I–III
+  54, 60, 65,   // Gold I–III
+  70, 75, 80,   // Platinum I–III
+  84, 87, 90,   // Diamond I–III
+  92, 94, 95,   // Champion I–III
+  96, 97, 98,   // Titan I–III
+  98.5, 99, 99.5, // God I–III
+];
+
+function rankStepToPercentile(step) {
+  return STEP_PERCENTILE[Math.min(step, 29)];
 }
 
 /* ═══════════════════════════════════════════
@@ -285,14 +331,17 @@ function renderRankCard() {
   }
 
   const { tier, div, pct, nextTier, nextDiv, isMaxDiv, count } = result;
-  const subtitle  = count > 0 ? `Based on ${count} exercise${count > 1 ? 's' : ''}` : 'Log exercises to rank up';
-  const divRoman  = ROMAN[div - 1];
-  const curLabel  = `${tier.label} ${divRoman}`;
-  const nextLabel = isMaxDiv ? 'God III · Max' : (div === 3 ? `${nextTier.label} I` : `${tier.label} ${ROMAN[div]}`);
+  const subtitle   = count > 0 ? `Based on ${count} exercise${count > 1 ? 's' : ''}` : 'Log exercises to rank up';
+  const divRoman   = ROMAN[div - 1];
+  const curLabel   = `${tier.label} ${divRoman}`;
+  const nextLabel  = isMaxDiv ? 'God III · Max' : (div === 3 ? `${nextTier.label} I` : `${tier.label} ${ROMAN[div]}`);
+  const step       = tierDivToStep(tier, div);
+  const percentile = rankStepToPercentile(step);
+  const pctText    = percentile >= 99 ? `top 1% of gym-goers` : `better than ${Math.round(percentile)}% of people that go to the gym`;
 
   el.innerHTML = `
     <div class="card-lbl">Strength Rank</div>
-    <div class="rank-card t-${tier.id}">
+    <div class="rank-card t-${tier.id}" id="rankCardInner" style="cursor:pointer">
       <div class="rank-hex-wrap">
         <div class="rank-hex-bg"></div>
         <div class="rank-hex-inner">
@@ -303,6 +352,7 @@ function renderRankCard() {
       <div class="rank-info">
         <div class="rank-name-lbl">${subtitle}</div>
         <div class="rank-name">${curLabel}</div>
+        <div class="rank-percentile">You are ${pctText}</div>
         <div class="rank-progress-wrap">
           <div class="rank-progress-fill" style="width:${pct}%"></div>
         </div>
@@ -311,7 +361,205 @@ function renderRankCard() {
           <span>${nextLabel}</span>
         </div>
       </div>
+      <div class="rank-tap-hint">Tap for breakdown →</div>
     </div>`;
+
+  document.getElementById('rankCardInner').addEventListener('click', openRankBreakdown);
+}
+
+// Returns 0-based step index out of 29 total steps (10 tiers × 3 divs - 1)
+function tierDivToStep(tier, div) {
+  const tierIdx = RANK_TIERS.findIndex(t => t.id === tier.id);
+  return tierIdx * 3 + (div - 1);
+}
+
+const TIER_COLORS = {
+  wood:'#4a6070', iron:'#7a8fa0', bronze:'#c2703a', silver:'#a8bec8',
+  gold:'#e0a020', platinum:'#007ea7', diamond:'#00a8e8',
+  champion:'#9d174d', titan:'#dc2626', god:'#f59e0b',
+};
+
+// 5×2 badge grid — no scrolling, shield-style SVG per tier
+function buildRankTimeline(markerStep) {
+  const activeTierIdx = Math.floor(markerStep / 3);
+  const activeDiv     = (markerStep % 3) + 1;
+
+  // Shield SVG path: pointed bottom, flat top with slight curve
+  const SHIELD = 'M30,3 L55,14 L55,38 Q55,58 30,65 Q5,58 5,38 L5,14 Z';
+
+  // Wing paths for higher tiers (Diamond+)
+  const WINGS = 'M5,26 C0,22 -4,28 -2,34 L5,32 Z M55,26 C60,22 64,28 62,34 L55,32 Z';
+
+  const badges = RANK_TIERS.map((t, ti) => {
+    const isPast   = ti < activeTierIdx;
+    const isActive = ti === activeTierIdx;
+    const isFuture = ti > activeTierIdx;
+    const color    = TIER_COLORS[t.id];
+    const hasWings = ti >= 6; // Diamond+
+
+    const fillOpacity  = isActive ? '1' : isPast ? '0.35' : '0.12';
+    const strokeOpacity = isFuture ? '0.3' : '1';
+    const textOpacity  = isFuture ? '0.35' : '1';
+    const glow = isActive ? `filter:drop-shadow(0 0 8px ${color}cc)` : '';
+
+    const pips = [1,2,3].map(d => {
+      const filled = isPast || (isActive && d <= activeDiv);
+      const cur    = isActive && d === activeDiv;
+      return `<span class="rlt-pip${filled?' filled':''}${cur?' cur':''}"
+                    style="${filled?`background:${color};border-color:${color}`:''}"></span>`;
+    }).join('');
+
+    const wingSvg = hasWings
+      ? `<path d="${WINGS}" fill="${color}" fill-opacity="${fillOpacity}" stroke="${color}" stroke-opacity="${strokeOpacity}" stroke-width="1.5" stroke-linejoin="round"/>`
+      : '';
+
+    return `<div class="rlt-cell${isActive?' active':''}">
+      <svg class="rlt-shield-svg" viewBox="-6 0 72 68" xmlns="http://www.w3.org/2000/svg" style="${glow}">
+        ${wingSvg}
+        <path d="${SHIELD}" fill="${color}" fill-opacity="${fillOpacity}"
+              stroke="${color}" stroke-opacity="${strokeOpacity}" stroke-width="2" stroke-linejoin="round"/>
+        <text x="30" y="37" text-anchor="middle" dominant-baseline="central"
+              font-family="Barlow Condensed,sans-serif" font-size="22" font-weight="900"
+              fill="${isActive?'#fff':color}" fill-opacity="${textOpacity}">${t.label[0]}</text>
+      </svg>
+      <div class="rlt-cell-name" style="color:${isActive?color:isFuture?'var(--text3)':color};opacity:${isFuture?0.4:1}">${t.label}</div>
+      <div class="rlt-pips">${pips}</div>
+    </div>`;
+  }).join('');
+
+  return `<div class="rlt-grid">${badges}</div>`;
+}
+
+// REMOVED: body SVG replaced by muscle group rows
+function buildBodySVG_UNUSED(groups) {
+  const gc = g => groups[g] ? TIER_COLORS[groups[g].tier.id] : null;
+  const NONE = '#3a3f44';
+
+  // Silhouette base pieces shared by both views, dx = center x
+  function silhouette(dx) {
+    return `
+      <ellipse cx="${dx}" cy="16" rx="14" ry="16" fill="#454c52"/>
+      <rect x="${dx-5}" y="30" width="10" height="13" rx="3" fill="#454c52"/>
+      <path d="M${dx-36},43 C${dx-46},46 ${dx-47},56 ${dx-46},68 L${dx-46},103 Q${dx-36},116 ${dx},118 Q${dx+36},116 ${dx+46},103 L${dx+46},68 C${dx+47},56 ${dx+46},46 ${dx+36},43 Z" fill="#454c52"/>
+      <path d="M${dx-36},105 Q${dx-30},132 ${dx-24},136 L${dx+24},136 Q${dx+30},132 ${dx+36},105 Z" fill="#454c52"/>
+      <rect x="${dx-53}" y="44" width="13" height="62" rx="6" fill="#454c52"/>
+      <rect x="${dx+40}" y="44" width="13" height="62" rx="6" fill="#454c52"/>
+      <rect x="${dx-51}" y="106" width="11" height="58" rx="5" fill="#343a3f"/>
+      <rect x="${dx+40}" y="106" width="11" height="58" rx="5" fill="#343a3f"/>
+      <ellipse cx="${dx-45}" cy="167" rx="8" ry="7" fill="#343a3f"/>
+      <ellipse cx="${dx+45}" cy="167" rx="8" ry="7" fill="#343a3f"/>
+      <rect x="${dx-33}" y="136" width="24" height="90" rx="10" fill="#454c52"/>
+      <rect x="${dx+9}"  y="136" width="24" height="90" rx="10" fill="#454c52"/>
+      <rect x="${dx-31}" y="226" width="20" height="66" rx="7" fill="#343a3f"/>
+      <rect x="${dx+11}" y="226" width="20" height="66" rx="7" fill="#343a3f"/>
+      <ellipse cx="${dx-21}" cy="294" rx="14" ry="7" fill="#343a3f"/>
+      <ellipse cx="${dx+21}" cy="294" rx="14" ry="7" fill="#343a3f"/>`;
+  }
+
+  // Front muscle zones
+  function frontZones(dx) {
+    return [
+      gc('Chest') ? `<ellipse cx="${dx-13}" cy="62" rx="17" ry="21" fill="${gc('Chest')}" opacity="0.88"/>
+                     <ellipse cx="${dx+13}" cy="62" rx="17" ry="21" fill="${gc('Chest')}" opacity="0.88"/>` : '',
+      gc('Shoulders') ? `<ellipse cx="${dx-46}" cy="56" rx="12" ry="18" fill="${gc('Shoulders')}" opacity="0.88"/>
+                         <ellipse cx="${dx+46}" cy="56" rx="12" ry="18" fill="${gc('Shoulders')}" opacity="0.88"/>` : '',
+      gc('Arms') ? `<ellipse cx="${dx-47}" cy="78" rx="7" ry="20" fill="${gc('Arms')}" opacity="0.88"/>
+                    <ellipse cx="${dx+47}" cy="78" rx="7" ry="20" fill="${gc('Arms')}" opacity="0.88"/>` : '',
+      gc('Core') ? `<ellipse cx="${dx}" cy="96" rx="13" ry="20" fill="${gc('Core')}" opacity="0.88"/>` : '',
+      gc('Legs') ? `<ellipse cx="${dx-21}" cy="172" rx="12" ry="36" fill="${gc('Legs')}" opacity="0.88"/>
+                    <ellipse cx="${dx+21}" cy="172" rx="12" ry="36" fill="${gc('Legs')}" opacity="0.88"/>` : '',
+    ].join('');
+  }
+
+  // Back muscle zones
+  function backZones(dx) {
+    return [
+      gc('Back') ? `<path d="M${dx-24},44 Q${dx},52 ${dx+24},44 L${dx+32},96 Q${dx},102 ${dx-32},96 Z" fill="${gc('Back')}" opacity="0.88"/>
+                    <path d="M${dx-32},96 C${dx-46},90 ${dx-48},100 ${dx-44},106 L${dx-28},112 Z" fill="${gc('Back')}" opacity="0.88"/>
+                    <path d="M${dx+32},96 C${dx+46},90 ${dx+48},100 ${dx+44},106 L${dx+28},112 Z" fill="${gc('Back')}" opacity="0.88"/>` : '',
+      gc('Shoulders') ? `<ellipse cx="${dx-46}" cy="56" rx="12" ry="18" fill="${gc('Shoulders')}" opacity="0.88"/>
+                         <ellipse cx="${dx+46}" cy="56" rx="12" ry="18" fill="${gc('Shoulders')}" opacity="0.88"/>` : '',
+      gc('Arms') ? `<ellipse cx="${dx-47}" cy="80" rx="7" ry="22" fill="${gc('Arms')}" opacity="0.88"/>
+                    <ellipse cx="${dx+47}" cy="80" rx="7" ry="22" fill="${gc('Arms')}" opacity="0.88"/>` : '',
+      gc('Legs') ? `<ellipse cx="${dx-21}" cy="122" rx="14" ry="14" fill="${gc('Legs')}" opacity="0.88"/>
+                    <ellipse cx="${dx+21}" cy="122" rx="14" ry="14" fill="${gc('Legs')}" opacity="0.88"/>
+                    <ellipse cx="${dx-21}" cy="178" rx="12" ry="38" fill="${gc('Legs')}" opacity="0.88"/>
+                    <ellipse cx="${dx+21}" cy="178" rx="12" ry="38" fill="${gc('Legs')}" opacity="0.88"/>` : '',
+    ].join('');
+  }
+
+  const LDX = 78, RDX = 222;
+
+  return `<svg class="rbk-body-svg" viewBox="0 0 300 310" xmlns="http://www.w3.org/2000/svg">
+    <text x="${LDX}"  y="10" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" font-weight="700" fill="#6c757d" letter-spacing="1.5">FRONT</text>
+    <text x="${RDX}" y="10" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" font-weight="700" fill="#6c757d" letter-spacing="1.5">BACK</text>
+    <g transform="translate(0,14)">
+      ${silhouette(LDX)}
+      ${frontZones(LDX)}
+      ${silhouette(RDX)}
+      ${backZones(RDX)}
+    </g>
+  </svg>`;
+}
+
+function openRankBreakdown() {
+  const p = db.profile;
+  if (!p?.weight) return;
+
+  const prs = db.prs || {};
+  if (!Object.keys(prs).length) { showToast('Log exercises to see breakdown'); return; }
+
+  // Overall rank
+  const overall = calcOverallRank();
+  const overallStep = overall ? tierDivToStep(overall.tier, overall.div) : 0;
+  const overallLabel = overall ? `${overall.tier.label} ${ROMAN[overall.div-1]}` : '—';
+  const overallColor = overall ? TIER_COLORS[overall.tier.id] : '#6c757d';
+
+  // Per muscle group averages
+  const rawGroups = {};
+  Object.entries(prs).forEach(([name, pr]) => {
+    const group = EX_MUSCLE[name] || 'Other';
+    if (!rawGroups[group]) rawGroups[group] = [];
+    rawGroups[group].push(calcExScore(pr, p, name));
+  });
+
+  const groups = {};
+  Object.entries(rawGroups).forEach(([g, scores]) => {
+    const avg = scores.reduce((s,v) => s+v, 0) / scores.length;
+    groups[g] = scoreToTierDiv(avg);
+  });
+
+  // Muscle group rows
+  const MUSCLE_ORDER = ['Chest','Back','Legs','Shoulders','Arms','Core'];
+  const groupRows = MUSCLE_ORDER.filter(g => groups[g]).map(g => {
+    const { tier, div } = groups[g];
+    const color = TIER_COLORS[tier.id];
+    const step  = tierDivToStep(tier, div);
+    const pct   = (step / 29 * 100).toFixed(1);
+    return `<div class="rbk-group-row">
+      <div class="rbk-group-top">
+        <span class="rbk-group-name">${g}</span>
+        <span class="rec-rank-badge t-${tier.id}">${tier.label} ${ROMAN[div-1]}</span>
+      </div>
+      <div class="rbk-group-bar">
+        <div class="rbk-group-fill" style="width:${pct}%;background:${color}"></div>
+        <div class="rbk-group-dot"  style="left:${pct}%;border-color:${color};box-shadow:0 0 6px ${color}88"></div>
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('rankBkBody').innerHTML = `
+    <div class="rbk-section-lbl">Overall — <span style="color:${overallColor};font-weight:800">${overallLabel}</span></div>
+    ${buildRankTimeline(overallStep)}
+    <div class="rbk-divider"></div>
+    <div class="rbk-section-lbl">By Body Part</div>
+    ${groupRows}`;
+
+  document.getElementById('rankBkOverlay').classList.add('open');
+}
+
+function closeRankBreakdown() {
+  document.getElementById('rankBkOverlay').classList.remove('open');
 }
 
 function renderTodayCard() {
@@ -459,38 +707,182 @@ function deleteEx(dayKey, id) {
 }
 
 /* ═══════════════════════════════════════════
+   RECORDS: PROGRESS CHART
+═══════════════════════════════════════════ */
+function buildChart(exName) {
+  const history = (db.history || []).filter(h => h.name === exName);
+  if (history.length < 2) return '';
+
+  const isBW = BODYWEIGHT_EX.has(exName);
+  const bwFrac = BW_FRACTION[exName] ?? 1.0;
+  const points = history.map(h => {
+    const base = isBW ? (db.profile?.weight||0)*bwFrac + h.weight : h.weight;
+    return { date: h.date, v: calcEpley(base, h.reps, isBW ? 0 : 30) };
+  });
+
+  const W = 300, H = 80, PAD = 8;
+  const vals = points.map(p => p.v);
+  const min = Math.min(...vals), max = Math.max(...vals);
+  const range = max - min || 1;
+
+  const xs = points.map((_, i) => PAD + (i / (points.length - 1)) * (W - PAD*2));
+  const ys = points.map(p => H - PAD - ((p.v - min) / range) * (H - PAD*2));
+
+  const linePath = xs.map((x, i) => `${i===0?'M':'L'}${x.toFixed(1)},${ys[i].toFixed(1)}`).join(' ');
+  const areaPath = linePath + ` L${xs[xs.length-1].toFixed(1)},${H} L${xs[0].toFixed(1)},${H} Z`;
+
+  const lastX = xs[xs.length-1].toFixed(1);
+  const lastY = ys[ys.length-1].toFixed(1);
+
+  return `<svg class="rec-chart" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="cg-${exName.replace(/\s/g,'')}" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="var(--acc)" stop-opacity="0.35"/>
+        <stop offset="100%" stop-color="var(--acc)" stop-opacity="0"/>
+      </linearGradient>
+    </defs>
+    <path d="${areaPath}" fill="url(#cg-${exName.replace(/\s/g,'')})" />
+    <path d="${linePath}" fill="none" stroke="var(--acc)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+    <circle cx="${lastX}" cy="${lastY}" r="4" fill="var(--acc)"/>
+  </svg>`;
+}
+
+
+/* ═══════════════════════════════════════════
    RENDER: RECORDS
 ═══════════════════════════════════════════ */
+let recTab = 'best'; // 'best' | 'e1rm'
+
 function renderRecords() {
   const list   = document.getElementById('recList');
-  const sorted = Object.entries(db.prs||{})
-    .sort((a,b) => (b[1].date||'').localeCompare(a[1].date||''));
+  const prs    = db.prs || {};
 
-  if (!sorted.length) {
+  if (!Object.keys(prs).length) {
     list.innerHTML = `<div class="empty-state"><b>No records yet</b>Log exercises in the Week tab — PRs appear here automatically.</div>`;
     return;
   }
 
-  list.innerHTML = '';
-  sorted.forEach(([name, pr]) => {
+  // Tab bar
+  const tabBar = `
+    <div class="rec-tabs">
+      <button class="rec-tab ${recTab==='best'?'active':''}" data-tab="best">Best Set</button>
+      <button class="rec-tab ${recTab==='e1rm'?'active':''}" data-tab="e1rm">Est. 1RM</button>
+    </div>`;
+
+  // Sort
+  let entries = Object.entries(prs);
+  if (recTab === 'e1rm') {
+    const p = db.profile;
+    if (p?.weight) {
+      entries.sort((a,b) => calcExScore(b[1], p, b[0]) - calcExScore(a[1], p, a[0]));
+    } else {
+      entries.sort((a,b) => {
+        const e1rmOf = ([name, pr]) => {
+          const bwFrac = BW_FRACTION[name] ?? 1.0;
+          const base = BODYWEIGHT_EX.has(name) ? (db.profile?.weight||0)*bwFrac + pr.weight : pr.weight;
+          return calcEpley(base, pr.reps, BODYWEIGHT_EX.has(name) ? 0 : 30);
+        };
+        return e1rmOf(b) - e1rmOf(a);
+      });
+    }
+  } else {
+    entries.sort((a,b) => (b[1].date||'').localeCompare(a[1].date||''));
+  }
+
+  list.innerHTML = tabBar;
+
+  entries.forEach(([name, pr]) => {
     const p = db.profile;
     let badgeHtml = '';
     if (p?.weight) {
       const { tier, div } = scoreToTierDiv(calcExScore(pr, p, name));
       badgeHtml = `<span class="rec-rank-badge t-${tier.id}">${TIER_SHORT[tier.id]} ${ROMAN[div-1]}</span>`;
     }
-    const el = document.createElement('div');
-    el.className = 'rec-item';
-    el.innerHTML = `
-      <span class="rec-name">${name}</span>
-      <div class="rec-right">
-        <div class="rec-right-top">
-          ${badgeHtml}
-          <span class="rec-weight">${fmtWeight(pr.weight, name)}</span>
+
+    // Est 1RM display
+    let e1rmStr = '';
+    if (recTab === 'e1rm') {
+      const bwFrac = BW_FRACTION[name] ?? 1.0;
+      const base = BODYWEIGHT_EX.has(name) ? (p?.weight||0)*bwFrac + pr.weight : pr.weight;
+      const e1rm = calcEpley(base, pr.reps, BODYWEIGHT_EX.has(name) ? 0 : 30);
+      e1rmStr = `<span class="rec-e1rm">~${Math.round(e1rm)} kg</span>`;
+    }
+
+    const chartHtml = buildChart(name);
+    const hasChart = chartHtml.length > 0;
+
+    const wrap = document.createElement('div');
+    wrap.className = 'rec-swipe-wrap';
+    wrap.innerHTML = `
+      <div class="rec-delete-bg"><span>Delete</span></div>
+      <div class="rec-item${hasChart ? ' rec-item--chartable' : ''}">
+        <span class="rec-name">${name}</span>
+        <div class="rec-right">
+          <div class="rec-right-top">
+            ${badgeHtml}
+            ${recTab==='e1rm' ? e1rmStr : `<span class="rec-weight">${fmtWeight(pr.weight, name)}</span>`}
+          </div>
+          <span class="rec-meta">${recTab === 'e1rm' ? `1 rep · ${fmtWeight(pr.weight, name)}` : `${pr.sets}×${pr.reps} · ${fmtWeight(pr.weight, name)} · ${fmtDate(pr.date)}`}</span>
         </div>
-        <span class="rec-meta">${pr.sets}×${pr.reps} · ${fmtDate(pr.date)}</span>
+        ${hasChart ? `<div class="rec-chart-wrap" style="display:none">${chartHtml}</div>` : ''}
       </div>`;
-    list.appendChild(el);
+
+    attachSwipeDelete(wrap, name);
+
+    if (hasChart) {
+      const item = wrap.querySelector('.rec-item');
+      const chartWrap = wrap.querySelector('.rec-chart-wrap');
+      item.addEventListener('click', () => {
+        const open = chartWrap.style.display !== 'none';
+        chartWrap.style.display = open ? 'none' : 'block';
+      });
+    }
+
+    list.appendChild(wrap);
+  });
+
+  // Tab click handlers
+  list.querySelectorAll('.rec-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      recTab = btn.dataset.tab;
+      renderRecords();
+    });
+  });
+}
+
+function attachSwipeDelete(wrap, exName) {
+  const item = wrap.querySelector('.rec-item');
+  let startX = 0, curX = 0, dragging = false;
+  const THRESHOLD = 80;
+
+  item.addEventListener('touchstart', e => {
+    startX = e.touches[0].clientX;
+    curX   = 0;
+    dragging = true;
+    item.style.transition = 'none';
+  }, { passive: true });
+
+  item.addEventListener('touchmove', e => {
+    if (!dragging) return;
+    curX = e.touches[0].clientX - startX;
+    if (curX > 0) curX = 0;
+    item.style.transform = `translateX(${curX}px)`;
+  }, { passive: true });
+
+  item.addEventListener('touchend', () => {
+    dragging = false;
+    item.style.transition = 'transform 0.25s ease';
+    if (curX < -THRESHOLD) {
+      item.style.transform = `translateX(-100%)`;
+      setTimeout(() => {
+        delete db.prs[exName];
+        persist();
+        renderRecords();
+        showToast(`${exName} record deleted`);
+      }, 250);
+    } else {
+      item.style.transform = 'translateX(0)';
+    }
   });
 }
 
@@ -534,7 +926,7 @@ function openExModal(dayKey, exId) {
   if (exSelName) document.getElementById('exSelectedLbl').textContent = exSelName;
 
   document.getElementById('exOverlay').classList.add('open');
-  setTimeout(() => document.getElementById('exSearch').focus(), 320);
+  // no auto-focus — keyboard popping up uninvited is annoying
 }
 
 function buildPicker(query) {
@@ -618,8 +1010,39 @@ function updateWeightDisplay() {
   document.getElementById('weightBig').innerHTML = isBW
     ? (exWeight === 0 ? `BW${hint}` : `+${exWeight}${hint}`)
     : `${exWeight}${hint}`;
-  document.getElementById('weightSlider').value = exWeight;
 }
+
+// Tap weight display → inline number input
+document.getElementById('weightBig').addEventListener('click', () => {
+  const inp = document.getElementById('weightDirect');
+  const big = document.getElementById('weightBig');
+  inp.value = exWeight;
+  big.style.display = 'none';
+  inp.style.display = 'block';
+  inp.focus();
+  inp.select();
+});
+document.getElementById('weightDirect').addEventListener('blur', () => {
+  const inp = document.getElementById('weightDirect');
+  const val = parseFloat(inp.value);
+  if (!isNaN(val)) exWeight = Math.max(0, Math.min(500, val));
+  inp.style.display = 'none';
+  document.getElementById('weightBig').style.display = '';
+  updateWeightDisplay();
+});
+document.getElementById('weightDirect').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('weightDirect').blur();
+});
+
+// Step buttons
+document.querySelectorAll('.ws-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const d = parseFloat(btn.dataset.d);
+    if (btn.classList.contains('ws-minus')) exWeight = Math.max(0, exWeight - d);
+    else exWeight = Math.min(500, exWeight + d);
+    updateWeightDisplay();
+  });
+});
 
 document.getElementById('exSearch').addEventListener('input', e => {
   buildPicker(e.target.value);
@@ -629,20 +1052,6 @@ document.getElementById('exSearch').addEventListener('input', e => {
   }
 });
 
-document.getElementById('weightSlider').addEventListener('input', e => {
-  exWeight = parseFloat(e.target.value);
-  updateWeightDisplay();
-});
-
-document.getElementById('wMinus').addEventListener('click', () => {
-  exWeight = Math.max(0, exWeight - 2.5);
-  updateWeightDisplay();
-});
-
-document.getElementById('wPlus').addEventListener('click', () => {
-  exWeight = Math.min(500, exWeight + 2.5);
-  updateWeightDisplay();
-});
 
 document.getElementById('setsMinus').addEventListener('click', () => {
   exSets = Math.max(1, exSets - 1);
@@ -690,6 +1099,9 @@ document.getElementById('exSave').addEventListener('click', () => {
   if (isPR) {
     db.prs[name] = { weight: exWeight, sets: exSets, reps: exReps, date: new Date().toISOString() };
   }
+
+  if (!db.history) db.history = [];
+  db.history.push({ name, weight: exWeight, sets: exSets, reps: exReps, date: new Date().toISOString() });
 
   persist();
   closeExModal();
@@ -880,7 +1292,6 @@ function openTagModal(dayKey, dayIdx) {
   });
 
   document.getElementById('tagOverlay').classList.add('open');
-  setTimeout(() => document.getElementById('tagInput').focus(), 320);
 }
 
 function closeTagModal() {
@@ -903,6 +1314,10 @@ document.getElementById('tagSave').addEventListener('click', () => {
   renderWeek();
   renderHome();
   showToast(val ? 'Focus saved' : 'Focus cleared');
+});
+
+document.getElementById('rankBkOverlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('rankBkOverlay')) closeRankBreakdown();
 });
 
 document.getElementById('tagClear').addEventListener('click', () => {
@@ -1005,10 +1420,23 @@ function checkMissedReminder() {
 document.querySelectorAll('.nav-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     const target = btn.dataset.scr;
-    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    const current = document.querySelector('.screen.active');
+    if (current && current.id === target) return;
+
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById(target).classList.add('active');
     btn.classList.add('active');
+
+    const next = document.getElementById(target);
+    if (current) {
+      current.classList.add('scr-exit');
+      current.addEventListener('animationend', () => {
+        current.classList.remove('active', 'scr-exit');
+        next.classList.add('active', 'scr-enter');
+        next.addEventListener('animationend', () => next.classList.remove('scr-enter'), { once: true });
+      }, { once: true });
+    } else {
+      next.classList.add('active');
+    }
 
     if (target === 'scr-week')  renderWeek();
     if (target === 'scr-rec')   renderRecords();
