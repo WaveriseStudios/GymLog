@@ -220,8 +220,8 @@ body{
 /* ── TIMER OVERLAY ── */
 .timer-overlay{position:fixed;top:0;left:0;right:0;bottom:0;z-index:79;background:var(--bg);display:flex;flex-direction:column;transform:translateY(100%);transition:transform .32s cubic-bezier(.32,.72,0,1);}
 .timer-overlay.open{transform:translateY(0);}
-.timer-mini-bar{flex-shrink:0;background:var(--bg);border-top:1.5px solid var(--bdr);display:flex;align-items:center;justify-content:space-between;padding:0 20px;max-height:0;overflow:hidden;transition:max-height .3s ease,padding .3s ease;cursor:pointer;}
-.timer-mini-bar.visible{max-height:48px;padding:11px 20px;}
+.timer-mini-bar{flex-shrink:0;background:var(--bg);border-top:1.5px solid var(--bdr);display:flex;align-items:center;justify-content:space-between;padding:0 20px;max-height:0;overflow:hidden;transition:max-height .3s ease,padding .3s ease;cursor:pointer;pointer-events:none;}
+.timer-mini-bar.visible{max-height:48px;padding:11px 20px;pointer-events:auto;}
 .tmb-name{font-size:13px;font-weight:600;color:var(--t2);}
 .tmb-time{font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:900;color:var(--text);letter-spacing:.5px;}
 .timer-ov-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:40px;}
