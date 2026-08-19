@@ -42,9 +42,9 @@ button{cursor:pointer;font-family:inherit;border:none;background:transparent;}
   --tb:  #888;    --tb2: rgba(136,136,136,.1);
 }
 
-html{height:-webkit-fill-available;overflow:hidden;}
+html{height:100%;overflow:hidden;}
 body{
-  height:-webkit-fill-available;
+  height:100%;
   overflow:hidden;
   background:var(--bg);
   color:var(--text);
@@ -53,7 +53,7 @@ body{
   -webkit-text-size-adjust:100%;
 }
 
-#app{display:flex;flex-direction:column;height:100dvh;height:100vh;overflow:hidden;}
+#app{display:flex;flex-direction:column;height:100%;overflow:hidden;}
 .scr{display:none;flex-direction:column;flex:1;min-height:0;overflow:hidden;}
 .scr.on{display:flex;}
 .sb{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;}
