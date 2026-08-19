@@ -1547,10 +1547,17 @@ function updateTimerRing(){
   if(miniBar) miniBar.classList.toggle('visible', timerRunning&&timerLeft>0);
 }
 
-function sendNotif(title, body){
+if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js');
+
+async function sendNotif(title, body){
   if(!db.notif?.enabled) return;
   if(typeof Notification==='undefined' || Notification.permission!=='granted') return;
-  try{ new Notification(title, {body, icon:'/icon-192.png', tag:'gymlog-timer'}); }catch(e){}
+  try{
+    const reg = await navigator.serviceWorker.ready;
+    reg.showNotification(title, {body, icon:'/icon-192.png', tag:'gymlog-timer', vibrate:[200,100,200]});
+  }catch(e){
+    try{ new Notification(title, {body, icon:'/icon-192.png'}); }catch(_){}
+  }
 }
 
 function startTimer(){
@@ -1676,7 +1683,7 @@ document.getElementById('notifToggle').addEventListener('click', async ()=>{
   if(perm!=='granted'){showToast('Permission not granted');return;}
   if(!db.notif) db.notif={};
   db.notif.enabled=true; persist(); updateNotifToggle(); showToast('Notifications enabled!');
-  try{ new Notification('GymLog ✓', {body:'Timer notifications are on.', icon:'/icon-192.png'}); }catch(e){}
+  sendNotif('GymLog ✓', 'Timer notifications are on.');
 });
 
 document.getElementById('btnExportData').addEventListener('click', ()=>{
