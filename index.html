@@ -1123,20 +1123,12 @@ function renderTodaySession(){
     <span class="smeta">${exs.length} exercise${exs.length!==1?'s':''} · ${totalSets} sets</span>
   </div>`;
 
-  const rows=exs.map(ex=>{
-    let badge='';
-    if(p?.weight&&db.prs?.[ex.name]){
-      const{tier,div}=scoreToTierDiv(calcExScore(db.prs[ex.name],p,ex.name));
-      badge=`<span class="bdg" style="background:color-mix(in srgb,${TIER_COLORS[tier.id]} 12%,transparent);color:${TIER_COLORS[tier.id]};border:1px solid color-mix(in srgb,${TIER_COLORS[tier.id]} 25%,transparent)">${TIER_SHORT[tier.id]} · ${ROMAN[div-1]}</span>`;
-    }
-    return `<div class="ex-row divr">
-      <div class="ex-left"><div class="ex-name">${ex.name}</div>${badge}</div>
-      <div class="ex-nums">
-        <span class="ex-w">${fmtWeight(ex.weight,ex.name)} × ${ex.reps}</span>
-        <span class="ex-s">${ex.sets}×</span>
-      </div>
-    </div>`;
-  }).join('');
+  const rows=exs.map(ex=>`<div class="lw-row">
+    <div class="lw-info">
+      <div class="lw-name">${ex.name}</div>
+      <div class="lw-meta">${fmtWeight(ex.weight,ex.name)} × ${ex.reps} · ${ex.sets} sets</div>
+    </div>
+  </div>`).join('');
 
   el.innerHTML=hdr+`<div class="card">${rows}</div>`;
 }
