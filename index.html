@@ -1547,6 +1547,12 @@ function updateTimerRing(){
   if(miniBar) miniBar.classList.toggle('visible', timerRunning&&timerLeft>0);
 }
 
+function sendNotif(title, body){
+  if(!db.notif?.enabled) return;
+  if(typeof Notification==='undefined' || Notification.permission!=='granted') return;
+  try{ new Notification(title, {body, icon:'/icon-192.png', tag:'gymlog-timer'}); }catch(e){}
+}
+
 function startTimer(){
   if(timerLeft<=0)timerLeft=timerTotal;
   timerRunning=true;
@@ -1561,6 +1567,7 @@ function startTimer(){
       document.getElementById('tcbPause').textContent='Start';
       showToast('Rest done — go!');
       if(navigator.vibrate)navigator.vibrate([200,100,200]);
+      sendNotif('💪 Rest done!', `${timerPresetName} complete — time to lift.`);
     }
   },1000);
 }
@@ -1669,6 +1676,7 @@ document.getElementById('notifToggle').addEventListener('click', async ()=>{
   if(perm!=='granted'){showToast('Permission not granted');return;}
   if(!db.notif) db.notif={};
   db.notif.enabled=true; persist(); updateNotifToggle(); showToast('Notifications enabled!');
+  try{ new Notification('GymLog ✓', {body:'Timer notifications are on.', icon:'/icon-192.png'}); }catch(e){}
 });
 
 document.getElementById('btnExportData').addEventListener('click', ()=>{
