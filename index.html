@@ -688,6 +688,23 @@ function getWeekDates(offset){
 function parseLocalDate(dateStr){const[y,m,d]=dateStr.split('-').map(Number);return new Date(y,m-1,d);}
 function lastWeekDateOf(dateStr){const d=parseLocalDate(dateStr);d.setDate(d.getDate()-7);return localDateStr(d);}
 
+function usualExsForDate(dateStr){
+  const seen = new Map();
+  let count = 0, iters = 0;
+  const d = parseLocalDate(dateStr);
+  while(count < 3 && iters < 26){
+    d.setDate(d.getDate()-7);
+    iters++;
+    const key = localDateStr(d);
+    const exs = db.schedule?.[key];
+    if(exs && exs.length){
+      exs.forEach(ex=>{ if(!seen.has(ex.name)) seen.set(ex.name, ex); });
+      count++;
+    }
+  }
+  return [...seen.values()];
+}
+
 // Migrate old mon/tue keys to YYYY-MM-DD
 (function migrateSchedule(){
   const OLD=['mon','tue','wed','thu','fri','sat','sun'];
@@ -1101,26 +1118,21 @@ function renderBestPRs(){
 /* ── TODAY SESSION ── */
 function renderTodaySession(){
   const el  = document.getElementById('todaySession');
-  const p   = db.profile;
-  const key = lastWeekDateOf(todayDateStr());
-  const exs = db.schedule?.[key] || [];
-  const tag = db.dayTags?.[key];
+  const today = todayDateStr();
+  const exs = usualExsForDate(today);
 
-  const d = parseLocalDate(key);
   const DAYS_L=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-  const MONTHS_L=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const dateLabel=`${DAYS_L[d.getDay()]}, ${MONTHS_L[d.getMonth()]} ${d.getDate()}`;
-  const tagPart=tag?` · ${tag}`:'';
+  const dow = parseLocalDate(today).getDay();
+  const dayName = DAYS_L[dow];
 
   if(!exs.length){
-    el.innerHTML=`<div class="card-hd">Last Week — ${dateLabel}</div><div class="card"><div style="padding:14px 16px;font-size:13px;color:var(--t2)">No session logged last ${DAYS_L[d.getDay()]}.</div></div>`;
+    el.innerHTML=`<div class="card-hd">Usual for ${dayName}s</div><div class="card"><div style="padding:14px 16px;font-size:13px;color:var(--t2)">No previous ${dayName} sessions found.</div></div>`;
     return;
   }
 
-  const totalSets=exs.reduce((s,e)=>s+e.sets,0);
   const hdr=`<div class="session-hd" style="margin-bottom:10px">
-    <span class="lbl">Last Week — ${dateLabel}${tagPart}</span>
-    <span class="smeta">${exs.length} exercise${exs.length!==1?'s':''} · ${totalSets} sets</span>
+    <span class="lbl">Usual for ${dayName}s</span>
+    <span class="smeta">${exs.length} exercise${exs.length!==1?'s':''}</span>
   </div>`;
 
   const rows=exs.map(ex=>`<div class="lw-row">
@@ -1218,13 +1230,12 @@ function renderWeekDay(dir){
   addBtn.addEventListener('click',()=>openExModal(dateStr,null));
   card.appendChild(addBtn);
 
-  // Last week section
-  const lwDate=lastWeekDateOf(dateStr);
-  const lwExs=db.schedule?.[lwDate]||[];
+  // Usual exercises section
+  const lwExs=usualExsForDate(dateStr);
   if(lwExs.length){
     const sec=document.createElement('div');
     sec.className='lw-sec';
-    sec.innerHTML=`<div class="wsec" style="margin-bottom:8px">Last Week</div>`;
+    sec.innerHTML=`<div class="wsec" style="margin-bottom:8px">Usual</div>`;
     const lwCard=document.createElement('div');
     lwCard.className='card';
     lwExs.forEach(ex=>{
@@ -1272,8 +1283,10 @@ function renderPRs(){
 
     const isBW=BODYWEIGHT_EX.has(name);
     const bwFrac=BW_FRACTION[name]??1.0;
-    const base=isBW?((p?.weight||0)*bwFrac+pr.weight):pr.weight;
+    const bw=p?.weight||0;
+    const base=isBW?(bw*bwFrac+pr.weight):pr.weight;
     const e1rm=Math.round(calcEpley(base,pr.reps,isBW?0:30));
+    const e1rmStr=isBW?`BW + ${Math.max(0,e1rm-Math.round(bw*bwFrac))} kg`:`~${e1rm} kg`;
     const bestStr=`${fmtWeight(pr.weight,name)} × ${pr.reps}`;
 
     const card=document.createElement('div');
@@ -1284,7 +1297,7 @@ function renderPRs(){
       <div class="prc-r2">
         <div><div class="pnum">${bestStr}</div><div class="pnum-l">Best Set</div></div>
         <div class="psep">→</div>
-        <div><div class="pnum a">~${e1rm} kg</div><div class="pnum-l">E1RM est.</div></div>
+        <div><div class="pnum a">${e1rmStr}</div><div class="pnum-l">E1RM est.</div></div>
       </div>`;
 
     let startX=0,curX=0,dragging=false;
