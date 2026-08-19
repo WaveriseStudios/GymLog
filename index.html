@@ -321,6 +321,13 @@ body{
 .rlt-pip.filled{border-color:currentColor;}
 .rlt-pip.cur{box-shadow:0 0 4px currentColor;}
 /* breakdown rows */
+.rbk-demog-desc{font-size:12px;color:var(--t2);margin-bottom:14px}
+.rbk-demog-row{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.rbk-demog-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px}
+.rbk-demog-lbl{font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--t3)}
+.rbk-demog-badge{font-size:13px;font-weight:800;padding:6px 14px;border-radius:20px;letter-spacing:.5px;text-align:center}
+.rbk-demog-sep{font-size:12px;font-weight:600;color:var(--t3);flex-shrink:0}
+.rbk-demog-verdict{font-size:13px;font-weight:700;text-align:center;padding:6px 0 4px}
 .rbk-section-lbl{font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--t3);margin:14px 0 8px;}
 .rbk-section-lbl:first-child{margin-top:0;}
 .rbk-divider{height:1px;background:var(--bdr);margin:10px 0;}
@@ -552,6 +559,17 @@ body{
       <button class="sheet-x" onclick="closeRankBreakdown()">×</button>
     </div>
     <div class="sheet-body" id="rankBkBody"></div>
+  </div>
+</div>
+
+<div class="overlay" id="prGroupOverlay">
+  <div class="sheet">
+    <div class="sheet-pull"></div>
+    <div class="sheet-hdr">
+      <span class="sheet-title" id="prGroupTitle">Group PRs</span>
+      <button class="sheet-x" id="prGroupClose">×</button>
+    </div>
+    <div class="sheet-body" id="prGroupBody"></div>
   </div>
 </div>
 
@@ -847,9 +865,10 @@ const EX_COEFF = {
   // Core
   'Ab Wheel':0.30,'Hanging Leg Raise':0.30,'Crunch':0.20,'Russian Twist':0.25,
   'Cable Crunch':0.40,'Dragon Flag':0.35,'Leg Raise':0.28,
+  'Plank':0.20,'Sit-up':0.18,'Toes to Bar':0.30,
 };
-const BODYWEIGHT_EX = new Set(['Pull-up','Chin-up','Dips','Push-up']);
-const BW_FRACTION   = {'Push-up':0.65};
+const BODYWEIGHT_EX = new Set(['Pull-up','Chin-up','Dips','Push-up','Hanging Leg Raise','Leg Raise','Toes to Bar','Dragon Flag','Plank','Crunch','Sit-up']);
+const BW_FRACTION   = {'Push-up':0.65,'Plank':0.65,'Hanging Leg Raise':0.35,'Leg Raise':0.35,'Toes to Bar':0.35,'Dragon Flag':0.80,'Crunch':0.15,'Sit-up':0.20};
 
 function calcLBM(weight,height,gender){
   if(!weight||!height) return Math.max((weight||70)*0.8,20);
@@ -951,8 +970,8 @@ const EX_MUSCLE={
   'Barbell Curl':'Arms','Dumbbell Curl':'Arms','Hammer Curl':'Arms','Preacher Curl':'Arms',
   'Leon Curl':'Arms','Tricep Pushdown':'Arms','Skull Crusher':'Arms',
   'Overhead Tricep Extension':'Arms','Leon Pushdowns':'Arms','Rope Pushdown':'Arms',
-  'Ab Wheel':'Core','Hanging Leg Raise':'Core','Crunch':'Core','Russian Twist':'Core',
-  'Cable Crunch':'Core','Dragon Flag':'Core','Leg Raise':'Core','Plank':'Core',
+  'Ab Wheel':'Core','Hanging Leg Raise':'Core','Crunch':'Core','Sit-up':'Core','Russian Twist':'Core',
+  'Cable Crunch':'Core','Dragon Flag':'Core','Leg Raise':'Core','Toes to Bar':'Core','Plank':'Core',
 };
 function tierDivToStep(tier,div){return RANK_TIERS.findIndex(t=>t.id===tier.id)*3+(div-1);}
 function rankStepToPercentile(step){return STEP_PERCENTILE[Math.min(step,29)];}
@@ -986,6 +1005,24 @@ function buildRankTimeline(markerStep){
   return `<div class="rlt-grid">${badges}</div>`;
 }
 
+// Average gym-goer strength as a ratio of bodyweight (1RM equivalent, 5 big lifts)
+const DEMOG_STANDARDS={
+  'Bench Press':    {m:1.00,f:0.55},
+  'Squat':          {m:1.25,f:0.80},
+  'Deadlift':       {m:1.50,f:0.95},
+  'Overhead Press': {m:0.65,f:0.38},
+  'Barbell Row':    {m:0.90,f:0.55},
+};
+function calcDemogExpectedRank(profile){
+  const bw=profile.weight;
+  const g=profile.gender==='f'?'f':'m';
+  const scores=Object.entries(DEMOG_STANDARDS).map(([name,ratios])=>{
+    const w=Math.round(bw*ratios[g]);
+    return calcExScore({weight:w,reps:5,sets:3},profile,name);
+  });
+  const avg=scores.reduce((s,v)=>s+v,0)/scores.length;
+  return scoreToTierDiv(avg);
+}
 function openRankBreakdown(){
   const p=db.profile;
   if(!p?.weight)return;
@@ -995,40 +1032,41 @@ function openRankBreakdown(){
   const overallStep=overall?tierDivToStep(overall.tier,overall.div):0;
   const overallLabel=overall?`${overall.tier.label} ${ROMAN[overall.div-1]}`:'—';
   const overallColor=overall?TIER_COLORS[overall.tier.id]:'#6c757d';
-  const rawGroups={};
-  Object.entries(prs).forEach(([name,pr])=>{
-    const group=EX_MUSCLE[name]||'Other';
-    if(!rawGroups[group])rawGroups[group]=[];
-    rawGroups[group].push(calcExScore(pr,p,name));
-  });
-  const groups={};
-  Object.entries(rawGroups).forEach(([g,scores])=>{
-    const avg=scores.reduce((s,v)=>s+v,0)/scores.length;
-    groups[g]=scoreToTierDiv(avg);
-  });
-  const MUSCLE_ORDER=['Chest','Back','Legs','Shoulders','Arms','Core'];
-  const groupRows=MUSCLE_ORDER.filter(g=>groups[g]).map(g=>{
-    const{tier,div}=groups[g];
-    const color=TIER_COLORS[tier.id];
-    const step=tierDivToStep(tier,div);
-    const pct=(step/29*100).toFixed(1);
-    return `<div class="rbk-group-row">
-      <div class="rbk-group-top">
-        <span class="rbk-group-name">${g}</span>
-        <span class="rec-rank-badge" style="background:color-mix(in srgb,${color} 12%,transparent);color:${color};border:1px solid color-mix(in srgb,${color} 30%,transparent)">${tier.label} ${ROMAN[div-1]}</span>
+
+  // demographic comparison
+  const exp=calcDemogExpectedRank(p);
+  const expColor=TIER_COLORS[exp.tier.id];
+  const expLabel=`${exp.tier.label} ${ROMAN[exp.div-1]}`;
+  const expStep=tierDivToStep(exp.tier,exp.div);
+  const diff=overallStep-expStep;
+  let diffText,diffColor;
+  if(diff>3){diffText=`${diff} ranks above average`;diffColor='var(--acc)';}
+  else if(diff>0){diffText='slightly above average';diffColor='var(--acc)';}
+  else if(diff===0){diffText='right at average';diffColor='var(--t2)';}
+  else if(diff>-4){diffText='slightly below average';diffColor='var(--t2)';}
+  else{diffText=`${Math.abs(diff)} ranks below average`;diffColor='#e06060';}
+  const gLabel=p.gender==='f'?'women':'men';
+  const ageLabel=p.age?`, age ${p.age}`:'';
+  const demogHtml=`<div class="rbk-divider"></div>
+    <div class="rbk-section-lbl">Demographic Comparison</div>
+    <div class="rbk-demog-desc">Average for ${gLabel}${ageLabel} — based on Bench, Squat, Deadlift, OHP & Row</div>
+    <div class="rbk-demog-row">
+      <div class="rbk-demog-col">
+        <div class="rbk-demog-lbl">You</div>
+        <span class="rbk-demog-badge" style="background:color-mix(in srgb,${overallColor} 14%,transparent);color:${overallColor};border:1px solid color-mix(in srgb,${overallColor} 30%,transparent)">${overallLabel}</span>
       </div>
-      <div class="rbk-group-bar">
-        <div class="rbk-group-fill" style="width:${pct}%;background:${color}"></div>
-        <div class="rbk-group-dot" style="left:${pct}%;border-color:${color};box-shadow:0 0 6px ${color}88"></div>
+      <div class="rbk-demog-sep">vs</div>
+      <div class="rbk-demog-col">
+        <div class="rbk-demog-lbl">Typical</div>
+        <span class="rbk-demog-badge" style="background:color-mix(in srgb,${expColor} 14%,transparent);color:${expColor};border:1px solid color-mix(in srgb,${expColor} 30%,transparent)">${expLabel}</span>
       </div>
-    </div>`;
-  }).join('');
+    </div>
+    <div class="rbk-demog-verdict" style="color:${diffColor}">${diffText}</div>`;
+
   document.getElementById('rankBkBody').innerHTML=`
     <div class="rbk-section-lbl">Overall — <span style="color:${overallColor};font-weight:800">${overallLabel}</span></div>
     ${buildRankTimeline(overallStep)}
-    <div class="rbk-divider"></div>
-    <div class="rbk-section-lbl">By Body Part</div>
-    ${groupRows}`;
+    ${demogHtml}`;
   document.getElementById('rankBkOverlay').classList.add('open');
 }
 function closeRankBreakdown(){document.getElementById('rankBkOverlay').classList.remove('open');}
@@ -1041,7 +1079,7 @@ const EX_DB = {
   'Legs':      ['Squat','Front Squat','Leg Press','Romanian Deadlift','Bulgarian Split Squat','Leg Extension','Leg Curl','Hip Thrust','Calf Raise','Hack Squat','Walking Lunges'],
   'Shoulders': ['Overhead Press','Dumbbell Shoulder Press','Lateral Raise','Cable Lateral Raise','Rear Delt Fly','Front Raise','Arnold Press','Shrugs'],
   'Arms':      ['Barbell Curl','Dumbbell Curl','Hammer Curl','Preacher Curl','Leon Curl','Tricep Pushdown','Skull Crusher','Overhead Tricep Extension','Leon Pushdowns','Rope Pushdown'],
-  'Core':      ['Plank','Ab Wheel','Hanging Leg Raise','Crunch','Russian Twist','Cable Crunch','Dragon Flag','Leg Raise'],
+  'Core':      ['Plank','Ab Wheel','Hanging Leg Raise','Crunch','Sit-up','Russian Twist','Cable Crunch','Dragon Flag','Leg Raise','Toes to Bar'],
 };
 const DAY_KEYS  = ['mon','tue','wed','thu','fri','sat','sun'];
 const DAY_SHORT = ['MON','TUE','WED','THU','FRI','SAT','SUN'];
@@ -1177,16 +1215,10 @@ function renderWeekDay(dir){
   const card=el.querySelector('#weekCard');
 
   function makeExRow(ex,editable){
-    let badge='';
-    if(p?.weight&&db.prs?.[ex.name]){
-      const{tier,div}=scoreToTierDiv(calcExScore(db.prs[ex.name],p,ex.name));
-      badge=`<span class="bdg" style="background:color-mix(in srgb,${TIER_COLORS[tier.id]} 12%,transparent);color:${TIER_COLORS[tier.id]};border:1px solid color-mix(in srgb,${TIER_COLORS[tier.id]} 25%,transparent)">${TIER_SHORT[tier.id]} · ${ROMAN[div-1]}</span>`;
-    }
     const row=document.createElement('div');
-    row.className='ex-row divr';
-    row.style.cssText=`background:var(--card);position:relative;transition:transform .25s ease;${editable?'cursor:pointer;user-select:none;':'opacity:.7;'}`;
-    row.innerHTML=`<div class="ex-left"><div class="ex-name">${ex.name}</div>${badge}</div>
-      <div class="ex-nums"><span class="ex-w">${fmtWeight(ex.weight,ex.name)} × ${ex.reps}</span><span class="ex-s">${ex.sets}×</span></div>`;
+    row.className='lw-row';
+    row.style.cssText=`position:relative;transition:transform .25s ease;${editable?'cursor:pointer;user-select:none;':'opacity:.7;'}`;
+    row.innerHTML=`<div class="lw-info"><div class="lw-name">${ex.name}</div><div class="lw-meta">${fmtWeight(ex.weight,ex.name)} × ${ex.reps} · ${ex.sets} sets</div></div>`;
     if(editable){
       row.addEventListener('click',()=>openExModal(dateStr,ex.id));
       let sx2=0,cx=0,drag=false;
@@ -1237,72 +1269,76 @@ function renderWeekDay(dir){
 }
 
 /* ── PR PAGE ── */
+const GROUP_ICONS={'Chest':'🫁','Back':'🔙','Legs':'🦵','Shoulders':'💆','Arms':'💪','Core':'🎯','Other':'⚡'};
+
+function buildExToGroup(){
+  const m={};
+  Object.entries(EX_DB).forEach(([g,exs])=>exs.forEach(n=>m[n]=g));
+  return m;
+}
+
 function renderPRs(){
   const list=document.getElementById('prList');
   const prs=db.prs||{};
   const p=db.profile;
-  const entries=Object.entries(prs).sort((a,b)=>(b[1].date||'').localeCompare(a[1].date||''));
+  const entries=Object.entries(prs);
 
   const ct=document.getElementById('prCount');
   if(ct) ct.textContent=entries.length?`${entries.length} PR${entries.length!==1?'s':''}` :'';
 
   if(!entries.length){
-    list.innerHTML='<div style="padding:32px 22px;color:var(--t3);font-size:13px;line-height:1.6"><b style="color:var(--t1);display:block;margin-bottom:6px">No records yet</b>Log exercises in the Week tab — PRs appear here automatically.</div>';
+    list.innerHTML='<div style="padding:32px 22px;color:var(--t3);font-size:13px;line-height:1.6"><b style="color:var(--t2);display:block;margin-bottom:6px">No records yet</b>Log exercises in the Week tab — PRs appear here automatically.</div>';
     return;
   }
 
-  list.innerHTML='';
-  entries.forEach(([name,pr])=>{
-    let badge='';
-    if(p?.weight){
-      const{tier,div}=scoreToTierDiv(calcExScore(pr,p,name));
-      const color=TIER_COLORS[tier.id];
-      badge=`<span class="rec-rank-badge" style="background:color-mix(in srgb,${color} 12%,transparent);color:${color};border:1px solid color-mix(in srgb,${color} 30%,transparent)">${TIER_SHORT[tier.id]} · ${ROMAN[div-1]}</span>`;
-    }
+  if(p?.weight) entries.sort((a,b)=>calcExScore(b[1],p,b[0])-calcExScore(a[1],p,a[0]));
+  else entries.sort((a,b)=>a[0].localeCompare(b[0]));
 
+  list.innerHTML='';
+  const wrap=document.createElement('div');
+  wrap.className='card';
+  wrap.style.cssText='margin-bottom:8px;';
+
+  entries.forEach(([name,pr])=>{
     const isBW=BODYWEIGHT_EX.has(name);
     const bwFrac=BW_FRACTION[name]??1.0;
     const bw=p?.weight||0;
     const base=isBW?(bw*bwFrac+pr.weight):pr.weight;
     const e1rm=Math.round(calcEpley(base,pr.reps,isBW?0:30));
     const e1rmStr=isBW?`BW + ${Math.max(0,e1rm-Math.round(bw*bwFrac))} kg`:`~${e1rm} kg`;
-    const bestStr=`${fmtWeight(pr.weight,name)} × ${pr.reps}`;
 
-    const card=document.createElement('div');
-    card.className='prc';
-    card.style.cssText='position:relative;transition:transform .25s ease;cursor:default;';
-    card.innerHTML=`
-      <div class="prc-r1"><span class="prc-name">${name}</span>${badge}</div>
-      <div class="prc-r2">
-        <div><div class="pnum">${bestStr}</div><div class="pnum-l">Best Set</div></div>
-        <div class="psep">→</div>
-        <div><div class="pnum a">${e1rmStr}</div><div class="pnum-l">E1RM est.</div></div>
+    let badgeHtml='';
+    if(p?.weight){
+      const{tier,div}=scoreToTierDiv(calcExScore(pr,p,name));
+      badgeHtml=`<span class="rec-rank-badge" style="background:color-mix(in srgb,${TIER_COLORS[tier.id]} 14%,transparent);color:${TIER_COLORS[tier.id]};border:1px solid color-mix(in srgb,${TIER_COLORS[tier.id]} 28%,transparent)">${TIER_SHORT[tier.id]} ${ROMAN[div-1]}</span>`;
+    }
+
+    const row=document.createElement('div');
+    row.className='ex-row divr';
+    row.style.cssText='position:relative;overflow:hidden;';
+    row.innerHTML=`
+      <div class="ex-left">
+        <div class="ex-name">${name}</div>
+        ${badgeHtml}
+      </div>
+      <div class="ex-nums">
+        <span class="ex-w">${fmtWeight(pr.weight,name)} × ${pr.reps}</span>
+        <span style="color:var(--t3);font-size:12px;margin:0 4px">→</span>
+        <span style="font-size:13px;color:var(--acc);font-weight:700">${e1rmStr}</span>
       </div>`;
 
-    let startX=0,curX=0,dragging=false;
-    card.addEventListener('touchstart',e=>{startX=e.touches[0].clientX;curX=0;dragging=true;card.style.transition='none';},{passive:true});
-    card.addEventListener('touchmove',e=>{
-      if(!dragging)return;
-      curX=e.touches[0].clientX-startX;
-      if(curX>0)curX=0;
-      card.style.transform=`translateX(${curX}px)`;
-    },{passive:true});
-    card.addEventListener('touchend',()=>{
-      dragging=false;
-      card.style.transition='transform .25s ease';
-      if(curX<-90){
-        card.style.transform='translateX(-100%)';
-        setTimeout(()=>{
-          delete db.prs[name];
-          persist();renderPRs();renderRankCard();renderBestPRs();showToast('PR removed');
-        },240);
-      }else{
-        card.style.transform='translateX(0)';
-      }
+    let sx=0,cx=0,drag=false;
+    row.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;cx=0;drag=true;row.style.transition='none';},{passive:true});
+    row.addEventListener('touchmove',e=>{if(!drag)return;cx=e.touches[0].clientX-sx;if(cx>0)cx=0;row.style.transform=`translateX(${cx}px)`;},{passive:true});
+    row.addEventListener('touchend',()=>{
+      drag=false;row.style.transition='transform .25s ease';
+      if(cx<-80){row.style.transform='translateX(-100%)';setTimeout(()=>{delete db.prs[name];persist();renderPRs();renderRankCard();renderBestPRs();showToast('PR removed');},220);}
+      else row.style.transform='translateX(0)';
     });
-
-    list.appendChild(card);
+    wrap.appendChild(row);
   });
+
+  list.appendChild(wrap);
 }
 
 /* ── EXERCISE MODAL ── */
