@@ -1,6 +1,4 @@
-/* GymLog Service Worker
-   Best-effort background notifications via SW setTimeout.
-   Works reliably on Android (browser backgrounded), partial on iOS. */
+/* GymLog Service Worker */
 
 self.addEventListener('install', () => self.skipWaiting())
 self.addEventListener('activate', e => e.waitUntil(self.clients.claim()))
@@ -15,6 +13,7 @@ self.addEventListener('message', e => {
     self.registration.showNotification(title, {
       body,
       icon: '/icon-192.png',
+      badge: '/icon-192.png',
       tag: 'gymlog',
       vibrate: [200, 100, 200],
     })
@@ -25,12 +24,17 @@ self.addEventListener('message', e => {
     clearTimeout(timerTimeout)
     const delay = Math.max(0, endsAt - Date.now())
     timerTimeout = setTimeout(() => {
-      self.registration.showNotification('Rest done — back to it!', {
+      self.registration.showNotification('💪 Rest done — back to it!', {
         body: `${presetName} complete. Time to lift.`,
         icon: '/icon-192.png',
+        badge: '/icon-192.png',
         tag: 'gymlog-timer',
-        vibrate: [200, 100, 200],
         renotify: true,
+        vibrate: [200, 100, 200, 100, 400],
+        actions: [
+          { action: 'open', title: 'Open app' },
+        ],
+        data: { url: '/' },
       })
     }, delay)
   }
@@ -47,7 +51,8 @@ self.addEventListener('notificationclick', e => {
   e.notification.close()
   e.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clients => {
-      if (clients.length) return clients[0].focus()
+      const match = clients.find(c => c.url.includes(self.location.origin))
+      if (match) return match.focus()
       return self.clients.openWindow('/')
     })
   )
