@@ -1647,7 +1647,7 @@ function applyTheme(t){
 }
 
 function updateNotifToggle(){
-  const on = typeof Notification!=='undefined' && Notification.permission==='granted' && !!db.notif?.enabled;
+  const on = !!db.notif?.enabled;
   const btn = document.getElementById('notifToggle');
   if(btn) btn.setAttribute('aria-pressed', on ? 'true' : 'false');
 }
@@ -1673,12 +1673,13 @@ document.getElementById('themeSeg').addEventListener('click', e=>{
 });
 
 document.getElementById('notifToggle').addEventListener('click', async ()=>{
-  if(Notification.permission==='granted' && db.notif?.enabled){
+  if(db.notif?.enabled){
     db.notif.enabled=false; persist(); updateNotifToggle(); showToast('Notifications off'); return;
   }
-  if(!('Notification' in window)){showToast('Not supported on this browser');return;}
-  if(Notification.permission==='denied'){showToast('Blocked — enable in browser settings');return;}
-  const perm = await Notification.requestPermission();
+  if(!('Notification' in window)){showToast('Notifications not supported on this browser');return;}
+  if(Notification.permission==='denied'){showToast('Notifications blocked — enable in phone settings');return;}
+  let perm = Notification.permission;
+  if(perm !== 'granted') perm = await Notification.requestPermission();
   if(perm!=='granted'){showToast('Permission not granted');return;}
   if(!db.notif) db.notif={};
   db.notif.enabled=true; persist(); updateNotifToggle(); showToast('Notifications enabled!');
