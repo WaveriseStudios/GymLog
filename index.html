@@ -1546,6 +1546,13 @@ function showToast(msg) {
 
 /* ── TIMER ── */
 const RING_CIRC=553;
+if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js');
+
+async function swMsg(data){
+  if(!('serviceWorker' in navigator)) return;
+  try{ const reg=await navigator.serviceWorker.ready; reg.active?.postMessage(data); }catch(e){}
+}
+
 let timerTotal=0,timerLeft=0,timerInterval=null,timerRunning=false,timerPresetName='';
 
 function fmtTime(s){return`${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;}
@@ -1573,6 +1580,7 @@ function startTimer(){
   timerRunning=true;
   document.getElementById('tcbPause').textContent='Pause';
   clearInterval(timerInterval);
+  swMsg({type:'SCHEDULE_TIMER', endsAt:Date.now()+timerLeft*1000, presetName:timerPresetName});
   timerInterval=setInterval(()=>{
     timerLeft--;
     updateTimerRing();
@@ -1582,6 +1590,8 @@ function startTimer(){
       document.getElementById('tcbPause').textContent='Start';
       showToast('Rest done — go!');
       if(navigator.vibrate)navigator.vibrate([200,100,200]);
+      // SW already fired the notification; cancel any duplicate
+      swMsg({type:'CANCEL_TIMER'});
     }
   },1000);
 }
@@ -1612,6 +1622,7 @@ document.getElementById('tcbPause').addEventListener('click',()=>{
   if(timerRunning){
     clearInterval(timerInterval);timerRunning=false;
     document.getElementById('tcbPause').textContent='Resume';
+    swMsg({type:'CANCEL_TIMER'});
   }else{startTimer();}
 });
 
@@ -1619,6 +1630,7 @@ document.getElementById('tcbReset').addEventListener('click',()=>{
   clearInterval(timerInterval);timerRunning=false;timerLeft=timerTotal;
   document.getElementById('tcbPause').textContent='Start';
   updateTimerRing();
+  swMsg({type:'CANCEL_TIMER'});
 });
 
 
