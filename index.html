@@ -1850,7 +1850,7 @@ function renderPRs(){
   list.innerHTML='';
 
   function makePRRow(name,pr){
-    const ago=timeAgo(pr.date);
+    const ago=timeAgo(pr.day||pr.date);
     const trend=prTrend(name);
     let badgeHtml='',valueHtml='';
     if(pr._cardio){
