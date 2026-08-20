@@ -10,8 +10,10 @@
 <link rel="manifest" href="manifest.json">
 <title>GymLog</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Syne:wght@500;600;700;800&display=swap" rel="stylesheet">
 <style>
+@font-face{font-family:'AoyagiSoseki';src:url('AoyagiSosekiFont2.otf') format('opentype');font-weight:normal;font-style:normal;}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 *{-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;}
 input,textarea{user-select:text;-webkit-user-select:text;}
@@ -190,8 +192,7 @@ body{
 .lw-name{font-size:14px;font-weight:700;color:var(--t1);}
 .lw-meta{font-size:12px;color:var(--t2);}
 .lw-add{width:28px;height:28px;border-radius:50%;background:var(--acc2);border:1.5px solid var(--bdr2);color:var(--acc);font-size:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:inherit;}
-.pr-tag{display:inline-block;font-size:9px;font-weight:800;letter-spacing:.8px;padding:2px 6px;border-radius:5px;background:var(--acc2);color:var(--acc);border:1px solid color-mix(in srgb,var(--acc) 30%,transparent);margin-left:6px;vertical-align:middle;text-transform:uppercase;}
-.wrow{display:flex;align-items:center;justify-content:space-between;padding:13px 14px;}
+.pr-tag{display:inline-block;font-size:9px;font-weight:800;letter-spacing:.8px;padding:2px 6px;border-radius:5px;background:var(--acc2);color:var(--acc);border:1px solid color-mix(in srgb,var(--acc) 30%,transparent);margin-left:6px;vertical-align:middle;text-transform:uppercase;}.wrow{display:flex;align-items:center;justify-content:space-between;padding:13px 14px;}
 .wex-n{font-size:14px;font-weight:700;margin-bottom:2px;}
 .wex-d{font-size:12px;color:var(--t2);font-weight:600;}
 .wvol{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:900;color:var(--acc);}
@@ -411,6 +412,47 @@ input[type=number]{-moz-appearance:textfield;}
 
 /* toast */
 #toast{position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-80px);background:var(--text);color:var(--card);font-size:14px;font-weight:600;padding:10px 18px;border-radius:30px;z-index:999;white-space:nowrap;transition:transform .25s cubic-bezier(.32,.72,0,1);pointer-events:none;}
+
+/* ── RANK-UP OVERLAY ── */
+#rankUpOverlay{position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;transform:translateY(100%);transition:transform .42s cubic-bezier(.32,.72,0,1);}
+#rankUpOverlay.ru-in{transform:translateY(0);}
+#rankUpOverlay.ru-out{transform:translateY(100%);transition:transform .35s cubic-bezier(.55,0,1,.45);}
+#rankUpBg{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 40%,color-mix(in srgb,var(--ru-color) 12%,var(--bg)),var(--bg) 70%);transition:background .6s ease;}
+#rankUpInner{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:0;width:100%;padding:40px 24px;}
+#rankUpLabel{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:800;letter-spacing:4px;text-transform:uppercase;color:var(--t2);margin-bottom:32px;opacity:0;transform:translateY(10px);transition:opacity .35s .55s,transform .35s .55s;}
+#rankUpOverlay.ru-in #rankUpLabel{opacity:1;transform:translateY(0);}
+#rankUpIconWrap{position:relative;width:160px;height:160px;display:flex;align-items:center;justify-content:center;margin-bottom:32px;}
+/* old icon exit — spin-out for rank-up, class added via JS */
+#rankUpOldIcon{position:absolute;}
+@keyframes ruOldExit{0%{transform:scale(1) rotate(0);opacity:1}100%{transform:scale(3.5) rotate(25deg);opacity:0}}
+#rankUpOldIcon.ru-exit{animation:ruOldExit .5s ease-out forwards;}
+/* 3 staggered burst rings */
+#rankUpBurst,#rankUpBurst2,#rankUpBurst3{position:absolute;width:160px;height:160px;border-radius:50%;border:3px solid var(--ru-color);transform:scale(0);opacity:0;pointer-events:none;}
+@keyframes ruBurst{0%{transform:scale(.3);opacity:1}100%{transform:scale(2.8);opacity:0}}
+#rankUpBurst.ru-burst{animation:ruBurst .7s ease-out forwards;}
+#rankUpBurst2.ru-burst{animation:ruBurst .7s .13s ease-out forwards;}
+#rankUpBurst3.ru-burst{animation:ruBurst .7s .27s ease-out forwards;}
+/* color flash at explosion */
+#rankUpFlash{position:absolute;inset:-60px;border-radius:50%;background:radial-gradient(circle,var(--ru-color) 0%,transparent 65%);opacity:0;pointer-events:none;}
+@keyframes ruFlash{0%{opacity:.55}100%{opacity:0}}
+#rankUpFlash.ru-flash{animation:ruFlash .55s ease-out forwards;}
+/* new icon — insane spring overshoot */
+#rankUpNewIcon{position:absolute;transform:scale(0);opacity:0;}
+@keyframes ruIconCrash{0%{transform:scale(0) rotate(-8deg);opacity:0}35%{opacity:1}55%{transform:scale(1.45) rotate(4deg)}72%{transform:scale(.88) rotate(-2deg)}85%{transform:scale(1.07) rotate(0)}100%{transform:scale(1) rotate(0);opacity:1}}
+#rankUpNewIcon.ru-enter{animation:ruIconCrash .75s cubic-bezier(.2,1,.4,1) forwards;}
+#rankUpNewIcon.ru-enter-derank{transform:scale(1);opacity:.85;transition:transform .7s cubic-bezier(.2,.8,.4,1),opacity .5s ease;}
+/* title — crashes in */
+#rankUpTitle{font-family:'AoyagiSoseki',sans-serif;font-size:58px;font-weight:normal;letter-spacing:2px;line-height:1;text-align:center;opacity:0;}
+@keyframes ruTitleCrash{0%{transform:scale(2.4);opacity:0}50%{transform:scale(.94);opacity:1}75%{transform:scale(1.04)}100%{transform:scale(1);opacity:1}}
+#rankUpTitle.ru-title-in{animation:ruTitleCrash .6s cubic-bezier(.2,1,.4,1) forwards;}
+#rankUpHint{font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--t2);margin-top:40px;opacity:0;}
+/* progress bar */
+#rankUpBar{width:200px;height:5px;background:rgba(255,255,255,.1);border-radius:3px;margin-top:36px;overflow:hidden;opacity:0;box-shadow:0 0 10px var(--ru-color);}
+#rankUpBarFill{height:100%;width:0%;border-radius:3px;box-shadow:0 0 8px var(--ru-color);}
+/* shake + derank */
+@keyframes ruShake{0%,100%{transform:translateX(0) rotate(0)}15%{transform:translateX(-8px) rotate(-5deg)}30%{transform:translateX(8px) rotate(5deg)}50%{transform:translateX(-5px) rotate(-3deg)}70%{transform:translateX(5px) rotate(3deg)}85%{transform:translateX(-2px) rotate(-1deg)}}
+#rankUpOldIcon.ru-shake{animation:ruShake .55s ease;}
+#rankUpOverlay[data-mode=derank] #rankUpBg{background:radial-gradient(ellipse at 50% 35%,color-mix(in srgb,#e11d48 10%,var(--bg)),var(--bg) 68%);}
 #toast.show{transform:translateX(-50%) translateY(0);}
 
 /* dark mode */
@@ -571,7 +613,7 @@ input[type=number]{-moz-appearance:textfield;}
       <div id="exPickerList" style="padding-top:14px"></div>
     </div>
   </div>
-  <div id="exBackdrop" class="ex-backdrop" onclick="document.getElementById('exInputBlock').classList.remove('visible');document.getElementById('exBackdrop').classList.remove('visible');exName='';"></div>
+  <div id="exBackdrop" class="ex-backdrop" onclick="document.getElementById('exInputBlock').classList.remove('visible');document.getElementById('exBackdrop').classList.remove('visible');document.getElementById('exSearch').value='';buildPicker('');"></div>
   <!-- Weight panel slides up on top of the exercise list -->
   <div id="exInputBlock" class="ex-weight-panel">
     <div class="sheet-pull" style="margin-bottom:8px"></div>
@@ -767,6 +809,38 @@ input[type=number]{-moz-appearance:textfield;}
 </div>
 
 <div id="toast"></div>
+
+<!-- Progression chart sheet -->
+<div class="overlay" id="progOverlay" onclick="if(event.target===this)closeProg()">
+  <div class="sheet" style="border-radius:22px 22px 0 0;max-height:82vh;overflow-y:auto">
+    <div class="sheet-pull" style="margin-bottom:0"></div>
+    <div style="padding:16px 20px 6px;display:flex;align-items:center;justify-content:space-between">
+      <div id="progName" style="font-size:17px;font-weight:800;color:var(--t1)"></div>
+      <button onclick="closeProg()" style="background:none;border:none;padding:4px;color:var(--t2);font-size:22px;line-height:1;cursor:pointer">×</button>
+    </div>
+    <div id="progMeta" style="padding:0 20px 12px;font-size:12px;color:var(--t2);font-weight:600"></div>
+    <div id="progChart" style="padding:0 12px 24px"></div>
+  </div>
+</div>
+
+<!-- Rank-up overlay -->
+<div id="rankUpOverlay" onclick="closeRankUp()" style="display:none">
+  <div id="rankUpBg"></div>
+  <div id="rankUpInner">
+    <div id="rankUpLabel"></div>
+    <div id="rankUpIconWrap">
+      <div id="rankUpOldIcon"></div>
+      <div id="rankUpBurst"></div>
+      <div id="rankUpBurst2"></div>
+      <div id="rankUpBurst3"></div>
+      <div id="rankUpFlash"></div>
+      <div id="rankUpNewIcon"></div>
+    </div>
+    <div id="rankUpBar"><div id="rankUpBarFill"></div></div>
+    <div id="rankUpTitle"></div>
+    <div id="rankUpHint">Tap to continue</div>
+  </div>
+</div>
 
 <script>
 /* ── DATA ── */
@@ -1089,8 +1163,32 @@ const RANK_TIERS = [
   {id:'mythril', label:'Mythril', threshold:13.0},
 ];
 const ROMAN = ['I','II','III'];
-const SHIELD_PATH='M30,3 L55,14 L55,38 Q55,58 30,65 Q5,58 5,38 L5,14 Z';
-const WINGS_PATH='M5,36 C-5,28 -6,16 -2,8 L5,22 Z M55,36 C65,28 66,16 62,8 L55,22 Z';
+const RANK_ICONS={
+  iron:    '土', // Earth
+  bronze:  '木', // Wood
+  steel:   '金', // Metal
+  silver:  '水', // Water
+  gold:    '火', // Fire
+  platinum:'風', // Wind
+  diamond: '雷', // Thunder
+  emerald: '氷', // Ice
+  ruby:    '光', // Light
+  mythril: '空', // Void
+};
+function rankIconSvg(id,color,{size=60,glow=true,opacity=1,div=1}={}){
+  const kanji=RANK_ICONS[id]||RANK_ICONS.iron;
+  const fs=Math.round(size*0.38);
+  const icon=`<circle cx="30" cy="30" r="22"/><text x="30" y="33" text-anchor="middle" dominant-baseline="middle" font-size="27" font-family="'AoyagiSoseki',serif" fill="${'%%C%%'}" stroke="none">${kanji}</text>`.replace('%%C%%',color);
+  const f=glow?`filter:drop-shadow(0 0 ${Math.round(size/7)}px ${color}99)`:'';
+  const op=opacity<1?`;opacity:${opacity}`:'';
+  const S='#BEC6CE';
+  const star=([cx,cy])=>`<path d="M${cx},${cy-5} L${cx+2},${cy-2} L${cx+5},${cy} L${cx+2},${cy+2} L${cx},${cy+5} L${cx-2},${cy+2} L${cx-5},${cy} L${cx-2},${cy-2} Z" fill="${S}" stroke="none"/>`;
+  let decos='';
+  if(div===1){decos+=star([30,8]);}
+  else if(div===2){decos+=star([8,30])+star([52,30]);}
+  else if(div>=3){decos+=star([30,8])+star([49,41])+star([11,41]);}
+  return `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" style="${f}${op}"><g fill="none" stroke="${color}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${icon}${decos}</g></svg>`;
+}
 const TIER_COLORS = {
   iron:'#7A8A96',     bronze:'#C47A32',    steel:'#4E7A96',   silver:'#9AAEBB',
   gold:'#CFA020',     platinum:'#28A0C0',  diamond:'#50C8EE', emerald:'#10B981',
@@ -1098,27 +1196,33 @@ const TIER_COLORS = {
 };
 const EX_COEFF = {
   // Chest
-  'Bench Press':1.00,'Incline Bench Press':0.88,'Decline Bench Press':1.05,
-  'Dumbbell Fly':0.55,'Cable Fly':0.45,'Pec Deck':0.50,'Dips':1.50,'Push-up':1.36,
+  'Bench Press':1.00,'Incline Bench Press':0.88,'Decline Bench Press':1.02,
+  'Dumbbell Bench Press':0.88,'Incline Dumbbell Press':0.78,'Decline Dumbbell Press':0.90,
+  'Dumbbell Fly':0.62,'Cable Fly':0.52,'Pec Deck':0.55,
+  'Dips':1.50,'Push-up':1.36,
   // Back
-  'Deadlift':1.75,'Pull-up':1.55,'Chin-up':1.55,'Barbell Row':0.92,
+  'Deadlift':1.75,'Pull-up':1.55,'Chin-up':1.55,
+  'Barbell Row':0.92,'Dumbbell Row':0.80,'Chest Supported Row':0.72,
   'Lat Pulldown':0.82,'Seated Row':0.75,'T-Bar Row':0.90,'Cable Row':0.75,
-  'Face Pull':0.40,'Straight Arm Pulldown':0.38,
+  'Face Pull':0.48,'Straight Arm Pulldown':0.44,
   // Legs
   'Squat':1.50,'Front Squat':1.25,'Leg Press':1.90,'Romanian Deadlift':1.20,
-  'Bulgarian Split Squat':1.10,'Leg Extension':0.70,'Leg Curl':0.65,
-  'Hip Thrust':1.55,'Calf Raise':0.80,'Hack Squat':1.40,'Walking Lunges':0.85,
+  'Dumbbell Romanian Deadlift':1.05,'Bulgarian Split Squat':1.10,
+  'Leg Extension':0.72,'Leg Curl':0.68,
+  'Hip Thrust':1.55,'Calf Raise':0.82,'Hack Squat':1.40,'Walking Lunges':0.88,
   // Shoulders
-  'Overhead Press':0.65,'Dumbbell Shoulder Press':0.58,'Lateral Raise':0.28,
-  'Cable Lateral Raise':0.28,'Rear Delt Fly':0.25,'Front Raise':0.28,'Arnold Press':0.55,'Shrugs':1.00,
+  'Overhead Press':0.65,'Dumbbell Shoulder Press':0.58,'Shrugs':1.00,
+  'Lateral Raise':0.38,'Cable Lateral Raise':0.38,
+  'Rear Delt Fly':0.38,'Rear Delt Cable Fly':0.38,'Reverse Pec Deck':0.50,
+  'Front Raise':0.36,'Arnold Press':0.55,
   // Arms
-  'Barbell Curl':0.42,'Dumbbell Curl':0.38,'Hammer Curl':0.38,'Preacher Curl':0.38,
-  'Leon Curl':0.38,'Tricep Pushdown':0.45,'Skull Crusher':0.48,
-  'Overhead Tricep Extension':0.42,'Leon Pushdowns':0.45,'Rope Pushdown':0.45,
+  'Barbell Curl':0.42,'Dumbbell Curl':0.38,'Hammer Curl':0.38,'Preacher Curl':0.40,
+  'Leon Curl':0.38,'Tricep Pushdown':0.46,'Skull Crusher':0.50,
+  'Overhead Tricep Extension':0.44,'Leon Pushdowns':0.46,'Rope Pushdown':0.46,
   // Core
-  'Ab Wheel':0.30,'Hanging Leg Raise':0.30,'Crunch':0.20,'Russian Twist':0.25,
-  'Cable Crunch':0.40,'Dragon Flag':0.35,'Leg Raise':0.28,
-  'Plank':0.20,'Sit-up':0.18,'Toes to Bar':0.30,
+  'Ab Wheel':0.32,'Hanging Leg Raise':0.30,'Crunch':0.22,'Russian Twist':0.26,
+  'Cable Crunch':0.42,'Dragon Flag':0.35,'Leg Raise':0.30,
+  'Plank':0.22,'Sit-up':0.20,'Toes to Bar':0.32,
 };
 const BODYWEIGHT_EX = new Set(['Pull-up','Chin-up','Dips','Push-up','Hanging Leg Raise','Leg Raise','Toes to Bar','Dragon Flag','Plank','Crunch','Sit-up','Muscle Up']);
 const CARDIO_EX = new Set(['Running','Cycling','Rowing','Jump Rope','Swimming']);
@@ -1222,10 +1326,7 @@ function renderRankCard(){
   el.innerHTML=`<div class="card" style="cursor:pointer" onclick="openRankBreakdown()">
     <div class="rank-card" style="--tc:${color}">
       <div class="rank-hex-wrap" style="width:72px;height:72px">
-        <svg viewBox="2 0 56 68" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;filter:drop-shadow(0 0 10px ${color}99)">
-          <path d="${SHIELD_PATH}" fill="${color}" fill-opacity="1" stroke="${color}" stroke-opacity="1" stroke-width="2" stroke-linejoin="round"/>
-          <text x="30" y="37" text-anchor="middle" dominant-baseline="central" font-family="Barlow Condensed,sans-serif" font-size="22" font-weight="900" fill="#fff">${ROMAN[div-1]}</text>
-        </svg>
+        ${rankIconSvg(tier.id,color,{size:72,div})}
       </div>
       <div class="rank-info">
         <div class="rank-sub">${subtitle}</div>
@@ -1250,7 +1351,7 @@ const EX_MUSCLE={
   'Bulgarian Split Squat':'Legs','Leg Extension':'Legs','Leg Curl':'Legs',
   'Hip Thrust':'Legs','Calf Raise':'Legs','Hack Squat':'Legs','Walking Lunges':'Legs',
   'Overhead Press':'Shoulders','Dumbbell Shoulder Press':'Shoulders','Lateral Raise':'Shoulders',
-  'Cable Lateral Raise':'Shoulders','Rear Delt Fly':'Shoulders','Front Raise':'Shoulders',
+  'Cable Lateral Raise':'Shoulders','Rear Delt Fly':'Shoulders','Rear Delt Cable Fly':'Shoulders','Reverse Pec Deck':'Shoulders','Front Raise':'Shoulders',
   'Arnold Press':'Shoulders','Shrugs':'Shoulders',
   'Barbell Curl':'Arms','Dumbbell Curl':'Arms','Hammer Curl':'Arms','Preacher Curl':'Arms',
   'Leon Curl':'Arms','Tricep Pushdown':'Arms','Skull Crusher':'Arms',
@@ -1276,11 +1377,9 @@ function buildRankTimeline(markerStep){
     }).join('');
     const entryPct=100-STEP_PERCENTILE[Math.min(ti*3,STEP_PERCENTILE.length-1)];
     const pctLabel=entryPct<=1?'top 1%':`top ${Math.round(entryPct)}%`;
+    const cellDiv=isPast?3:isActive?activeDiv:1;
     return `<div class="rlt-cell${isActive?' active':''}">
-      <svg class="rlt-shield-svg" viewBox="2 0 56 68" xmlns="http://www.w3.org/2000/svg" style="${glow}">
-        <path d="${SHIELD_PATH}" fill="${color}" fill-opacity="${fillOpacity}" stroke="${color}" stroke-opacity="${strokeOpacity}" stroke-width="2" stroke-linejoin="round"/>
-        <text x="30" y="37" text-anchor="middle" dominant-baseline="central" font-family="Barlow Condensed,sans-serif" font-size="22" font-weight="900" fill="${isActive?'#fff':color}" fill-opacity="${isFuture?'0.35':'1'}">${t.label[0]}</text>
-      </svg>
+      ${rankIconSvg(t.id,color,{size:44,glow:isActive,opacity:isFuture?0.2:isPast?0.45:1,div:cellDiv})}
       <div class="rlt-cell-name" style="color:${isActive?color:color}">${t.label}</div>
       <div style="font-size:9px;font-weight:700;letter-spacing:.3px;color:${isActive?color:'var(--t2)'};opacity:.85;margin-top:1px">${pctLabel}</div>
       <div class="rlt-pips">${pips}</div>
@@ -1361,7 +1460,7 @@ const EX_DB = {
   'Chest':     ['Bench Press','Incline Bench Press','Decline Bench Press','Dumbbell Fly','Cable Fly','Pec Deck','Dips','Push-up'],
   'Back':      ['Deadlift','Pull-up','Chin-up','Barbell Row','Lat Pulldown','Seated Row','T-Bar Row','Cable Row','Face Pull','Straight Arm Pulldown'],
   'Legs':      ['Squat','Front Squat','Leg Press','Romanian Deadlift','Bulgarian Split Squat','Leg Extension','Leg Curl','Hip Thrust','Calf Raise','Hack Squat','Walking Lunges'],
-  'Shoulders': ['Overhead Press','Dumbbell Shoulder Press','Lateral Raise','Cable Lateral Raise','Rear Delt Fly','Front Raise','Arnold Press','Shrugs'],
+  'Shoulders': ['Overhead Press','Dumbbell Shoulder Press','Lateral Raise','Cable Lateral Raise','Rear Delt Fly','Rear Delt Cable Fly','Reverse Pec Deck','Front Raise','Arnold Press','Shrugs'],
   'Arms':      ['Barbell Curl','Dumbbell Curl','Hammer Curl','Preacher Curl','Leon Curl','Tricep Pushdown','Skull Crusher','Overhead Tricep Extension','Leon Pushdowns','Rope Pushdown'],
   'Core':      ['Plank','Ab Wheel','Hanging Leg Raise','Crunch','Sit-up','Russian Twist','Cable Crunch','Dragon Flag','Leg Raise','Toes to Bar'],
   'Calisthenics': ['Muscle Up','Pull-up','Chin-up','Dips','Push-up','Handstand Push-up','L-Sit','Front Lever','Back Lever'],
@@ -1634,7 +1733,7 @@ function renderWeekDay(dir){
             wrap.style.height='0';
             setTimeout(()=>{
               db.schedule[dateStr]=db.schedule[dateStr].filter(e=>e.id!==ex.id);
-              db.history=db.history.filter(h=>!(h.name===ex.name&&h.day===dateStr));
+              db.history=db.history.filter(h=>h._entryId!==ex.id);
               recomputePR(ex.name);
               persist();renderWeek();renderTodaySession();renderRankCard();renderPRs();renderBestPRs();showToast('Exercise removed');
             },200);
@@ -1713,7 +1812,7 @@ function timeAgo(dateStr){
 function prTrend(name){
   const hist=(db.history||[]).filter(h=>h.name===name);
   if(hist.length<2)return'';
-  hist.sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+  hist.sort((a,b)=>(a.day||a.date||'').localeCompare(b.day||b.date||''));
   const bw=db.profile?.weight||0;
   const isBW=BODYWEIGHT_EX.has(name);
   const bwFrac=BW_FRACTION[name]??1;
@@ -1765,7 +1864,7 @@ function renderPRs(){
       const base=isBW?(bw*bwFrac+pr.weight):pr.weight;
       const e1rm=Math.round(calcEpley(base,pr.reps,isBW?0:30));
       const e1rmStr=isBW?`BW + ${Math.max(0,e1rm-Math.round(bw*bwFrac))} kg`:`~${e1rm} kg`;
-      valueHtml=`<span class="ex-w">${fmtWeight(pr.weight,name)} × ${pr.reps}</span>${pr.reps>1?`<span style="color:var(--t3);font-size:12px;margin:0 2px">→</span><span style="font-size:13px;color:var(--acc);font-weight:700">${e1rmStr}</span>`:''}`;
+      valueHtml=`<span class="ex-w">${fmtWeight(pr.weight,name)} × ${pr.reps}</span>${pr.reps>1?`<span style="color:var(--t3);font-size:12px;margin:0 2px">→</span><span style="font-size:13px;color:var(--t2);font-weight:700">${e1rmStr}</span>`:''}`;
       if(p?.weight){
         const{tier,div}=scoreToTierDiv(calcExScore(pr,p,name));
         badgeHtml=`<span class="rec-rank-badge" style="background:color-mix(in srgb,${TIER_COLORS[tier.id]} 14%,transparent);color:${TIER_COLORS[tier.id]};border:1px solid color-mix(in srgb,${TIER_COLORS[tier.id]} 28%,transparent)">${TIER_SHORT[tier.id]} ${ROMAN[div-1]}</span>`;
@@ -1773,7 +1872,8 @@ function renderPRs(){
     }
     const row=document.createElement('div');
     row.className='ex-row divr';
-    row.style.cssText='position:relative;overflow:hidden;';
+    row.style.cssText='position:relative;overflow:hidden;cursor:pointer;';
+    if(!pr._cardio) row.addEventListener('click',()=>openProg(name));
     row.innerHTML=`
       <div class="ex-left">
         <div class="ex-name">${name}</div>
@@ -1833,6 +1933,7 @@ function openExModal(dayKey,editId,prefillName){
   document.getElementById('setsVal').textContent=exSets;
   document.getElementById('repsVal').textContent=exReps;
   document.getElementById('exInputBlock').classList.toggle('visible',!!exName);
+  document.getElementById('exBackdrop').classList.toggle('visible',!!exName);
   if(exName){
     document.getElementById('exSelectedLbl').textContent=exName;
     if(isCardio(exName)){
@@ -1848,6 +1949,175 @@ function openExModal(dayKey,editId,prefillName){
   buildPicker('');
   document.querySelector('#exOverlay .sheet').scrollTop=0;
   document.getElementById('exOverlay').classList.add('open');
+}
+
+/* ── PROGRESSION CHART ── */
+function openProg(name){
+  const overlay=document.getElementById('progOverlay');
+  document.getElementById('progName').textContent=name;
+  buildProgChart(name);
+  overlay.classList.add('open');
+}
+function closeProg(){
+  document.getElementById('progOverlay').classList.remove('open');
+}
+function buildProgChart(name){
+  const container=document.getElementById('progChart');
+  const isBW=BODYWEIGHT_EX.has(name);
+  const p=db.profile;
+  const bw=p?.weight||0;
+  const bwFrac=BW_FRACTION[name]??1;
+  const cap=isBW?0:30;
+
+  // all entries for this exercise sorted by workout date (oldest first)
+  const entries=(db.history||[])
+    .filter(h=>h.name===name&&(h.reps||0)>0&&((h.weight||0)>0||isBW))
+    .map(h=>({...h,_d:h.day||localDateStr(new Date(h.date))}))
+    .sort((a,b)=>a._d.localeCompare(b._d));
+
+  const meta=document.getElementById('progMeta');
+  meta.textContent=entries.length?`${entries.length} session${entries.length!==1?'s':''}`:' ';
+
+  if(!entries.length){
+    container.innerHTML='<div style="padding:20px;text-align:center;color:var(--t2);font-size:13px">No sessions logged yet</div>';
+    return;
+  }
+
+  const rows=entries.map(h=>{
+    const base=isBW?bw*bwFrac+h.weight:h.weight;
+    const e1rm=calcEpley(base,h.reps,cap);
+    // use calcExScore so sets bonus is included in the rank badge
+    const tier=p?.weight?scoreToTierDiv(calcExScore(h,p,name)).tier:null;
+    const badgeHtml=tier?`<span style="font-size:9px;font-weight:800;padding:2px 7px;border-radius:6px;background:color-mix(in srgb,${TIER_COLORS[tier.id]} 16%,transparent);color:${TIER_COLORS[tier.id]};border:1px solid color-mix(in srgb,${TIER_COLORS[tier.id]} 30%,transparent)">${TIER_SHORT[tier.id]}</span>`:'';
+    const e1rmStr=isBW?`BW+${Math.round(e1rm-bw*bwFrac)} kg`:`e1RM ${Math.round(e1rm)} kg`;
+    const [yr,mo,dy]=h._d.split('-');
+    const dateStr=`${parseInt(mo)}/${parseInt(dy)}/${yr.slice(2)}`;
+    return `<div class="lw-row" style="display:flex;align-items:center;justify-content:space-between;padding:11px 16px;border-bottom:1px solid var(--bdr);">
+      <div style="display:flex;flex-direction:column;gap:3px">
+        <span style="font-size:13px;font-weight:700;color:var(--t1)">${fmtWeight(h.weight,name)} × ${h.reps}${h.sets>1?` · ${h.sets} sets`:''}</span>
+        <span style="font-size:11px;color:var(--t3)">${dateStr}</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        ${badgeHtml}
+        <span style="font-size:12px;color:var(--t2);font-weight:700">${e1rmStr}</span>
+      </div>
+    </div>`;
+  }).reverse().join(''); // newest first
+
+  container.innerHTML=`<div class="card" style="margin:0 0 24px;border-radius:14px;overflow:hidden">${rows}</div>`;
+}
+
+/* ── RANK-UP / DERANK ANIMATION ── */
+function showRankUp(oldTier,oldDiv,newTier,newDiv,isDerank=false){
+  const ol=document.getElementById('rankUpOverlay');
+  if(!ol) return;
+  const newColor=TIER_COLORS[newTier]||'#9333EA';
+  const color=isDerank?'#e11d48':newColor;
+  ol.style.setProperty('--ru-color',color);
+  ol.dataset.mode=isDerank?'derank':'rankup';
+  // label
+  const labelEl=document.getElementById('rankUpLabel');
+  labelEl.textContent=isDerank?'RANK LOST':(newTier!==oldTier?'RANK UP':'DIVISION UP');
+  labelEl.style.color=isDerank?'#e11d48':'';
+  // title (JS-controlled)
+  const tierLabel=RANK_TIERS.find(t=>t.id===newTier)?.label||newTier;
+  const titleEl=document.getElementById('rankUpTitle');
+  titleEl.textContent=`${tierLabel} ${ROMAN[newDiv-1]}`;
+  titleEl.style.color=newColor;
+  titleEl.style.opacity='0';
+  titleEl.style.transform='translateY(18px)';
+  titleEl.style.transition='';
+  // hint
+  const hintEl=document.getElementById('rankUpHint');
+  hintEl.style.opacity='0';
+  hintEl.style.transition='';
+  // icons
+  const oldIconEl=document.getElementById('rankUpOldIcon');
+  const newIconEl=document.getElementById('rankUpNewIcon');
+  const burstEl=document.getElementById('rankUpBurst');
+  oldIconEl.innerHTML=rankIconSvg(oldTier,TIER_COLORS[oldTier]||'#7A8A96',{size:100,glow:false,div:oldDiv});
+  oldIconEl.classList.remove('ru-exit','ru-shake');
+  oldIconEl.style.transform='';oldIconEl.style.opacity='';
+  newIconEl.innerHTML=rankIconSvg(newTier,newColor,{size:120,glow:!isDerank,div:newDiv});
+  newIconEl.classList.remove('ru-enter','ru-enter-derank');
+  // clear any leftover inline styles so CSS defaults (scale(0), opacity:0) take effect
+  newIconEl.style.transform='';newIconEl.style.opacity='';newIconEl.style.transition='';
+  burstEl.classList.remove('ru-burst');
+  document.getElementById('rankUpBurst2').classList.remove('ru-burst');
+  document.getElementById('rankUpBurst3').classList.remove('ru-burst');
+  document.getElementById('rankUpFlash').classList.remove('ru-flash');
+  titleEl.classList.remove('ru-title-in');
+  // bar
+  const barEl=document.getElementById('rankUpBar');
+  const barFillEl=document.getElementById('rankUpBarFill');
+  barEl.style.opacity='0';barEl.style.transition='';
+  barFillEl.style.width='0%';barFillEl.style.transition='none';
+  barFillEl.style.background=color;
+  // show
+  ol.style.display='flex';
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    ol.classList.remove('ru-out');
+    ol.classList.add('ru-in');
+    if(isDerank){
+      barEl.style.display='none';
+      setTimeout(()=>oldIconEl.classList.add('ru-shake'),350);
+      setTimeout(()=>{
+        oldIconEl.classList.remove('ru-shake');
+        oldIconEl.classList.add('ru-exit');
+      },950);
+      setTimeout(()=>newIconEl.classList.add('ru-enter-derank'),1200);
+      setTimeout(()=>{
+        titleEl.style.transition='opacity .45s,transform .45s cubic-bezier(.34,1.2,.64,1)';
+        titleEl.style.opacity='1';titleEl.style.transform='translateY(0)';
+      },1550);
+      setTimeout(()=>{hintEl.style.transition='opacity .4s';hintEl.style.opacity='1';},2200);
+    } else {
+      barEl.style.display='';
+      // bar fills
+      setTimeout(()=>{
+        barEl.style.transition='opacity .2s';barEl.style.opacity='1';
+        setTimeout(()=>{barFillEl.style.transition='width 1s ease';barFillEl.style.width='100%';},40);
+      },260);
+      // EXPLOSION — 3 bursts + flash + old icon spin-out
+      setTimeout(()=>{
+        barEl.style.transition='opacity .25s';barEl.style.opacity='0';
+        oldIconEl.classList.add('ru-exit');
+        burstEl.classList.add('ru-burst');
+        document.getElementById('rankUpBurst2').classList.add('ru-burst');
+        document.getElementById('rankUpBurst3').classList.add('ru-burst');
+        document.getElementById('rankUpFlash').classList.add('ru-flash');
+      },1300);
+      // new icon crashes in
+      setTimeout(()=>newIconEl.classList.add('ru-enter'),1480);
+      // title slams in
+      setTimeout(()=>titleEl.classList.add('ru-title-in'),1800);
+      // hint
+      setTimeout(()=>{hintEl.style.transition='opacity .4s';hintEl.style.opacity='1';},2600);
+    }
+  }));
+}
+function closeRankUp(){
+  const ol=document.getElementById('rankUpOverlay');
+  if(!ol) return;
+  ol.classList.remove('ru-in');
+  ol.classList.add('ru-out');
+  setTimeout(()=>{
+    ol.style.display='none';
+    document.getElementById('rankUpOldIcon').classList.remove('ru-exit','ru-shake');
+    const ni=document.getElementById('rankUpNewIcon');
+    ni.classList.remove('ru-enter','ru-enter-derank');
+    ni.style.transform='';ni.style.opacity='';
+    document.getElementById('rankUpOldIcon').classList.remove('ru-exit','ru-shake');
+    document.getElementById('rankUpBurst').classList.remove('ru-burst');
+    document.getElementById('rankUpBurst2').classList.remove('ru-burst');
+    document.getElementById('rankUpBurst3').classList.remove('ru-burst');
+    document.getElementById('rankUpFlash').classList.remove('ru-flash');
+    document.getElementById('rankUpTitle').classList.remove('ru-title-in');
+    document.getElementById('rankUpTitle').style.opacity='0';
+    document.getElementById('rankUpHint').style.opacity='0';
+    ol.classList.remove('ru-out');
+    delete ol.dataset.mode;
+  },400);
 }
 
 function closeExModal(){
@@ -2048,6 +2318,7 @@ document.getElementById('exSave').addEventListener('click',()=>{
   if(!name){showToast('Pick or type an exercise name');return;}
   if(!db.history) db.history=[];
   if(!db.schedule[exDay]) db.schedule[exDay]=[];
+  const _prevRank=calcOverallRank();
 
   // use the schedule entry's id as the stable link to its history row
   const entryId = exId || uid();
@@ -2066,13 +2337,11 @@ document.getElementById('exSave').addEventListener('click',()=>{
     ?{name,distance:cardioDist,duration:cardioMin*60+cardioSec,date:new Date().toISOString(),day:exDay,_entryId:entryId}
     :{name,weight:exWeight,sets:exSets,reps:exReps,date:new Date().toISOString(),day:exDay,_entryId:entryId};
   const histIdx=db.history.findIndex(h=>h._entryId===entryId);
+  const oldName=histIdx>=0?db.history[histIdx].name:null;
   if(histIdx>=0) db.history[histIdx]=histEntry; else db.history.push(histEntry);
 
-  if(cardio){
-    recomputePR(name);
-  } else {
-    recomputePR(name);
-  }
+  recomputePR(name);
+  if(oldName&&oldName!==name) recomputePR(oldName);
   persist();
   closeExModal();
   renderTodaySession();
@@ -2081,6 +2350,14 @@ document.getElementById('exSave').addEventListener('click',()=>{
   renderPRs();
   renderBestPRs();
   showToast(exId?'Exercise updated':'Exercise added');
+  // check for rank/division change
+  const _newRank=calcOverallRank();
+  if(_prevRank&&_newRank){
+    const isUp=_newRank.tierIdx>_prevRank.tierIdx||(_newRank.tierIdx===_prevRank.tierIdx&&_newRank.div>_prevRank.div);
+    const isDown=_newRank.tierIdx<_prevRank.tierIdx||(_newRank.tierIdx===_prevRank.tierIdx&&_newRank.div<_prevRank.div);
+    if(isUp) setTimeout(()=>showRankUp(_prevRank.tier.id,_prevRank.div,_newRank.tier.id,_newRank.div,false),400);
+    else if(isDown) setTimeout(()=>showRankUp(_prevRank.tier.id,_prevRank.div,_newRank.tier.id,_newRank.div,true),400);
+  }
 });
 
 document.getElementById('exClose').addEventListener('click',closeExModal);
@@ -2332,11 +2609,7 @@ applyTheme(localStorage.getItem(THEME_KEY)||'carbon');
   const color=r?TIER_COLORS[r.tier.id]:'var(--acc)';
   const divLabel=r?ROMAN[r.div-1]:'I';
   const rankLabel=r?`${r.tier.label} ${ROMAN[r.div-1]}`:'Iron I';
-  document.getElementById('splash-logo').innerHTML=`
-    <svg width="90" height="90" viewBox="2 0 56 68" xmlns="http://www.w3.org/2000/svg" style="filter:drop-shadow(0 8px 28px ${color}bb)">
-      <path d="${SHIELD_PATH}" fill="${color}" stroke="${color}" stroke-width="1.5" stroke-linejoin="round"/>
-      <text x="30" y="37" text-anchor="middle" dominant-baseline="central" font-family="Barlow Condensed,sans-serif" font-size="22" font-weight="900" fill="#fff">${divLabel}</text>
-    </svg>`;
+  document.getElementById('splash-logo').innerHTML=rankIconSvg(r?r.tier.id:'iron',color,{size:90,glow:true,div:r?r.div:1});
   document.getElementById('splash-wordmark').textContent=rankLabel;
   const dismiss=()=>{splash.classList.add('hide');setTimeout(()=>splash.remove(),600);};
   if(document.fonts){
