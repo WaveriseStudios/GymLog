@@ -53,7 +53,7 @@ body{
   -webkit-text-size-adjust:100%;
 }
 
-#app{display:flex;flex-direction:column;height:100%;overflow:hidden;}
+#app{display:flex;flex-direction:column;height:100%;overflow:hidden;position:relative;}
 .scr{display:none;flex-direction:column;flex:1;min-height:0;overflow:hidden;}
 .scr.on{display:flex;}
 .sb{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;}
@@ -108,11 +108,27 @@ body{
 .home-bar{padding:calc(env(safe-area-inset-top,0px) + 14px) 22px 0;display:flex;align-items:center;justify-content:space-between;}
 .date-lbl{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--t2);}
 .bar-r{display:flex;align-items:center;gap:10px;}
-.streak{display:flex;align-items:center;gap:4px;font-size:12px;font-weight:800;color:var(--acc);background:var(--acc2);border-radius:100px;padding:5px 10px 5px 8px;}
-.av{width:34px;height:34px;border-radius:50%;background:var(--acc);color:#f0f1ec;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;}
-.av-icon{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--t2);transition:background .15s,color .15s;}
-.av-icon:active{background:var(--acc2);color:var(--text);}
-.av-icon svg{width:18px;height:18px;}
+.streak{display:flex;align-items:center;gap:4px;font-size:12px;font-weight:800;color:var(--acc);background:var(--acc2);border-radius:100px;padding:5px 10px 5px 8px;}/* menu bottom sheet */
+#menuDrawer{position:fixed;inset:0;z-index:500;pointer-events:none;}
+#menuDrawer.open{pointer-events:auto;}
+#menuScrim{position:absolute;inset:0;background:rgba(0,0,0,.4);opacity:0;transition:opacity .25s ease;}
+#menuDrawer.open #menuScrim{opacity:1;}
+#menuPanel{position:absolute;left:0;right:0;bottom:0;background:var(--bg2);border-radius:20px 20px 0 0;padding-bottom:calc(env(safe-area-inset-bottom,0px) + 8px);transform:translateY(100%);transition:transform .32s cubic-bezier(.4,0,.2,1);}
+#menuDrawer.open #menuPanel{transform:translateY(0);}
+.menu-pull{width:36px;height:4px;border-radius:2px;background:var(--bdr2);margin:10px auto 0;}
+.menu-avatar-row{display:flex;align-items:center;gap:14px;padding:16px 20px 16px;border-bottom:1px solid var(--bdr);}
+.menu-av{width:52px;height:52px;border-radius:50%;background:var(--acc);color:#fff;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;overflow:hidden;flex-shrink:0;}
+.menu-av img{width:100%;height:100%;object-fit:cover;}
+.menu-av-info{flex:1;min-width:0;}
+.menu-av-name{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;color:var(--t1);letter-spacing:.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.menu-av-rank{font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--t3);margin-top:1px;}
+.menu-items{padding:8px 0;}
+.menu-item{display:flex;align-items:center;gap:14px;padding:15px 22px;color:var(--t1);font-size:15px;font-weight:600;cursor:pointer;border:none;background:none;width:100%;text-align:left;}
+.menu-item:active{background:var(--card2);}
+.menu-item svg{width:20px;height:20px;flex-shrink:0;color:var(--t2);}
+.menu-item .mi-label{flex:1;}
+.menu-item .mi-badge{font-size:10px;font-weight:700;letter-spacing:.5px;background:var(--acc2);color:var(--acc);border-radius:20px;padding:3px 9px;}
+.menu-sep{height:1px;background:var(--bdr);margin:4px 22px;}
 
 .greeting{padding:14px 22px 20px;font-family:'Barlow Condensed',sans-serif;line-height:.94;}
 .greeting .sub{display:block;font-size:18px;font-weight:700;font-family:'Syne',sans-serif;color:var(--t2);letter-spacing:.3px;margin-bottom:2px;}
@@ -282,14 +298,42 @@ body{
 .day.sel:not(.td) .day-dot{background:var(--acc);}
 .tiny-btn{width:30px;height:30px;border-radius:8px;background:var(--card2);color:var(--t3);display:flex;align-items:center;justify-content:center;font-size:13px;border:none;cursor:pointer;flex-shrink:0;}
 
-.profile-field{margin-bottom:14px;}
-.profile-lbl{font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--t3);display:block;margin-bottom:7px;}
-.profile-inp{width:100%;background:var(--card);border:1.5px solid var(--bdr);border-radius:11px;padding:13px;color:var(--text);font-size:26px;font-family:'Barlow Condensed',sans-serif;font-weight:700;text-align:center;outline:none;}
-.profile-inp:focus{border-color:var(--acc);}
-.profile-inp::placeholder{color:var(--t3);font-size:18px;font-weight:400;}
-.profile-inp.name-inp{font-size:20px;font-family:'Syne',sans-serif;}
-.gender-row{display:flex;gap:8px;margin-top:4px;}
-.gender-btn{flex:1;padding:11px 0;border-radius:10px;border:2px solid var(--bdr);background:var(--card);color:var(--t2);font-size:14px;font-weight:700;font-family:inherit;}
+/* profile tab (TikTok style) */
+.prf-topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 18px 10px;background:var(--bg);position:sticky;top:0;z-index:10;}
+.prf-username{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:900;letter-spacing:.5px;color:var(--t1);}
+.prf-settings-btn{background:none;border:none;color:var(--t2);cursor:pointer;padding:4px;display:flex;align-items:center;}
+.prf-hero{display:flex;flex-direction:column;align-items:center;padding:10px 20px 4px;}
+.prf-av{width:96px;height:96px;border-radius:50%;background:var(--acc);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:38px;font-weight:900;overflow:hidden;cursor:pointer;border:2.5px solid var(--bdr2);}
+.prf-av img{width:100%;height:100%;object-fit:cover;}
+.prf-hero-name{margin-top:10px;font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:900;letter-spacing:.5px;color:var(--t1);}
+.prf-rank-badge{margin-top:6px;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:3px 10px;border-radius:20px;display:inline-block;}
+.prf-stats{display:flex;align-items:center;justify-content:center;gap:0;padding:16px 20px 12px;}
+.prf-stat{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;}
+.prf-stat-n{font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:900;color:var(--t1);line-height:1;}
+.prf-stat-l{font-size:11px;font-weight:600;color:var(--t3);}
+.prf-stat-div{width:1px;height:28px;background:var(--bdr);}
+.prf-actions{display:flex;gap:8px;padding:0 16px 20px;}
+.prf-btn{flex:1;padding:9px 0;border-radius:10px;background:var(--card2);border:1.5px solid var(--bdr);color:var(--t1);font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;}
+.prf-btn-icon{flex:0 0 42px;display:flex;align-items:center;justify-content:center;}
+
+/* profile panel */
+.prof-avatar-area{display:flex;flex-direction:row;align-items:center;gap:14px;margin-bottom:20px;}
+.prof-avatar{width:80px;height:80px;border-radius:50%;background:var(--acc2);border:2.5px solid var(--acc);display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer;position:relative;flex-shrink:0;}
+.prof-avatar img{width:100%;height:100%;object-fit:cover;display:block;}
+.prof-avatar-initials{font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:900;color:var(--acc);line-height:1;}
+.prof-avatar-hint{font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--t3);}
+.prof-name-inp{width:100%;background:transparent;border:none;border-bottom:1.5px solid var(--bdr);padding:6px 2px;color:var(--t1);font-size:22px;font-family:'Barlow Condensed',sans-serif;font-weight:700;text-align:center;outline:none;letter-spacing:1px;}
+.prof-name-inp:focus{border-bottom-color:var(--acc);}
+.prof-name-inp::placeholder{color:var(--t3);font-weight:400;}
+.prof-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+.prof-cell{background:var(--card2);border:1.5px solid var(--bdr);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:4px;}
+.prof-cell-lbl{font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--t3);}
+.prof-cell input{background:transparent;border:none;outline:none;color:var(--t1);font-size:22px;font-family:'Barlow Condensed',sans-serif;font-weight:700;width:100%;padding:0;}
+.prof-cell input::placeholder{color:var(--t3);font-weight:400;font-size:18px;}
+.prof-cell input:focus{color:var(--acc);}
+.gender-row{display:flex;gap:8px;margin-bottom:14px;}
+.gender-btn{flex:1;padding:10px 0;border-radius:10px;border:1.5px solid var(--bdr);background:var(--card2);color:var(--t2);font-size:13px;font-weight:700;font-family:inherit;transition:background .15s,color .15s,border-color .15s;}
+.gender-btn.active{background:var(--acc2);border-color:var(--acc);color:var(--acc);}
 .gender-btn.active{border-color:var(--acc);color:var(--acc);}
 
 .btn-save{width:100%;padding:14px;background:var(--acc);border:none;border-radius:13px;color:var(--card);font-size:16px;font-weight:800;font-family:inherit;cursor:pointer;margin-top:10px;letter-spacing:.3px;}
@@ -341,18 +385,18 @@ body{
 .rec-rank-badge{font-size:10px;font-weight:800;letter-spacing:.5px;padding:2px 7px;border-radius:20px;text-transform:uppercase;}
 
 /* screen transition animations */
-@keyframes _exitL {to{transform:translateX(-28%) scale(.98);opacity:0}}
-@keyframes _exitR {to{transform:translateX( 28%) scale(.98);opacity:0}}
-@keyframes _enterR{from{transform:translateX( 28%) scale(.98);opacity:0}}
-@keyframes _enterL{from{transform:translateX(-28%) scale(.98);opacity:0}}
-@keyframes _exitFade {to{opacity:0;transform:scale(.97)}}
-@keyframes _enterFade{from{opacity:0;transform:scale(.97)}}
-.scr-xl{animation:_exitL  .22s cubic-bezier(.32,.72,0,1) forwards}
-.scr-xr{animation:_exitR  .22s cubic-bezier(.32,.72,0,1) forwards}
-.scr-er{animation:_enterR .22s cubic-bezier(.32,.72,0,1) forwards}
-.scr-el{animation:_enterL .22s cubic-bezier(.32,.72,0,1) forwards}
-.scr-xf{animation:_exitFade  .18s ease forwards}
-.scr-ef{animation:_enterFade .18s ease forwards}
+@keyframes _exitL {to{transform:translateX(-30%);opacity:0}}
+@keyframes _exitR {to{transform:translateX( 30%);opacity:0}}
+@keyframes _enterR{from{transform:translateX( 30%);opacity:0}}
+@keyframes _enterL{from{transform:translateX(-30%);opacity:0}}
+@keyframes _exitFade {to{opacity:0}}
+@keyframes _enterFade{from{opacity:0}}
+.scr-xl{animation:_exitL  .2s cubic-bezier(.4,0,.2,1) forwards;position:absolute;inset:0;z-index:1;pointer-events:none;}
+.scr-xr{animation:_exitR  .2s cubic-bezier(.4,0,.2,1) forwards;position:absolute;inset:0;z-index:1;pointer-events:none;}
+.scr-er{animation:_enterR .2s cubic-bezier(.4,0,.2,1) forwards}
+.scr-el{animation:_enterL .2s cubic-bezier(.4,0,.2,1) forwards}
+.scr-xf{animation:_exitFade  .15s ease forwards;position:absolute;inset:0;z-index:1;pointer-events:none;}
+.scr-ef{animation:_enterFade .15s ease forwards}
 
 /* toast */
 #toast{position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-80px);background:var(--text);color:var(--card);font-size:14px;font-weight:600;padding:10px 18px;border-radius:30px;z-index:999;white-space:nowrap;transition:transform .25s cubic-bezier(.32,.72,0,1);pointer-events:none;}
@@ -416,13 +460,9 @@ body{
   <!-- HOME -->
   <div class="scr on" id="sh">
     <div class="home-bar">
-      <div><div class="date-lbl" id="dateLbl">MON · AUG 19</div></div>
+      <div class="date-lbl" id="dateLbl">MON · AUG 19</div>
       <div class="bar-r">
         <div class="streak" id="streakChip" style="display:none">🔥 4</div>
-        <button class="av-icon" id="btnSettings" title="Settings">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-        </button>
-        <button class="av" id="btnProfile">G</button>
       </div>
     </div>
     <div class="greeting">
@@ -451,6 +491,43 @@ body{
   </div>
 
 
+  <!-- PROFILE SCREEN -->
+  <div class="scr" id="spr">
+    <!-- topbar -->
+    <div class="prf-topbar">
+      <span></span>
+      <button class="prf-settings-btn" onclick="openSettings()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
+    </div>
+    <div class="sb">
+      <!-- avatar + identity -->
+      <div class="prf-hero">
+        <div class="prf-av" id="scrProfileAv" onclick="document.getElementById('profAvatarInput').click()">G</div>
+        <div class="prf-hero-name" id="scrProfileHeroName">Athlete</div>
+        <div id="scrProfileRank"></div>
+      </div>
+      <!-- stats row -->
+      <div class="prf-stats">
+        <div class="prf-stat"><span class="prf-stat-n" id="scrStatWorkouts">0</span><span class="prf-stat-l">Friends</span></div>
+        <div class="prf-stat-div"></div>
+        <div class="prf-stat"><span class="prf-stat-n" id="scrStatPRs">0</span><span class="prf-stat-l">PRs</span></div>
+        <div class="prf-stat-div"></div>
+        <div class="prf-stat"><span class="prf-stat-n" id="scrStatStreak">0</span><span class="prf-stat-l">Streak</span></div>
+      </div>
+      <!-- action buttons -->
+      <div class="prf-actions">
+        <button class="prf-btn" onclick="openProfile()">Edit Profile</button>
+        <button class="prf-btn" onclick="showToast('Coming soon!')">Friends</button>
+        <button class="prf-btn prf-btn-icon" onclick="openRankBreakdown()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        </button>
+      </div>
+      <!-- PR list -->
+      <div id="scrBestPRs" style="padding:0 0 32px"></div>
+    </div>
+  </div>
+
   <!-- NAV -->
   <nav class="nav">
     <button class="nb on" data-t="sh">
@@ -464,6 +541,10 @@ body{
     <button class="nb" data-t="sp">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
       PR
+    </button>
+    <button class="nb" data-t="spr" id="profileTab">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+      Profile
     </button>
   </nav>
 
@@ -548,28 +629,37 @@ body{
       <button class="sheet-x" id="profileClose">×</button>
     </div>
     <div class="sheet-body">
-      <p style="font-size:13px;color:var(--t2);margin-bottom:16px;line-height:1.6">Used to calculate your strength rank, accounting for body weight, height, and age.</p>
-      <div class="profile-field">
-        <label class="profile-lbl" for="inName">Name</label>
-        <input class="profile-inp name-inp" id="inName" type="text" placeholder="Your name" autocomplete="off" autocorrect="off" spellcheck="false">
+      <!-- avatar -->
+      <div class="prof-avatar-area">
+        <div class="prof-avatar" id="profAvatar">
+          <span class="prof-avatar-initials" id="profInitials">?</span>
+        </div>
+        <input type="file" id="profAvatarInput" accept="image/*" style="display:none">
+        <div style="flex:1;display:flex;flex-direction:column;gap:6px">
+          <input class="prof-name-inp" id="inName" type="text" placeholder="Your name" autocomplete="off" autocorrect="off" spellcheck="false" style="text-align:left">
+          <span class="prof-avatar-hint">Tap photo to change</span>
+        </div>
       </div>
-      <div class="profile-field">
-        <label class="profile-lbl" for="inWeight">Body Weight (kg)</label>
-        <input class="profile-inp" id="inWeight" type="number" inputmode="decimal" placeholder="75" min="30" max="200" step="0.5">
-      </div>
-      <div class="profile-field">
-        <label class="profile-lbl" for="inHeight">Height (cm)</label>
-        <input class="profile-inp" id="inHeight" type="number" inputmode="numeric" placeholder="175" min="140" max="220">
-      </div>
-      <div class="profile-field">
-        <label class="profile-lbl" for="inAge">Age</label>
-        <input class="profile-inp" id="inAge" type="number" inputmode="numeric" placeholder="25" min="14" max="80">
-      </div>
-      <div class="profile-field">
-        <label class="profile-lbl">Gender</label>
-        <div class="gender-row">
-          <button class="gender-btn active" id="gBtnM">Male</button>
-          <button class="gender-btn" id="gBtnF">Female</button>
+      <!-- stats grid -->
+      <div class="prof-grid">
+        <div class="prof-cell">
+          <span class="prof-cell-lbl">Body Weight (kg)</span>
+          <input id="inWeight" type="number" inputmode="decimal" placeholder="75" min="30" max="200" step="0.5">
+        </div>
+        <div class="prof-cell">
+          <span class="prof-cell-lbl">Height (cm)</span>
+          <input id="inHeight" type="number" inputmode="numeric" placeholder="175" min="140" max="220">
+        </div>
+        <div class="prof-cell">
+          <span class="prof-cell-lbl">Age</span>
+          <input id="inAge" type="number" inputmode="numeric" placeholder="25" min="14" max="80">
+        </div>
+        <div class="prof-cell" style="justify-content:space-between">
+          <span class="prof-cell-lbl">Gender</span>
+          <div class="gender-row" style="margin:0;gap:6px">
+            <button class="gender-btn active" id="gBtnM" style="padding:6px 0;font-size:12px">Male</button>
+            <button class="gender-btn" id="gBtnF" style="padding:6px 0;font-size:12px">Female</button>
+          </div>
         </div>
       </div>
       <button class="btn-save" id="profileSave">Save Profile</button>
@@ -735,7 +825,75 @@ function usualExsForDate(dateStr){
 
 
 /* ── NAV ── */
-const NAV_ORDER = ['sh','sw','sp'];
+const NAV_ORDER = ['sh','sw','sp','spr'];
+
+function renderProfileTab(){
+  const name=db.profile?.name?.trim();
+  // hero name
+  const heroName=document.getElementById('scrProfileHeroName');
+  if(heroName) heroName.textContent=name||'Athlete';
+  // avatar
+  const av=document.getElementById('scrProfileAv');
+  if(av){
+    if(db.profile?.avatar){av.innerHTML=`<img src="${db.profile.avatar}">`;}
+    else{av.textContent=name?name[0].toUpperCase():'G';}
+  }
+  // rank badge with tier color
+  const r=calcOverallRank();
+  const rankEl=document.getElementById('scrProfileRank');
+  if(rankEl){
+    if(r){
+      const c=TIER_COLORS[r.tier.id];
+      rankEl.className='prf-rank-badge';
+      rankEl.style.cssText=`background:color-mix(in srgb,${c} 14%,transparent);color:${c};border:1px solid color-mix(in srgb,${c} 35%,transparent)`;
+      rankEl.textContent=`${r.tier.label} ${ROMAN[r.div-1]}`;
+    } else {
+      rankEl.className='';rankEl.style.cssText='color:var(--t3);font-size:11px;margin-top:6px';
+      rankEl.textContent='Log workouts to rank';
+    }
+  }
+  // stats
+  const workouts=(db.friends||[]).length;
+  const prsCount=Object.keys(db.prs||{}).length;
+  const streak=(()=>{
+    let s=0,d=new Date();
+    while(true){d.setDate(d.getDate()-1);const k=localDateStr(d);if(!db.schedule?.[k]?.length) break;s++;}
+    return s;
+  })();
+  const wsEl=document.getElementById('scrStatWorkouts');
+  const psEl=document.getElementById('scrStatPRs');
+  const ssEl=document.getElementById('scrStatStreak');
+  if(wsEl) wsEl.textContent=workouts;
+  if(psEl) psEl.textContent=prsCount;
+  if(ssEl) ssEl.textContent=streak;
+  // top 5 PRs
+  const bp=document.getElementById('scrBestPRs');
+  if(!bp) return;
+  const p=db.profile;
+  const entries=Object.entries(db.prs||{});
+  if(!entries.length){bp.innerHTML='';return;}
+  if(p?.weight) entries.sort((a,b)=>calcExScore(b[1],p,b[0])-calcExScore(a[1],p,a[0]));
+  else entries.sort((a,b)=>(b[1].date||'').localeCompare(a[1].date||''));
+  const top5=entries.slice(0,5);
+  bp.innerHTML=`<div class="card-hd" style="padding:0 20px 8px">Best PRs</div>`;
+  const card=document.createElement('div');
+  card.className='card';
+  card.style.margin='0 16px';
+  top5.forEach(([exName,pr])=>{
+    let badgeHtml='';
+    if(p?.weight){
+      const{tier,div}=scoreToTierDiv(calcExScore(pr,p,exName));
+      badgeHtml=`<span class="rec-rank-badge" style="background:color-mix(in srgb,${TIER_COLORS[tier.id]} 14%,transparent);color:${TIER_COLORS[tier.id]};border:1px solid color-mix(in srgb,${TIER_COLORS[tier.id]} 28%,transparent)">${TIER_SHORT[tier.id]} ${ROMAN[div-1]}</span>`;
+    }
+    const row=document.createElement('div');
+    row.className='ex-row divr';
+    row.innerHTML=`
+      <div class="ex-left"><div class="ex-name">${exName}</div><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">${badgeHtml}<span style="color:var(--t3);font-size:11px;font-weight:600">${pr.date?new Date(pr.date).toLocaleDateString('en',{month:'short',day:'numeric'}):''}</span></div></div>
+      <div class="ex-nums"><span class="ex-w">${fmtWeight(pr.weight,exName)} × ${pr.reps}</span></div>`;
+    card.appendChild(row);
+  });
+  bp.appendChild(card);
+}
 
 function goScr(t, dir){
   const cur = document.querySelector('.scr.on');
@@ -745,6 +903,7 @@ function goScr(t, dir){
   if(t==='sh') renderTodaySession();
   if(t==='sw') renderWeek();
   if(t==='sp') renderPRs();
+  if(t==='spr') renderProfileTab();
   sessionStorage.setItem('gymlog_scr',t);
 
   const next = document.getElementById(t);
@@ -756,18 +915,18 @@ function goScr(t, dir){
   else if(dir===-1) { exitCls='scr-xr'; enterCls='scr-el'; }
   else              { exitCls='scr-xf'; enterCls='scr-ef'; }
 
+  // show next immediately, animate both simultaneously
+  next.classList.add('on', enterCls);
   cur.classList.add(exitCls);
-  cur.addEventListener('animationend', ()=>{
-    cur.classList.remove('on', exitCls);
-    next.classList.add('on', enterCls);
-    next.addEventListener('animationend', ()=>next.classList.remove(enterCls), {once:true});
-  }, {once:true});
+  next.addEventListener('animationend', ()=>next.classList.remove(enterCls), {once:true});
+  cur.addEventListener('animationend', ()=>cur.classList.remove('on', exitCls), {once:true});
 }
 
 document.querySelectorAll('.nb').forEach(b=>{
   b.addEventListener('click',()=>{
     const from = NAV_ORDER.indexOf(document.querySelector('.scr.on')?.id);
     const to   = NAV_ORDER.indexOf(b.dataset.t);
+    if(b.dataset.t==='spr') renderProfileTab();
     goScr(b.dataset.t, to > from ? 1 : to < from ? -1 : 0);
   });
 });
@@ -779,7 +938,8 @@ document.querySelectorAll('.nb').forEach(b=>{
   const strip = document.getElementById('daysStrip');
   app.addEventListener('touchstart', e=>{
     // ignore if touch starts on the week day strip (it has its own swipe)
-    locked = strip.contains(e.target) || !!e.target.closest('.ex-row') || !!e.target.closest('.lw-row');
+    const onWeek = document.querySelector('.scr.on')?.id === 'sw';
+    locked = strip.contains(e.target) || (onWeek && (!!e.target.closest('.ex-row') || !!e.target.closest('.lw-row')));
     sx=e.touches[0].clientX; sy=e.touches[0].clientY;
   },{passive:true});
   app.addEventListener('touchend', e=>{
@@ -823,8 +983,6 @@ function renderHomeBar() {
 
   const name = db.profile?.name?.trim();
   document.getElementById('greetName').textContent = name ? name + '.' : 'Athlete.';
-  document.getElementById('btnProfile').textContent = name ? name[0].toUpperCase() : 'G';
-
   // streak
   const streak = calcStreak();
   const chip = document.getElementById('streakChip');
@@ -1652,6 +1810,22 @@ document.getElementById('exOverlay').addEventListener('click',e=>{if(e.target===
 /* ── PROFILE MODAL ── */
 let selGender = 'm';
 
+function renderProfAvatar(){
+  const av=document.getElementById('profAvatar');
+  const init=document.getElementById('profInitials');
+  if(!av) return;
+  const existing=av.querySelector('img');
+  if(existing) existing.remove();
+  if(db.profile?.avatar){
+    const img=document.createElement('img');
+    img.src=db.profile.avatar;
+    av.appendChild(img);
+    if(init) init.style.display='none';
+  } else {
+    if(init){init.style.display='';init.textContent=(db.profile?.name||'?')[0].toUpperCase();}
+  }
+}
+
 function openProfile() {
   document.getElementById('inName').value   = db.profile?.name   || '';
   document.getElementById('inWeight').value = db.profile?.weight || '';
@@ -1660,6 +1834,7 @@ function openProfile() {
   selGender = db.profile?.gender || 'm';
   document.getElementById('gBtnM').classList.toggle('active', selGender === 'm');
   document.getElementById('gBtnF').classList.toggle('active', selGender === 'f');
+  renderProfAvatar();
   document.getElementById('profileOverlay').classList.add('open');
 }
 
@@ -1667,7 +1842,33 @@ function closeProfile() {
   document.getElementById('profileOverlay').classList.remove('open');
 }
 
-document.getElementById('btnProfile').addEventListener('click', openProfile);
+// avatar tap → file picker
+document.getElementById('profAvatar').addEventListener('click',()=>document.getElementById('profAvatarInput').click());
+document.getElementById('profAvatarInput').addEventListener('change',e=>{
+  const file=e.target.files[0];
+  if(!file) return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    // resize to 256px canvas before storing
+    const img=new Image();
+    img.onload=()=>{
+      const size=256;
+      const canvas=document.createElement('canvas');
+      canvas.width=canvas.height=size;
+      const ctx=canvas.getContext('2d');
+      const s=Math.min(img.width,img.height);
+      const ox=(img.width-s)/2, oy=(img.height-s)/2;
+      ctx.drawImage(img,ox,oy,s,s,0,0,size,size);
+      if(!db.profile) db.profile={};
+      db.profile.avatar=canvas.toDataURL('image/jpeg',0.8);
+      renderProfAvatar();
+    };
+    img.src=ev.target.result;
+  };
+  reader.readAsDataURL(file);
+  e.target.value='';
+});
+
 document.getElementById('profileClose').addEventListener('click', closeProfile);
 document.getElementById('profileOverlay').addEventListener('click', e => {
   if (e.target === document.getElementById('profileOverlay')) closeProfile();
@@ -1700,6 +1901,7 @@ document.getElementById('profileSave').addEventListener('click', () => {
   renderHomeBar();
   renderRankCard();
   renderTodaySession();
+  renderProfileTab();
   showToast('Profile saved');
 });
 
@@ -1790,7 +1992,7 @@ function closeSettings(){
   document.getElementById('settingsOverlay').classList.remove('open');
 }
 
-document.getElementById('btnSettings').addEventListener('click', openSettings);
+
 document.getElementById('settingsClose').addEventListener('click', closeSettings);
 document.getElementById('settingsOverlay').addEventListener('click', e=>{
   if(e.target===document.getElementById('settingsOverlay')) closeSettings();
