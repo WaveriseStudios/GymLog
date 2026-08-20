@@ -15,8 +15,9 @@
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 *{-webkit-tap-highlight-color:transparent;}
 button{cursor:pointer;font-family:inherit;border:none;background:transparent;}
-.tap-scale{transition:transform .12s ease,opacity .12s ease;}
+.tap-scale{transition:transform .12s ease,opacity .12s ease;touch-action:manipulation;}
 .tap-scale:active{transform:scale(.93);opacity:.75;}
+.tap-scale.pressing{transform:scale(.93);opacity:.75;}
 
 :root{
   --linen:  #e0e2db;
@@ -111,7 +112,7 @@ body{
 .home-bar{padding:calc(env(safe-area-inset-top,0px) + 14px) 22px 0;display:flex;align-items:center;justify-content:space-between;}
 .date-lbl{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--t2);}
 .bar-r{display:flex;align-items:center;gap:10px;}
-.streak{display:flex;align-items:center;gap:4px;font-size:12px;font-weight:800;color:var(--acc);background:var(--acc2);border-radius:100px;padding:5px 10px 5px 8px;}/* menu bottom sheet */
+/* menu bottom sheet */
 #menuDrawer{position:fixed;inset:0;z-index:500;pointer-events:none;}
 #menuDrawer.open{pointer-events:auto;}
 #menuScrim{position:absolute;inset:0;background:rgba(0,0,0,.4);opacity:0;transition:opacity .25s ease;}
@@ -466,7 +467,6 @@ body{
     <div class="home-bar">
       <div class="date-lbl" id="dateLbl">MON · AUG 19</div>
       <div class="bar-r">
-        <div class="streak" id="streakChip" style="display:none">🔥 4</div>
       </div>
     </div>
     <div class="greeting">
@@ -507,7 +507,7 @@ body{
     <div class="sb">
       <!-- avatar + identity -->
       <div class="prf-hero">
-        <label class="prf-av tap-scale" id="scrProfileAv" for="profAvatarInput" style="cursor:pointer">G</label>
+        <div class="prf-av tap-scale" id="scrProfileAv" style="cursor:pointer;touch-action:manipulation">G</div>
         <div class="prf-hero-name" id="scrProfileHeroName">Athlete</div>
         <div id="scrProfileRank"></div>
       </div>
@@ -516,8 +516,6 @@ body{
         <div class="prf-stat"><span class="prf-stat-n" id="scrStatWorkouts">0</span><span class="prf-stat-l">Friends</span></div>
         <div class="prf-stat-div"></div>
         <div class="prf-stat"><span class="prf-stat-n" id="scrStatPRs">0</span><span class="prf-stat-l">PRs</span></div>
-        <div class="prf-stat-div"></div>
-        <div class="prf-stat"><span class="prf-stat-n" id="scrStatStreak">0</span><span class="prf-stat-l">Streak</span></div>
       </div>
       <!-- action buttons -->
       <div class="prf-actions">
@@ -858,17 +856,10 @@ function renderProfileTab(){
   // stats
   const workouts=(db.friends||[]).length;
   const prsCount=Object.keys(db.prs||{}).length;
-  const streak=(()=>{
-    let s=0,d=new Date();
-    while(true){d.setDate(d.getDate()-1);const k=localDateStr(d);if(!db.schedule?.[k]?.length) break;s++;}
-    return s;
-  })();
   const wsEl=document.getElementById('scrStatWorkouts');
   const psEl=document.getElementById('scrStatPRs');
-  const ssEl=document.getElementById('scrStatStreak');
   if(wsEl) wsEl.textContent=workouts;
   if(psEl) psEl.textContent=prsCount;
-  if(ssEl) ssEl.textContent=streak;
   // top 5 PRs
   const bp=document.getElementById('scrBestPRs');
   if(!bp) return;
@@ -959,6 +950,20 @@ document.querySelectorAll('.nb').forEach(b=>{
   },{passive:true});
 })();
 
+/* ── TOUCH PRESS ANIMATION (mobile :active fix) ── */
+document.querySelectorAll('.tap-scale').forEach(el=>{
+  el.addEventListener('touchstart',()=>el.classList.add('pressing'),{passive:true});
+  el.addEventListener('touchend',()=>setTimeout(()=>el.classList.remove('pressing'),120),{passive:true});
+  el.addEventListener('touchcancel',()=>el.classList.remove('pressing'),{passive:true});
+});
+
+/* ── AVATAR — open picker on pointerdown for max speed ── */
+document.getElementById('scrProfileAv').addEventListener('pointerdown', e=>{
+  e.preventDefault();
+  document.getElementById('profAvatarInput').click();
+});
+
+
 /* ── BACK BUTTON / GESTURE ── */
 // seed an initial state so the very first popstate has somewhere to go back from
 history.replaceState({scr:'sh'}, '', '');
@@ -1018,23 +1023,8 @@ function renderHomeBar() {
 
   const name = db.profile?.name?.trim();
   document.getElementById('greetName').textContent = name ? name + '.' : 'Athlete.';
-  // streak
-  const streak = calcStreak();
-  const chip = document.getElementById('streakChip');
-  if (streak > 1) { chip.textContent = `🔥 ${streak}`; chip.style.display = ''; }
-  else chip.style.display = 'none';
 }
 
-function calcStreak() {
-  const history = db.history || [];
-  if (!history.length) return 0;
-  const dayMs = 86400000;
-  const todayMs = new Date().setHours(0,0,0,0);
-  const daySet = new Set(history.map(h => new Date(h.date).setHours(0,0,0,0)));
-  let streak = 0, check = daySet.has(todayMs) ? todayMs : todayMs - dayMs;
-  while (daySet.has(check)) { streak++; check -= dayMs; }
-  return streak;
-}
 
 /* ── RANK SYSTEM ── */
 const RANK_TIERS = [
