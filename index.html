@@ -194,6 +194,7 @@ body{
 .lw-name{font-size:14px;font-weight:700;color:var(--t1);}
 .lw-meta{font-size:12px;color:var(--t2);}
 .lw-add{width:28px;height:28px;border-radius:50%;background:var(--acc2);border:1.5px solid var(--bdr2);color:var(--acc);font-size:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:inherit;}
+.pr-tag{display:inline-block;font-size:9px;font-weight:800;letter-spacing:.8px;padding:2px 6px;border-radius:5px;background:var(--acc2);color:var(--acc);border:1px solid color-mix(in srgb,var(--acc) 30%,transparent);margin-left:6px;vertical-align:middle;text-transform:uppercase;}
 .wrow{display:flex;align-items:center;justify-content:space-between;padding:13px 14px;}
 .wex-n{font-size:14px;font-weight:700;margin-bottom:2px;}
 .wex-d{font-size:12px;color:var(--t2);font-weight:600;}
@@ -1375,6 +1376,13 @@ function renderTodaySession(){
     if(s>loggedMap[h.name].bestScore){loggedMap[h.name].best=h;loggedMap[h.name].bestScore=s;}
   });
 
+  // returns true if today's best for this exercise matches the stored PR
+  const isTodayPR=(name,g)=>{
+    const pr=db.prs?.[name];
+    if(!pr||!g) return false;
+    return pr.weight===g.best.weight && pr.reps===g.best.reps;
+  };
+
   const usualExs=usualExsForDate(today);
 
   // no usual exercises — show logged session if something exists, otherwise empty state
@@ -1390,9 +1398,10 @@ function renderTodaySession(){
     // something was logged freestyle
     const rows=loggedNames.map(name=>{
       const g=loggedMap[name];
+      const prTag=isTodayPR(name,g)?`<span class="pr-tag">PR</span>`:'';
       return `<div class="lw-row" style="cursor:pointer" onclick="openExModal('${today}','${name}')">
         <div class="lw-info">
-          <div class="lw-name">${name}</div>
+          <div class="lw-name">${name}${prTag}</div>
           <div class="lw-meta">${fmtWeight(g.best.weight,name)} × ${g.best.reps} · ${g.totalSets} set${g.totalSets!==1?'s':''}</div>
         </div>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color:var(--acc);flex-shrink:0"><polyline points="20 6 9 17 4 12"/></svg>
@@ -1414,9 +1423,10 @@ function renderTodaySession(){
     const usual=usualExs.find(e=>e.name===name);
     if(g){
       // logged today — tap to edit
+      const prTag2=isTodayPR(name,g)?`<span class="pr-tag">PR</span>`:'';
       return `<div class="lw-row" style="cursor:pointer" onclick="openExModal('${today}','${name}')">
         <div class="lw-info">
-          <div class="lw-name" style="color:var(--t2)">${name}</div>
+          <div class="lw-name" style="color:var(--t2)">${name}${prTag2}</div>
           <div class="lw-meta">${fmtWeight(g.best.weight,name)} × ${g.best.reps} · ${g.totalSets} set${g.totalSets!==1?'s':''}</div>
         </div>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color:var(--acc);flex-shrink:0"><polyline points="20 6 9 17 4 12"/></svg>
@@ -1500,7 +1510,10 @@ function renderWeekDay(dir){
     wrap.style.cssText='overflow:hidden;padding:0;';
     const row=document.createElement('div');
     row.style.cssText=`display:flex;align-items:center;justify-content:space-between;padding:11px 14px;transition:transform .25s ease;${editable?'cursor:pointer;user-select:none;':'opacity:.7;'}`;
-    row.innerHTML=`<div class="lw-info"><div class="lw-name">${ex.name}</div><div class="lw-meta">${fmtWeight(ex.weight,ex.name)} × ${ex.reps} · ${ex.sets} sets</div></div>`;
+    const pr=db.prs?.[ex.name];
+    const isPR=pr&&pr.weight===ex.weight&&pr.reps===ex.reps;
+    const prTagW=isPR?`<span class="pr-tag">PR</span>`:'';
+    row.innerHTML=`<div class="lw-info"><div class="lw-name">${ex.name}${prTagW}</div><div class="lw-meta">${fmtWeight(ex.weight,ex.name)} × ${ex.reps} · ${ex.sets} sets</div></div>`;
     wrap.appendChild(row);
     if(editable){
       wrap.addEventListener('click',()=>openExModal(dateStr,ex.id));
@@ -1664,8 +1677,7 @@ function renderPRs(){
       <div class="ex-nums" style="gap:4px">
         ${trend}
         <span class="ex-w">${fmtWeight(pr.weight,name)} × ${pr.reps}</span>
-        <span style="color:var(--t3);font-size:12px;margin:0 2px">→</span>
-        <span style="font-size:13px;color:var(--acc);font-weight:700">${e1rmStr}</span>
+        ${pr.reps>1?`<span style="color:var(--t3);font-size:12px;margin:0 2px">→</span><span style="font-size:13px;color:var(--acc);font-weight:700">${e1rmStr}</span>`:''}
       </div>`;
 
     wrap.appendChild(row);
