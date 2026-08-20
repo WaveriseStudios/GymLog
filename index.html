@@ -455,6 +455,7 @@ body{
   <svg viewBox="0 0 24 24"><polyline points="8 10 12 14 16 10"/><line x1="12" y1="3" x2="12" y2="14"/><path d="M5 20h14"/></svg>
 </div>
 
+<input type="file" id="profAvatarInput" accept="image/*" style="display:none">
 <div id="app">
 
   <!-- HOME -->
@@ -503,7 +504,7 @@ body{
     <div class="sb">
       <!-- avatar + identity -->
       <div class="prf-hero">
-        <div class="prf-av" id="scrProfileAv" onclick="document.getElementById('profAvatarInput').click()">G</div>
+        <label class="prf-av" id="scrProfileAv" for="profAvatarInput" style="cursor:pointer">G</label>
         <div class="prf-hero-name" id="scrProfileHeroName">Athlete</div>
         <div id="scrProfileRank"></div>
       </div>
@@ -634,7 +635,6 @@ body{
         <div class="prof-avatar" id="profAvatar">
           <span class="prof-avatar-initials" id="profInitials">?</span>
         </div>
-        <input type="file" id="profAvatarInput" accept="image/*" style="display:none">
         <div style="flex:1;display:flex;flex-direction:column;gap:6px">
           <input class="prof-name-inp" id="inName" type="text" placeholder="Your name" autocomplete="off" autocorrect="off" spellcheck="false" style="text-align:left">
           <span class="prof-avatar-hint">Tap photo to change</span>
@@ -1861,7 +1861,9 @@ document.getElementById('profAvatarInput').addEventListener('change',e=>{
       ctx.drawImage(img,ox,oy,s,s,0,0,size,size);
       if(!db.profile) db.profile={};
       db.profile.avatar=canvas.toDataURL('image/jpeg',0.8);
+      persist();
       renderProfAvatar();
+      renderProfileTab();
     };
     img.src=ev.target.result;
   };
