@@ -287,7 +287,10 @@ body{
 .input-lbl{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--t3);margin-bottom:10px;display:block;}
 .weight-big{font-family:'Barlow Condensed',sans-serif;font-size:64px;font-weight:900;text-align:center;color:var(--text);line-height:1;margin-bottom:10px;cursor:pointer;user-select:none;letter-spacing:2px;}
 .weight-big small{font-size:22px;color:var(--t3);}
-.weight-direct{width:100%;font-family:'Barlow Condensed',sans-serif;font-size:56px;font-weight:900;text-align:center;color:var(--text);background:var(--card2);border:none;border-radius:12px;padding:8px 0;margin-bottom:10px;outline:none;letter-spacing:2px;}
+.weight-direct{width:100%;font-family:'Barlow Condensed',sans-serif;font-size:56px;font-weight:900;text-align:center;color:var(--text);background:transparent;border:none;padding:8px 0;margin-bottom:10px;outline:none;letter-spacing:2px;}
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
+input[type=number]{-moz-appearance:textfield;}
 .weight-steps{display:grid;grid-template-columns:repeat(6,1fr);gap:5px;margin-bottom:14px;}
 .ws-btn{padding:9px 0;border-radius:10px;font-size:12px;font-weight:700;background:var(--card2);color:var(--text);}
 .ws-btn.minus{color:var(--t2);}
@@ -567,35 +570,67 @@ body{
       <div id="exPickerList"></div>
       <div class="input-block" id="exInputBlock" style="display:none">
         <span class="input-lbl" id="exSelectedLbl">Exercise</span>
-        <span class="input-lbl" id="weightLbl" style="margin-top:4px">Weight</span>
-        <div class="weight-big" id="weightBig">60<small> kg</small></div>
-        <input class="weight-direct" id="weightDirect" type="number" inputmode="decimal" style="display:none" min="0" max="500" step="2.5">
-        <div class="weight-steps">
-          <button class="ws-btn minus" data-d="10">−10</button>
-          <button class="ws-btn minus" data-d="5">−5</button>
-          <button class="ws-btn minus" data-d="1">−1</button>
-          <button class="ws-btn" data-d="1">+1</button>
-          <button class="ws-btn" data-d="5">+5</button>
-          <button class="ws-btn" data-d="10">+10</button>
-        </div>
-        <div class="steppers">
-          <div class="stepper">
-            <span class="stepper-lbl">Sets</span>
-            <div class="stepper-row">
-              <button class="step-btn" id="setsMinus">−</button>
-              <span class="step-val" id="setsVal">3</span>
-              <button class="step-btn" id="setsPlus">＋</button>
+
+        <!-- STRENGTH fields -->
+        <div id="strengthFields">
+          <span class="input-lbl" id="weightLbl" style="margin-top:4px">Weight</span>
+          <div class="weight-big" id="weightBig">60<small> kg</small></div>
+          <input class="weight-direct" id="weightDirect" type="number" inputmode="decimal" style="display:none" min="0" max="500" step="2.5">
+          <div class="weight-steps">
+            <button class="ws-btn minus" data-d="10">−10</button>
+            <button class="ws-btn minus" data-d="5">−5</button>
+            <button class="ws-btn minus" data-d="1">−1</button>
+            <button class="ws-btn" data-d="1">+1</button>
+            <button class="ws-btn" data-d="5">+5</button>
+            <button class="ws-btn" data-d="10">+10</button>
+          </div>
+          <div class="steppers">
+            <div class="stepper">
+              <span class="stepper-lbl">Sets</span>
+              <div class="stepper-row">
+                <button class="step-btn" id="setsMinus">−</button>
+                <span class="step-val" id="setsVal">3</span>
+                <button class="step-btn" id="setsPlus">＋</button>
+              </div>
+            </div>
+            <div class="stepper">
+              <span class="stepper-lbl">Reps</span>
+              <div class="stepper-row">
+                <button class="step-btn" id="repsMinus">−</button>
+                <span class="step-val" id="repsVal">8</span>
+                <button class="step-btn" id="repsPlus">＋</button>
+              </div>
             </div>
           </div>
-          <div class="stepper">
-            <span class="stepper-lbl">Reps</span>
-            <div class="stepper-row">
-              <button class="step-btn" id="repsMinus">−</button>
-              <span class="step-val" id="repsVal">8</span>
-              <button class="step-btn" id="repsPlus">＋</button>
-            </div>
-          </div>
         </div>
+
+        <!-- CARDIO fields -->
+        <div id="cardioFields" style="display:none">
+          <span class="input-lbl" id="cardioDistLbl" style="margin-top:4px">Distance</span>
+          <div class="weight-big" id="cardioDistBig" style="cursor:pointer" onclick="openCardioInp('dist')">0<small> m</small></div>
+          <input class="weight-direct" id="cardioDistInp" type="number" inputmode="numeric" style="display:none" min="0">
+          <div class="weight-steps">
+            <button class="ws-btn minus" data-cd="1000">−1km</button>
+            <button class="ws-btn minus" data-cd="100">−100m</button>
+            <button class="ws-btn minus" data-cd="10">−10</button>
+            <button class="ws-btn" data-cd="10">+10</button>
+            <button class="ws-btn" data-cd="100">+100m</button>
+            <button class="ws-btn" data-cd="1000">+1km</button>
+          </div>
+          <span class="input-lbl" style="margin-top:14px">Time</span>
+          <div class="weight-big" id="cardioTimeBig" style="cursor:pointer" onclick="openCardioInp('time')">0:00<small> min</small></div>
+          <input class="weight-direct" id="cardioTimeInp" type="text" inputmode="numeric" placeholder="M:SS" style="display:none">
+          <div class="weight-steps">
+            <button class="ws-btn minus" data-ct="300">−5min</button>
+            <button class="ws-btn minus" data-ct="30">−30s</button>
+            <button class="ws-btn minus" data-ct="5">−5s</button>
+            <button class="ws-btn" data-ct="5">+5s</button>
+            <button class="ws-btn" data-ct="30">+30s</button>
+            <button class="ws-btn" data-ct="300">+5min</button>
+          </div>
+          <div id="cardioSpeedDisp" style="text-align:center;font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:900;color:var(--acc);margin:14px 0 4px"></div>
+        </div>
+
         <button class="btn-save" id="exSave">Save Exercise</button>
       </div>
     </div>
@@ -881,11 +916,19 @@ function renderProfileTab(){
       const{tier,div}=scoreToTierDiv(calcExScore(pr,p,exName));
       badgeHtml=`<span class="rec-rank-badge" style="background:color-mix(in srgb,${TIER_COLORS[tier.id]} 14%,transparent);color:${TIER_COLORS[tier.id]};border:1px solid color-mix(in srgb,${TIER_COLORS[tier.id]} 28%,transparent)">${TIER_SHORT[tier.id]} ${ROMAN[div-1]}</span>`;
     }
+    let valHtml;
+    if(pr._cardio){
+      const km=(pr.distance/1000).toFixed(pr.distance%1000===0?0:1);
+      const m=Math.floor(pr.duration/60),s=pr.duration%60;
+      valHtml=`<span class="ex-w" style="font-size:13px">${km} km · ${m}:${String(s).padStart(2,'0')} · ${(pr._spd*3.6).toFixed(1)} km/h</span>`;
+    } else {
+      valHtml=`<span class="ex-w">${fmtWeight(pr.weight,exName)} × ${pr.reps}</span>`;
+    }
     const row=document.createElement('div');
     row.className='ex-row divr';
     row.innerHTML=`
       <div class="ex-left"><div class="ex-name">${exName}</div><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">${badgeHtml}<span style="color:var(--t3);font-size:11px;font-weight:600">${pr.date?new Date(pr.date).toLocaleDateString('en',{month:'short',day:'numeric'}):''}</span></div></div>
-      <div class="ex-nums"><span class="ex-w">${fmtWeight(pr.weight,exName)} × ${pr.reps}</span></div>`;
+      <div class="ex-nums">${valHtml}</div>`;
     card.appendChild(row);
   });
   bp.appendChild(card);
@@ -1068,7 +1111,8 @@ const EX_COEFF = {
   'Cable Crunch':0.40,'Dragon Flag':0.35,'Leg Raise':0.28,
   'Plank':0.20,'Sit-up':0.18,'Toes to Bar':0.30,
 };
-const BODYWEIGHT_EX = new Set(['Pull-up','Chin-up','Dips','Push-up','Hanging Leg Raise','Leg Raise','Toes to Bar','Dragon Flag','Plank','Crunch','Sit-up']);
+const BODYWEIGHT_EX = new Set(['Pull-up','Chin-up','Dips','Push-up','Hanging Leg Raise','Leg Raise','Toes to Bar','Dragon Flag','Plank','Crunch','Sit-up','Muscle Up']);
+const CARDIO_EX = new Set(['Running','Cycling','Rowing','Jump Rope','Swimming']);
 const BW_FRACTION   = {'Push-up':0.65,'Plank':0.65,'Hanging Leg Raise':0.35,'Leg Raise':0.35,'Toes to Bar':0.35,'Dragon Flag':0.80,'Crunch':0.15,'Sit-up':0.20};
 
 function calcLBM(weight,height,gender){
@@ -1107,7 +1151,7 @@ function scoreToTierDiv(score){
 function calcOverallRank(){
   const p=db.profile;
   if(!p?.weight)return null;
-  const prs=Object.entries(db.prs||{});
+  const prs=Object.entries(db.prs||{}).filter(([n,pr])=>!pr._cardio);
   if(!prs.length)return null;
   const scores=prs.map(([n,pr])=>calcExScore(pr,p,n));
   const avg=scores.reduce((a,b)=>a+b,0)/scores.length;
@@ -1115,6 +1159,17 @@ function calcOverallRank(){
 }
 
 function recomputePR(name, onlyIfBetter=false){
+  if(isCardio(name)){
+    const entries=db.history.filter(h=>h.name===name&&h.distance>0&&h.duration>0);
+    if(!entries.length){delete db.prs[name];return;}
+    const best=entries.reduce((acc,h)=>{
+      const spd=h.distance/h.duration;
+      return spd>acc.spd?{spd,h}:acc;
+    },{spd:-1,h:null});
+    if(onlyIfBetter&&db.prs[name]&&best.spd<=db.prs[name]._spd) return;
+    db.prs[name]={distance:best.h.distance,duration:best.h.duration,_spd:best.spd,date:best.h.date,_cardio:true};
+    return;
+  }
   const bw=db.profile?.weight||0;
   const isBW=BODYWEIGHT_EX.has(name);
   const bwFrac=BW_FRACTION[name]??1;
@@ -1299,6 +1354,8 @@ const EX_DB = {
   'Shoulders': ['Overhead Press','Dumbbell Shoulder Press','Lateral Raise','Cable Lateral Raise','Rear Delt Fly','Front Raise','Arnold Press','Shrugs'],
   'Arms':      ['Barbell Curl','Dumbbell Curl','Hammer Curl','Preacher Curl','Leon Curl','Tricep Pushdown','Skull Crusher','Overhead Tricep Extension','Leon Pushdowns','Rope Pushdown'],
   'Core':      ['Plank','Ab Wheel','Hanging Leg Raise','Crunch','Sit-up','Russian Twist','Cable Crunch','Dragon Flag','Leg Raise','Toes to Bar'],
+  'Calisthenics': ['Muscle Up','Pull-up','Chin-up','Dips','Push-up','Handstand Push-up','L-Sit','Front Lever','Back Lever'],
+  'Cardio':    ['Running','Cycling','Rowing','Jump Rope','Swimming'],
 };
 const DAY_KEYS  = ['mon','tue','wed','thu','fri','sat','sun'];
 const DAY_SHORT = ['MON','TUE','WED','THU','FRI','SAT','SUN'];
@@ -1309,6 +1366,19 @@ const TIER_SHORT = {iron:'Iron',bronze:'Brz',steel:'Steel',silver:'Slv',gold:'Go
 function todayKey(){return DAY_KEYS[[6,0,1,2,3,4,5][new Date().getDay()]];}
 function uid(){return Math.random().toString(36).slice(2)+Date.now().toString(36);}
 function fmtWeight(w,name){return BODYWEIGHT_EX.has(name)?(w===0?'BW':`+${w} kg`):`${w} kg`;}
+function fmtCardio(ex){
+  const dist=ex.distance||0, dur=ex.duration||0;
+  const km=(dist/1000).toFixed(dist%1000===0?0:1);
+  const min=Math.floor(dur/60), sec=dur%60;
+  const timeStr=`${min}:${String(sec).padStart(2,'0')}`;
+  if(dist>0&&dur>0){
+    const kmh=((dist/1000)/(dur/3600)).toFixed(1);
+    return `${km} km · ${timeStr} · ${kmh} km/h`;
+  }
+  if(dist>0) return `${km} km`;
+  if(dur>0) return timeStr;
+  return '—';
+}
 
 /* ── BEST PRs ── */
 function renderBestPRs(){
@@ -1366,20 +1436,32 @@ function renderTodaySession(){
   const DAYS_L=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
   const dayName=DAYS_L[parseLocalDate(today).getDay()];
 
-  // build logged map: name → {totalSets, best, bestScore}
+  // build logged map: name → {totalSets, best, bestScore, cardio}
   const loggedMap={};
   todayHistoryExs().forEach(h=>{
-    if(!loggedMap[h.name])loggedMap[h.name]={totalSets:0,best:null,bestScore:-1};
-    loggedMap[h.name].totalSets+=(h.sets||1);
-    const isBW=BODYWEIGHT_EX.has(h.name),bw=db.profile?.weight||0;
-    const s=calcEpley(isBW?(bw*(BW_FRACTION[h.name]??1)+h.weight):h.weight,h.reps,isBW?0:30);
-    if(s>loggedMap[h.name].bestScore){loggedMap[h.name].best=h;loggedMap[h.name].bestScore=s;}
+    const cardio=isCardio(h.name);
+    if(!loggedMap[h.name])loggedMap[h.name]={totalSets:0,best:null,bestScore:-1,cardio};
+    if(cardio){
+      // keep entry with most distance, then fastest time
+      const cur=loggedMap[h.name].best;
+      if(!cur||(h.distance||0)>(cur.distance||0)||((h.distance||0)===(cur.distance||0)&&(h.duration||0)<(cur.duration||0)))
+        loggedMap[h.name].best=h;
+    } else {
+      loggedMap[h.name].totalSets+=(h.sets||1);
+      const isBW=BODYWEIGHT_EX.has(h.name),bw=db.profile?.weight||0;
+      const s=calcEpley(isBW?(bw*(BW_FRACTION[h.name]??1)+h.weight):h.weight,h.reps,isBW?0:30);
+      if(s>loggedMap[h.name].bestScore){loggedMap[h.name].best=h;loggedMap[h.name].bestScore=s;}
+    }
   });
 
   // returns true if today's best for this exercise matches the stored PR
   const isTodayPR=(name,g)=>{
     const pr=db.prs?.[name];
     if(!pr||!g) return false;
+    if(pr._cardio){
+      const spd=g.best.distance>0&&g.best.duration>0?g.best.distance/g.best.duration:-1;
+      return Math.abs(spd-(pr._spd||0))<0.0001;
+    }
     return pr.weight===g.best.weight && pr.reps===g.best.reps;
   };
 
@@ -1399,10 +1481,11 @@ function renderTodaySession(){
     const rows=loggedNames.map(name=>{
       const g=loggedMap[name];
       const prTag=isTodayPR(name,g)?`<span class="pr-tag">PR</span>`:'';
+      const metaStr=g.cardio?fmtCardio(g.best):`${fmtWeight(g.best.weight,name)} × ${g.best.reps} · ${g.totalSets} set${g.totalSets!==1?'s':''}`;
       return `<div class="lw-row" style="cursor:pointer" onclick="openExModal('${today}','${name}')">
         <div class="lw-info">
           <div class="lw-name">${name}${prTag}</div>
-          <div class="lw-meta">${fmtWeight(g.best.weight,name)} × ${g.best.reps} · ${g.totalSets} set${g.totalSets!==1?'s':''}</div>
+          <div class="lw-meta">${metaStr}</div>
         </div>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color:var(--acc);flex-shrink:0"><polyline points="20 6 9 17 4 12"/></svg>
       </div>`;
@@ -1424,20 +1507,22 @@ function renderTodaySession(){
     if(g){
       // logged today — tap to edit
       const prTag2=isTodayPR(name,g)?`<span class="pr-tag">PR</span>`:'';
+      const metaStr2=g.cardio?fmtCardio(g.best):`${fmtWeight(g.best.weight,name)} × ${g.best.reps} · ${g.totalSets} set${g.totalSets!==1?'s':''}`;
       return `<div class="lw-row" style="cursor:pointer" onclick="openExModal('${today}','${name}')">
         <div class="lw-info">
           <div class="lw-name" style="color:var(--t2)">${name}${prTag2}</div>
-          <div class="lw-meta">${fmtWeight(g.best.weight,name)} × ${g.best.reps} · ${g.totalSets} set${g.totalSets!==1?'s':''}</div>
+          <div class="lw-meta">${metaStr2}</div>
         </div>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color:var(--acc);flex-shrink:0"><polyline points="20 6 9 17 4 12"/></svg>
       </div>`;
     }else{
       // not yet done — tap to log it now
-      const ref=usual||{weight:0,reps:0,sets:0};
+      const ref=usual||{weight:0,reps:0,sets:0,distance:0,duration:0};
+      const refMeta=isCardio(name)?fmtCardio(ref):`${fmtWeight(ref.weight,name)} × ${ref.reps} · ${ref.sets} sets`;
       return `<div class="lw-row" style="cursor:pointer;opacity:.6" onclick="openExModal('${today}',null,'${name}')">
         <div class="lw-info">
           <div class="lw-name">${name}</div>
-          <div class="lw-meta">${fmtWeight(ref.weight,name)} × ${ref.reps} · ${ref.sets} sets</div>
+          <div class="lw-meta">${refMeta}</div>
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color:var(--t3);flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg>
       </div>`;
@@ -1511,9 +1596,14 @@ function renderWeekDay(dir){
     const row=document.createElement('div');
     row.style.cssText=`display:flex;align-items:center;justify-content:space-between;padding:11px 14px;transition:transform .25s ease;${editable?'cursor:pointer;user-select:none;':'opacity:.7;'}`;
     const pr=db.prs?.[ex.name];
-    const isPR=pr&&pr.weight===ex.weight&&pr.reps===ex.reps;
+    let isPR=false;
+    if(pr){
+      if(pr._cardio) isPR=ex.distance>0&&ex.duration>0&&Math.abs(ex.distance/ex.duration-(pr._spd||0))<0.0001;
+      else isPR=pr.weight===ex.weight&&pr.reps===ex.reps;
+    }
     const prTagW=isPR?`<span class="pr-tag">PR</span>`:'';
-    row.innerHTML=`<div class="lw-info"><div class="lw-name">${ex.name}${prTagW}</div><div class="lw-meta">${fmtWeight(ex.weight,ex.name)} × ${ex.reps} · ${ex.sets} sets</div></div>`;
+    const weekMeta=isCardio(ex.name)?fmtCardio(ex):`${fmtWeight(ex.weight,ex.name)} × ${ex.reps} · ${ex.sets} sets`;
+    row.innerHTML=`<div class="lw-info"><div class="lw-name">${ex.name}${prTagW}</div><div class="lw-meta">${weekMeta}</div></div>`;
     wrap.appendChild(row);
     if(editable){
       wrap.addEventListener('click',()=>openExModal(dateStr,ex.id));
@@ -1587,7 +1677,7 @@ function renderWeekDay(dir){
 }
 
 /* ── PR PAGE ── */
-const GROUP_ICONS={'Chest':'🫁','Back':'🔙','Legs':'🦵','Shoulders':'💆','Arms':'💪','Core':'🎯','Other':'⚡'};
+const GROUP_ICONS={'Chest':'🫁','Back':'🔙','Legs':'🦵','Shoulders':'💆','Arms':'💪','Core':'🎯','Calisthenics':'🤸','Cardio':'🏃','Other':'⚡'};
 
 function buildExToGroup(){
   const m={};
@@ -1639,30 +1729,38 @@ function renderPRs(){
     return;
   }
 
-  if(p?.weight) entries.sort((a,b)=>calcExScore(b[1],p,b[0])-calcExScore(a[1],p,a[0]));
-  else entries.sort((a,b)=>a[0].localeCompare(b[0]));
+  const weightEntries=entries.filter(([n,pr])=>!pr._cardio&&!BODYWEIGHT_EX.has(n));
+  const caliEntries=entries.filter(([n,pr])=>!pr._cardio&&BODYWEIGHT_EX.has(n));
+  const cardioEntries=entries.filter(([,pr])=>pr._cardio);
+
+  const sortStrength=(a,b)=>p?.weight?calcExScore(b[1],p,b[0])-calcExScore(a[1],p,a[0]):a[0].localeCompare(b[0]);
+  weightEntries.sort(sortStrength);
+  caliEntries.sort(sortStrength);
+  cardioEntries.sort((a,b)=>a[0].localeCompare(b[0]));
 
   list.innerHTML='';
-  const wrap=document.createElement('div');
-  wrap.className='card';
-  wrap.style.cssText='margin-bottom:8px;';
 
-  entries.forEach(([name,pr])=>{
-    const isBW=BODYWEIGHT_EX.has(name);
-    const bwFrac=BW_FRACTION[name]??1.0;
-    const bw=p?.weight||0;
-    const base=isBW?(bw*bwFrac+pr.weight):pr.weight;
-    const e1rm=Math.round(calcEpley(base,pr.reps,isBW?0:30));
-    const e1rmStr=isBW?`BW + ${Math.max(0,e1rm-Math.round(bw*bwFrac))} kg`:`~${e1rm} kg`;
+  function makePRRow(name,pr){
     const ago=timeAgo(pr.date);
     const trend=prTrend(name);
-
-    let badgeHtml='';
-    if(p?.weight){
-      const{tier,div}=scoreToTierDiv(calcExScore(pr,p,name));
-      badgeHtml=`<span class="rec-rank-badge" style="background:color-mix(in srgb,${TIER_COLORS[tier.id]} 14%,transparent);color:${TIER_COLORS[tier.id]};border:1px solid color-mix(in srgb,${TIER_COLORS[tier.id]} 28%,transparent)">${TIER_SHORT[tier.id]} ${ROMAN[div-1]}</span>`;
+    let badgeHtml='',valueHtml='';
+    if(pr._cardio){
+      const km=(pr.distance/1000).toFixed(pr.distance%1000===0?0:1);
+      const m=Math.floor(pr.duration/60),s=pr.duration%60;
+      valueHtml=`<span style="font-size:13px;font-weight:700;color:var(--text)">${km} km · ${m}:${String(s).padStart(2,'0')} · ${(pr._spd*3.6).toFixed(1)} km/h</span>`;
+    } else {
+      const isBW=BODYWEIGHT_EX.has(name);
+      const bwFrac=BW_FRACTION[name]??1.0;
+      const bw=p?.weight||0;
+      const base=isBW?(bw*bwFrac+pr.weight):pr.weight;
+      const e1rm=Math.round(calcEpley(base,pr.reps,isBW?0:30));
+      const e1rmStr=isBW?`BW + ${Math.max(0,e1rm-Math.round(bw*bwFrac))} kg`:`~${e1rm} kg`;
+      valueHtml=`<span class="ex-w">${fmtWeight(pr.weight,name)} × ${pr.reps}</span>${pr.reps>1?`<span style="color:var(--t3);font-size:12px;margin:0 2px">→</span><span style="font-size:13px;color:var(--acc);font-weight:700">${e1rmStr}</span>`:''}`;
+      if(p?.weight){
+        const{tier,div}=scoreToTierDiv(calcExScore(pr,p,name));
+        badgeHtml=`<span class="rec-rank-badge" style="background:color-mix(in srgb,${TIER_COLORS[tier.id]} 14%,transparent);color:${TIER_COLORS[tier.id]};border:1px solid color-mix(in srgb,${TIER_COLORS[tier.id]} 28%,transparent)">${TIER_SHORT[tier.id]} ${ROMAN[div-1]}</span>`;
+      }
     }
-
     const row=document.createElement('div');
     row.className='ex-row divr';
     row.style.cssText='position:relative;overflow:hidden;';
@@ -1670,24 +1768,35 @@ function renderPRs(){
       <div class="ex-left">
         <div class="ex-name">${name}</div>
         <div style="display:flex;align-items:center;gap:6px;margin-top:2px">
-          ${badgeHtml}
-          ${ago?`<span style="font-size:11px;color:var(--t3)">${ago}</span>`:''}
+          ${badgeHtml}${ago?`<span style="font-size:11px;color:var(--t3)">${ago}</span>`:''}
         </div>
       </div>
-      <div class="ex-nums" style="gap:4px">
-        ${trend}
-        <span class="ex-w">${fmtWeight(pr.weight,name)} × ${pr.reps}</span>
-        ${pr.reps>1?`<span style="color:var(--t3);font-size:12px;margin:0 2px">→</span><span style="font-size:13px;color:var(--acc);font-weight:700">${e1rmStr}</span>`:''}
-      </div>`;
+      <div class="ex-nums" style="gap:4px">${trend}${valueHtml}</div>`;
+    return row;
+  }
 
-    wrap.appendChild(row);
-  });
+  function appendSection(label, sectionEntries){
+    if(!sectionEntries.length) return;
+    const hd=document.createElement('div');
+    hd.className='card-hd';
+    hd.style.cssText='padding:0 20px 8px;margin-top:24px';
+    hd.textContent=label;
+    list.appendChild(hd);
+    const wrap=document.createElement('div');
+    wrap.className='card';
+    wrap.style.cssText='margin-bottom:8px;';
+    sectionEntries.forEach(([name,pr])=>wrap.appendChild(makePRRow(name,pr)));
+    list.appendChild(wrap);
+  }
 
-  list.appendChild(wrap);
+  appendSection('Weight', weightEntries);
+  appendSection('Calisthenics', caliEntries);
+  appendSection('Cardio', cardioEntries);
 }
 
 /* ── EXERCISE MODAL ── */
 let exDay=null,exId=null,exName='',exWeight=60,exSets=3,exReps=8;
+let cardioDist=0,cardioMin=0,cardioSec=0;
 
 function openExModal(dayKey,editId,prefillName){
   exDay=dayKey; exId=editId; exName='';
@@ -1695,7 +1804,9 @@ function openExModal(dayKey,editId,prefillName){
     // try schedule id first, fall back to finding by name
     let ex=(db.schedule?.[dayKey]||[]).find(e=>e.id===editId);
     if(!ex) ex=(db.schedule?.[dayKey]||[]).find(e=>e.name===editId);
-    if(ex){exId=ex.id;exName=ex.name;exWeight=ex.weight;exSets=ex.sets;exReps=ex.reps;}
+    if(ex){exId=ex.id;exName=ex.name;exWeight=ex.weight??60;exSets=ex.sets??3;exReps=ex.reps??8;
+      if(isCardio(ex.name)){cardioDist=ex.distance||0;cardioMin=ex.duration?Math.floor(ex.duration/60):0;cardioSec=ex.duration?ex.duration%60:0;}
+    }
     document.getElementById('exSheetTitle').textContent='Edit Exercise';
   }else if(prefillName){
     exName=prefillName;
@@ -1714,7 +1825,15 @@ function openExModal(dayKey,editId,prefillName){
   document.getElementById('exInputBlock').style.display=exName?'block':'none';
   if(exName){
     document.getElementById('exSelectedLbl').textContent=exName;
-    updateWeightLbl(); updateWeightDisp();
+    if(isCardio(exName)){
+      // restore from existing entry if editing
+      const ex2=exId?(db.schedule?.[dayKey]||[]).find(e=>e.id===exId):null;
+      cardioDist=ex2?.distance||0; cardioMin=ex2?.duration?Math.floor(ex2.duration/60):0; cardioSec=ex2?.duration?ex2.duration%60:0;
+    }
+    updateWeightLbl(); updateWeightDisp(); updateCardioFields();
+  } else {
+    document.getElementById('strengthFields').style.display='block';
+    document.getElementById('cardioFields').style.display='none';
   }
   buildPicker('');
   document.getElementById('exOverlay').classList.add('open');
@@ -1754,13 +1873,53 @@ function buildPicker(q){
   }
 }
 
+function isCardio(name){return CARDIO_EX.has(name);}
+
+function updateCardioFields(){
+  const cardio=isCardio(exName);
+  document.getElementById('strengthFields').style.display=cardio?'none':'block';
+  document.getElementById('cardioFields').style.display=cardio?'block':'none';
+  updateCardioDisp();
+}
+function updateCardioDisp(){
+  const totalSec=cardioMin*60+cardioSec;
+  const distBig=document.getElementById('cardioDistBig');
+  const timeBig=document.getElementById('cardioTimeBig');
+  if(distBig){
+    const km=cardioDist>=1000?(cardioDist/1000).toFixed(cardioDist%1000===0?0:1)+' km':cardioDist+' m';
+    distBig.innerHTML=km;
+  }
+  if(timeBig){
+    const m=Math.floor(totalSec/60),s=totalSec%60;
+    timeBig.innerHTML=`${m}:${String(s).padStart(2,'0')}<small> min</small>`;
+  }
+  const speedEl=document.getElementById('cardioSpeedDisp');
+  if(cardioDist>0&&totalSec>0){
+    const kmh=(cardioDist/1000)/(totalSec/3600);
+    speedEl.textContent=`${kmh.toFixed(1)} km/h`;
+  } else {
+    speedEl.textContent='';
+  }
+}
+
 function selectEx(name){
   exName=name;
   document.getElementById('exSearch').value=name;
   document.getElementById('exSelectedLbl').textContent=name;
   document.getElementById('exInputBlock').style.display='block';
-  if(BODYWEIGHT_EX.has(name)&&!exId) exWeight=0;
+  if(isCardio(name)){
+    cardioDist=0;cardioMin=0;cardioSec=0;
+  } else {
+    // always ensure values are valid numbers when switching to strength
+    if(isNaN(exWeight)||exWeight===undefined||exWeight===null) exWeight=60;
+    if(isNaN(exSets)||exSets===undefined||exSets===null) exSets=3;
+    if(isNaN(exReps)||exReps===undefined||exReps===null) exReps=8;
+    if(BODYWEIGHT_EX.has(name)&&!exId) exWeight=0;
+  }
   updateWeightLbl(); updateWeightDisp();
+  document.getElementById('setsVal').textContent=exSets;
+  document.getElementById('repsVal').textContent=exReps;
+  updateCardioFields();
   buildPicker('');
 }
 
@@ -1795,6 +1954,65 @@ document.querySelectorAll('.ws-btn').forEach(btn=>{
     updateWeightDisp();
   });
 });
+// cardio direct input
+function openCardioInp(field){
+  if(field==='dist'){
+    const big=document.getElementById('cardioDistBig');
+    const inp=document.getElementById('cardioDistInp');
+    inp.value=cardioDist;
+    big.style.display='none'; inp.style.display='block'; inp.focus(); inp.select();
+  } else {
+    const big=document.getElementById('cardioTimeBig');
+    const inp=document.getElementById('cardioTimeInp');
+    const m=cardioMin, s=cardioSec;
+    inp.value=`${m}:${String(s).padStart(2,'0')}`;
+    big.style.display='none'; inp.style.display='block'; inp.focus(); inp.select();
+  }
+}
+document.getElementById('cardioDistInp').addEventListener('blur',()=>{
+  const inp=document.getElementById('cardioDistInp');
+  const v=parseInt(inp.value);
+  if(!isNaN(v)) cardioDist=Math.max(0,v);
+  inp.style.display='none';
+  document.getElementById('cardioDistBig').style.display='';
+  updateCardioDisp();
+});
+document.getElementById('cardioDistInp').addEventListener('keydown',e=>{if(e.key==='Enter')e.target.blur();});
+document.getElementById('cardioTimeInp').addEventListener('blur',()=>{
+  const inp=document.getElementById('cardioTimeInp');
+  const raw=inp.value.trim();
+  const parts=raw.split(':');
+  if(parts.length===2){
+    const m=parseInt(parts[0]),s=parseInt(parts[1]);
+    if(!isNaN(m)&&!isNaN(s)){ cardioMin=Math.max(0,m); cardioSec=Math.max(0,Math.min(59,s)); }
+  } else {
+    const t=parseInt(raw);
+    if(!isNaN(t)){ cardioMin=Math.floor(t/60); cardioSec=t%60; }
+  }
+  inp.style.display='none';
+  document.getElementById('cardioTimeBig').style.display='';
+  updateCardioDisp();
+});
+document.getElementById('cardioTimeInp').addEventListener('keydown',e=>{if(e.key==='Enter')e.target.blur();});
+
+// cardio buttons
+document.querySelectorAll('[data-cd]').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    const d=parseInt(btn.dataset.cd);
+    cardioDist=Math.max(0,cardioDist+(btn.classList.contains('minus')?-d:d));
+    updateCardioDisp();
+  });
+});
+document.querySelectorAll('[data-ct]').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    const d=parseInt(btn.dataset.ct);
+    let total=cardioMin*60+cardioSec+(btn.classList.contains('minus')?-d:d);
+    total=Math.max(0,total);
+    cardioMin=Math.floor(total/60); cardioSec=total%60;
+    updateCardioDisp();
+  });
+});
+
 document.getElementById('setsMinus').addEventListener('click',()=>{exSets=Math.max(1,exSets-1);document.getElementById('setsVal').textContent=exSets;});
 document.getElementById('setsPlus').addEventListener('click',()=>{exSets=Math.min(20,exSets+1);document.getElementById('setsVal').textContent=exSets;});
 document.getElementById('repsMinus').addEventListener('click',()=>{exReps=Math.max(1,exReps-1);document.getElementById('repsVal').textContent=exReps;});
@@ -1813,7 +2031,10 @@ document.getElementById('exSave').addEventListener('click',()=>{
 
   // use the schedule entry's id as the stable link to its history row
   const entryId = exId || uid();
-  const entry={id:entryId,name,weight:exWeight,sets:exSets,reps:exReps};
+  const cardio=isCardio(name);
+  const entry=cardio
+    ?{id:entryId,name,distance:cardioDist,duration:cardioMin*60+cardioSec}
+    :{id:entryId,name,weight:exWeight,sets:exSets,reps:exReps};
   if(exId){
     db.schedule[exDay]=db.schedule[exDay].map(e=>e.id===exId?entry:e);
   }else{
@@ -1821,12 +2042,17 @@ document.getElementById('exSave').addEventListener('click',()=>{
   }
 
   // update or insert the matching history row
-  const histEntry={name,weight:exWeight,sets:exSets,reps:exReps,date:new Date().toISOString(),day:exDay,_entryId:entryId};
+  const histEntry=cardio
+    ?{name,distance:cardioDist,duration:cardioMin*60+cardioSec,date:new Date().toISOString(),day:exDay,_entryId:entryId}
+    :{name,weight:exWeight,sets:exSets,reps:exReps,date:new Date().toISOString(),day:exDay,_entryId:entryId};
   const histIdx=db.history.findIndex(h=>h._entryId===entryId);
   if(histIdx>=0) db.history[histIdx]=histEntry; else db.history.push(histEntry);
 
-  // when editing an existing entry, only let PR go up (never down)
-  if(exId) recomputePR(name,true); else recomputePR(name);
+  if(cardio){
+    recomputePR(name);
+  } else {
+    recomputePR(name);
+  }
   persist();
   closeExModal();
   renderTodaySession();
