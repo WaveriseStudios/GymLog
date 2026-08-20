@@ -887,7 +887,7 @@ function renderProfileTab(){
       rankEl.textContent=`${r.tier.label} ${ROMAN[r.div-1]}`;
     } else {
       rankEl.className='';rankEl.style.cssText='color:var(--t3);font-size:11px;margin-top:6px';
-      rankEl.textContent='Log workouts to rank';
+      rankEl.textContent='Set your profile to rank';
     }
   }
   // stats
@@ -1152,7 +1152,7 @@ function calcOverallRank(){
   const p=db.profile;
   if(!p?.weight)return null;
   const prs=Object.entries(db.prs||{}).filter(([n,pr])=>!pr._cardio);
-  if(!prs.length)return null;
+  if(!prs.length)return{...scoreToTierDiv(0),count:0};
   const scores=prs.map(([n,pr])=>calcExScore(pr,p,n));
   const avg=scores.reduce((a,b)=>a+b,0)/scores.length;
   return{...scoreToTierDiv(avg),count:prs.length};
