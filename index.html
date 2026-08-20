@@ -13,7 +13,10 @@
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Syne:wght@500;600;700;800&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+*{-webkit-tap-highlight-color:transparent;}
 button{cursor:pointer;font-family:inherit;border:none;background:transparent;}
+.tap-scale{transition:transform .12s ease,opacity .12s ease;}
+.tap-scale:active{transform:scale(.93);opacity:.75;}
 
 :root{
   --linen:  #e0e2db;
@@ -468,7 +471,7 @@ body{
     </div>
     <div class="greeting">
       <span class="sub" id="greetSub">Good evening,</span>
-      <span class="name" id="greetName">Athlete.</span>
+      <span class="name tap-scale" id="greetName" style="cursor:pointer;display:inline-block" onclick="goScr('spr',1)">Athlete.</span>
     </div>
     <div class="sb">
       <div id="rankCard" style="margin:0 0 12px"></div>
@@ -504,7 +507,7 @@ body{
     <div class="sb">
       <!-- avatar + identity -->
       <div class="prf-hero">
-        <label class="prf-av" id="scrProfileAv" for="profAvatarInput" style="cursor:pointer">G</label>
+        <label class="prf-av tap-scale" id="scrProfileAv" for="profAvatarInput" style="cursor:pointer">G</label>
         <div class="prf-hero-name" id="scrProfileHeroName">Athlete</div>
         <div id="scrProfileRank"></div>
       </div>
@@ -905,6 +908,8 @@ function goScr(t, dir){
   if(t==='sp') renderPRs();
   if(t==='spr') renderProfileTab();
   sessionStorage.setItem('gymlog_scr',t);
+  // push a history entry so back button returns to previous tab, not closes app
+  history.pushState({scr:t}, '', '');
 
   const next = document.getElementById(t);
   if(!cur){ next.classList.add('on'); return; }
@@ -953,6 +958,36 @@ document.querySelectorAll('.nb').forEach(b=>{
     if(dx>0 && cur>0)                  goScr(NAV_ORDER[cur-1], -1);
   },{passive:true});
 })();
+
+/* ── BACK BUTTON / GESTURE ── */
+// seed an initial state so the very first popstate has somewhere to go back from
+history.replaceState({scr:'sh'}, '', '');
+window.addEventListener('popstate', e=>{
+  // if any overlay is open, close it instead
+  const openOverlay = document.querySelector('.overlay.open');
+  if(openOverlay){ openOverlay.classList.remove('open'); history.pushState({scr: document.querySelector('.scr.on')?.id||'sh'}, '', ''); return; }
+  const cur = document.querySelector('.scr.on')?.id;
+  const idx = NAV_ORDER.indexOf(cur);
+  if(idx > 0){
+    // go back one tab without pushing a new history entry
+    const prev = NAV_ORDER[idx-1];
+    sessionStorage.setItem('gymlog_scr', prev);
+    if(prev==='sh') renderTodaySession();
+    if(prev==='sw') renderWeek();
+    if(prev==='sp') renderPRs();
+    if(prev==='spr') renderProfileTab();
+    document.querySelectorAll('.nb').forEach(n=>n.classList.toggle('on', n.dataset.t===prev));
+    const next = document.getElementById(prev);
+    const active = document.getElementById(cur);
+    next.classList.add('on','scr-el');
+    active.classList.add('scr-xr');
+    next.addEventListener('animationend',()=>next.classList.remove('scr-el'),{once:true});
+    active.addEventListener('animationend',()=>active.classList.remove('on','scr-xr'),{once:true});
+    // push a replacement so there's still a buffer entry for the next back press
+    history.pushState({scr:prev}, '', '');
+  }
+  // if already on first tab, let the browser/OS handle it (closes app)
+});
 
 /* ── WEEK SWIPE (set up once) ── */
 (function(){
