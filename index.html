@@ -385,13 +385,13 @@ body{
 .set-toggle[aria-pressed="true"] .set-toggle-knob{transform:translateX(20px);}
 
 /* ── SPLASH ── */
-#splash{position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;transition:opacity .4s ease;}
+#splash{position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;transition:opacity .6s ease;}
 #splash.hide{opacity:0;pointer-events:none;}
-#splash-logo{animation:splashPop .55s cubic-bezier(.34,1.56,.64,1) both;}
-#splash-wordmark{font-family:'Barlow Condensed',sans-serif;font-size:38px;font-weight:900;letter-spacing:4px;text-transform:uppercase;color:var(--t1);animation:splashRise .5s cubic-bezier(.22,1,.36,1) .22s both;}
-#splash-sub{font-size:10px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--t3);animation:splashRise .5s cubic-bezier(.22,1,.36,1) .36s both;}
-@keyframes splashPop{from{transform:scale(.5);opacity:0}to{transform:scale(1);opacity:1}}
-@keyframes splashRise{from{transform:translateY(12px);opacity:0}to{transform:translateY(0);opacity:1}}
+#splash-logo{animation:splashPop .9s cubic-bezier(.34,1.46,.64,1) both;}
+#splash-wordmark{font-family:'Barlow Condensed',sans-serif;font-size:36px;font-weight:900;letter-spacing:5px;text-transform:uppercase;color:var(--t1);animation:splashRise .7s cubic-bezier(.22,1,.36,1) .45s both;}
+#splash-sub{font-size:10px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--t3);animation:splashRise .7s cubic-bezier(.22,1,.36,1) .65s both;}
+@keyframes splashPop{from{transform:scale(.45);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes splashRise{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
 </style>
 </head>
 <body>
@@ -1844,12 +1844,22 @@ applyTheme(localStorage.getItem(THEME_KEY)||'carbon');
 (function(){
   const splash=document.getElementById('splash');
   if(!splash) return;
-  // wait for fonts + first paint, then fade out
-  const dismiss=()=>{splash.classList.add('hide');setTimeout(()=>splash.remove(),450);};
+  // populate with current rank
+  const r=calcOverallRank();
+  const color=r?TIER_COLORS[r.tier.id]:'var(--acc)';
+  const divLabel=r?ROMAN[r.div-1]:'I';
+  const rankLabel=r?`${r.tier.label} ${ROMAN[r.div-1]}`:'Iron I';
+  document.getElementById('splash-logo').innerHTML=`
+    <svg width="90" height="90" viewBox="2 0 56 68" xmlns="http://www.w3.org/2000/svg" style="filter:drop-shadow(0 8px 28px ${color}bb)">
+      <path d="${SHIELD_PATH}" fill="${color}" stroke="${color}" stroke-width="1.5" stroke-linejoin="round"/>
+      <text x="30" y="37" text-anchor="middle" dominant-baseline="central" font-family="Barlow Condensed,sans-serif" font-size="22" font-weight="900" fill="#fff">${divLabel}</text>
+    </svg>`;
+  document.getElementById('splash-wordmark').textContent=rankLabel;
+  const dismiss=()=>{splash.classList.add('hide');setTimeout(()=>splash.remove(),600);};
   if(document.fonts){
-    document.fonts.ready.then(()=>setTimeout(dismiss,700));
+    document.fonts.ready.then(()=>setTimeout(dismiss,1400));
   } else {
-    setTimeout(dismiss,900);
+    setTimeout(dismiss,1700);
   }
 })();
 
