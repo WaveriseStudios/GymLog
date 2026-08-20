@@ -277,6 +277,12 @@ body{
 .pills{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px;}
 .pill{background:var(--card);border:1.5px solid var(--bdr);border-radius:20px;padding:7px 13px;font-size:13px;font-weight:600;color:var(--t2);cursor:pointer;white-space:nowrap;}
 .pill.active{background:var(--acc);border-color:var(--acc);color:var(--card);}
+.ex-search-sticky{position:sticky;top:0;z-index:5;background:var(--bg2);padding:10px 18px 6px;margin:0 -18px;}
+
+.ex-backdrop{position:fixed;inset:0;z-index:209;background:rgba(0,0,0,.55);opacity:0;pointer-events:none;transition:opacity .28s;}
+.ex-backdrop.visible{opacity:1;pointer-events:auto;}
+.ex-weight-panel{position:fixed;bottom:0;left:0;right:0;z-index:210;background:var(--bg2);border-radius:22px 22px 0 0;padding-bottom:calc(env(safe-area-inset-bottom,0px) + 16px);padding-top:10px;transform:translateY(100%);transition:transform .28s cubic-bezier(.32,.72,0,1);}
+.ex-weight-panel.visible{transform:translateY(0);}
 
 /* weight + steppers */
 .input-block{margin-top:16px;border-top:1px solid var(--bdr);padding-top:16px;}
@@ -559,73 +565,83 @@ input[type=number]{-moz-appearance:textfield;}
       <button class="sheet-x" id="exClose">×</button>
     </div>
     <div class="sheet-body">
-      <input class="ex-search-inp" id="exSearch" type="text" placeholder="Search or type custom…" autocomplete="off" autocorrect="off" autocapitalize="words" spellcheck="false">
-      <div id="exPickerList"></div>
-      <div class="input-block" id="exInputBlock" style="display:none">
-        <span class="input-lbl" id="exSelectedLbl">Exercise</span>
-
-        <!-- STRENGTH fields -->
-        <div id="strengthFields">
-          <span class="input-lbl" id="weightLbl" style="margin-top:4px">Weight</span>
-          <div class="weight-big" id="weightBig">60<small> kg</small></div>
-          <input class="weight-direct" id="weightDirect" type="number" inputmode="decimal" style="display:none" min="0" max="500" step="2.5">
-          <div class="weight-steps">
-            <button class="ws-btn minus" data-d="10">−10</button>
-            <button class="ws-btn minus" data-d="5">−5</button>
-            <button class="ws-btn minus" data-d="1">−1</button>
-            <button class="ws-btn" data-d="1">+1</button>
-            <button class="ws-btn" data-d="5">+5</button>
-            <button class="ws-btn" data-d="10">+10</button>
-          </div>
-          <div class="steppers">
-            <div class="stepper">
-              <span class="stepper-lbl">Sets</span>
-              <div class="stepper-row">
-                <button class="step-btn" id="setsMinus">−</button>
-                <span class="step-val" id="setsVal">3</span>
-                <button class="step-btn" id="setsPlus">＋</button>
-              </div>
-            </div>
-            <div class="stepper">
-              <span class="stepper-lbl">Reps</span>
-              <div class="stepper-row">
-                <button class="step-btn" id="repsMinus">−</button>
-                <span class="step-val" id="repsVal">8</span>
-                <button class="step-btn" id="repsPlus">＋</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- CARDIO fields -->
-        <div id="cardioFields" style="display:none">
-          <span class="input-lbl" id="cardioDistLbl" style="margin-top:4px">Distance</span>
-          <div class="weight-big" id="cardioDistBig" style="cursor:pointer" onclick="openCardioInp('dist')">0<small> m</small></div>
-          <input class="weight-direct" id="cardioDistInp" type="number" inputmode="numeric" style="display:none" min="0">
-          <div class="weight-steps">
-            <button class="ws-btn minus" data-cd="1000">−1km</button>
-            <button class="ws-btn minus" data-cd="100">−100m</button>
-            <button class="ws-btn minus" data-cd="10">−10</button>
-            <button class="ws-btn" data-cd="10">+10</button>
-            <button class="ws-btn" data-cd="100">+100m</button>
-            <button class="ws-btn" data-cd="1000">+1km</button>
-          </div>
-          <span class="input-lbl" style="margin-top:14px">Time</span>
-          <div class="weight-big" id="cardioTimeBig" style="cursor:pointer" onclick="openCardioInp('time')">0:00<small> min</small></div>
-          <input class="weight-direct" id="cardioTimeInp" type="text" inputmode="numeric" placeholder="M:SS" style="display:none">
-          <div class="weight-steps">
-            <button class="ws-btn minus" data-ct="300">−5min</button>
-            <button class="ws-btn minus" data-ct="30">−30s</button>
-            <button class="ws-btn minus" data-ct="5">−5s</button>
-            <button class="ws-btn" data-ct="5">+5s</button>
-            <button class="ws-btn" data-ct="30">+30s</button>
-            <button class="ws-btn" data-ct="300">+5min</button>
-          </div>
-          <div id="cardioSpeedDisp" style="text-align:center;font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:900;color:var(--acc);margin:14px 0 4px"></div>
-        </div>
-
-        <button class="btn-save" id="exSave">Save Exercise</button>
+      <div class="ex-search-sticky">
+        <input class="ex-search-inp" id="exSearch" type="text" placeholder="Search or type custom…" autocomplete="off" autocorrect="off" autocapitalize="words" spellcheck="false" style="margin-bottom:0">
       </div>
+      <div id="exPickerList" style="padding-top:14px"></div>
+    </div>
+  </div>
+  <div id="exBackdrop" class="ex-backdrop" onclick="document.getElementById('exInputBlock').classList.remove('visible');document.getElementById('exBackdrop').classList.remove('visible');exName='';"></div>
+  <!-- Weight panel slides up on top of the exercise list -->
+  <div id="exInputBlock" class="ex-weight-panel">
+    <div class="sheet-pull" style="margin-bottom:8px"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:0 18px 14px">
+      <span class="sheet-title" id="exSelectedLbl" style="font-size:18px"></span>
+      <button class="sheet-x" onclick="document.getElementById('exInputBlock').classList.remove('visible');document.getElementById('exBackdrop').classList.remove('visible');exName='';">×</button>
+    </div>
+
+    <!-- STRENGTH fields -->
+    <div id="strengthFields" style="padding:0 18px">
+      <span class="input-lbl" id="weightLbl" style="margin-top:4px">Weight</span>
+      <div class="weight-big" id="weightBig">60<small> kg</small></div>
+      <input class="weight-direct" id="weightDirect" type="number" inputmode="decimal" style="display:none" min="0" max="500" step="2.5">
+      <div class="weight-steps">
+        <button class="ws-btn minus" data-d="10">−10</button>
+        <button class="ws-btn minus" data-d="5">−5</button>
+        <button class="ws-btn minus" data-d="1">−1</button>
+        <button class="ws-btn" data-d="1">+1</button>
+        <button class="ws-btn" data-d="5">+5</button>
+        <button class="ws-btn" data-d="10">+10</button>
+      </div>
+      <div class="steppers">
+        <div class="stepper">
+          <span class="stepper-lbl">Sets</span>
+          <div class="stepper-row">
+            <button class="step-btn" id="setsMinus">−</button>
+            <span class="step-val" id="setsVal">3</span>
+            <button class="step-btn" id="setsPlus">＋</button>
+          </div>
+        </div>
+        <div class="stepper">
+          <span class="stepper-lbl">Reps</span>
+          <div class="stepper-row">
+            <button class="step-btn" id="repsMinus">−</button>
+            <span class="step-val" id="repsVal">8</span>
+            <button class="step-btn" id="repsPlus">＋</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CARDIO fields -->
+    <div id="cardioFields" style="display:none;padding:0 18px">
+      <span class="input-lbl" id="cardioDistLbl" style="margin-top:4px">Distance</span>
+      <div class="weight-big" id="cardioDistBig" style="cursor:pointer" onclick="openCardioInp('dist')">0<small> m</small></div>
+      <input class="weight-direct" id="cardioDistInp" type="number" inputmode="numeric" style="display:none" min="0">
+      <div class="weight-steps">
+        <button class="ws-btn minus" data-cd="1000">−1km</button>
+        <button class="ws-btn minus" data-cd="100">−100m</button>
+        <button class="ws-btn minus" data-cd="10">−10</button>
+        <button class="ws-btn" data-cd="10">+10</button>
+        <button class="ws-btn" data-cd="100">+100m</button>
+        <button class="ws-btn" data-cd="1000">+1km</button>
+      </div>
+      <span class="input-lbl" style="margin-top:14px">Time</span>
+      <div class="weight-big" id="cardioTimeBig" style="cursor:pointer" onclick="openCardioInp('time')">0:00<small> min</small></div>
+      <input class="weight-direct" id="cardioTimeInp" type="text" inputmode="numeric" placeholder="M:SS" style="display:none">
+      <div class="weight-steps">
+        <button class="ws-btn minus" data-ct="300">−5min</button>
+        <button class="ws-btn minus" data-ct="30">−30s</button>
+        <button class="ws-btn minus" data-ct="5">−5s</button>
+        <button class="ws-btn" data-ct="5">+5s</button>
+        <button class="ws-btn" data-ct="30">+30s</button>
+        <button class="ws-btn" data-ct="300">+5min</button>
+      </div>
+      <div id="cardioSpeedDisp" style="text-align:center;font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:900;color:var(--acc);margin:14px 0 4px"></div>
+    </div>
+
+    <div style="padding:0 18px">
+      <button class="btn-save" id="exSave">Save Exercise</button>
     </div>
   </div>
 </div>
@@ -1816,7 +1832,7 @@ function openExModal(dayKey,editId,prefillName){
   document.getElementById('exSearch').value=exName;
   document.getElementById('setsVal').textContent=exSets;
   document.getElementById('repsVal').textContent=exReps;
-  document.getElementById('exInputBlock').style.display=exName?'block':'none';
+  document.getElementById('exInputBlock').classList.toggle('visible',!!exName);
   if(exName){
     document.getElementById('exSelectedLbl').textContent=exName;
     if(isCardio(exName)){
@@ -1830,11 +1846,14 @@ function openExModal(dayKey,editId,prefillName){
     document.getElementById('cardioFields').style.display='none';
   }
   buildPicker('');
+  document.querySelector('#exOverlay .sheet').scrollTop=0;
   document.getElementById('exOverlay').classList.add('open');
 }
 
 function closeExModal(){
   document.getElementById('exOverlay').classList.remove('open');
+  document.getElementById('exInputBlock').classList.remove('visible');
+  document.getElementById('exBackdrop').classList.remove('visible');
   exDay=null;exId=null;exName='';
 }
 
@@ -1844,10 +1863,11 @@ function buildPicker(q){
   if(q){
     const all=Object.values(EX_DB).flat().filter(n=>n.toLowerCase().includes(q.toLowerCase()));
     const pills=document.createElement('div'); pills.className='pills';
-    all.slice(0,14).forEach(n=>{
+    all.slice(0,20).forEach(n=>{
       const p=document.createElement('div');
       p.className='pill'+(n===exName?' active':'');
-      p.textContent=n; p.addEventListener('click',()=>selectEx(n));
+      p.textContent=n;
+      p.addEventListener('click',()=>selectEx(n));
       pills.appendChild(p);
     });
     if(!all.length){const m=document.createElement('div');m.style.cssText='font-size:13px;color:var(--t3);padding:6px 0 10px';m.textContent='No match — save below to use as custom.';wrap.appendChild(m);}
@@ -1860,6 +1880,9 @@ function buildPicker(q){
         const p=document.createElement('div');
         p.className='pill'+(n===exName?' active':'');
         p.textContent=n; p.addEventListener('click',()=>selectEx(n));
+        p.addEventListener('touchstart',()=>p.classList.add('pressing'),{passive:true});
+        p.addEventListener('touchend',()=>setTimeout(()=>p.classList.remove('pressing'),150),{passive:true});
+        p.addEventListener('touchcancel',()=>p.classList.remove('pressing'),{passive:true});
         pills.appendChild(p);
       });
       wrap.appendChild(pills);
@@ -1900,7 +1923,7 @@ function selectEx(name){
   exName=name;
   document.getElementById('exSearch').value=name;
   document.getElementById('exSelectedLbl').textContent=name;
-  document.getElementById('exInputBlock').style.display='block';
+  document.getElementById('exInputBlock').classList.add('visible');document.getElementById('exBackdrop').classList.add('visible');
   if(isCardio(name)){
     cardioDist=0;cardioMin=0;cardioSec=0;
   } else {
@@ -1914,7 +1937,10 @@ function selectEx(name){
   document.getElementById('setsVal').textContent=exSets;
   document.getElementById('repsVal').textContent=exReps;
   updateCardioFields();
-  buildPicker('');
+  // update active pill in-place so the press animation isn't cut short
+  document.querySelectorAll('#exPickerList .pill').forEach(el=>{
+    el.classList.toggle('active',el.textContent===name);
+  });
 }
 
 function updateWeightLbl(){
@@ -2014,7 +2040,7 @@ document.getElementById('repsPlus').addEventListener('click',()=>{exReps=Math.mi
 
 document.getElementById('exSearch').addEventListener('input',e=>{
   buildPicker(e.target.value);
-  if(!e.target.value){exName='';document.getElementById('exInputBlock').style.display='none';}
+  if(!e.target.value){exName='';document.getElementById('exInputBlock').classList.remove('visible');document.getElementById('exBackdrop').classList.remove('visible');}
 });
 
 document.getElementById('exSave').addEventListener('click',()=>{
@@ -2358,9 +2384,11 @@ applyTheme(localStorage.getItem(THEME_KEY)||'carbon');
 
 /* ── PULL-TO-REFRESH ── */
 (function(){
-  const app=document.getElementById('app');
-  const THRESHOLD=150;
+  const THRESHOLD=220;
   let startY=0,pulling=false,triggered=false;
+
+  function getScr(){return document.querySelector('.scr.on');}
+  function reset(scr){if(scr){scr.style.transition='none';scr.style.transform='';}}
 
   document.addEventListener('touchstart',e=>{
     if(document.querySelector('.overlay.open')) return;
@@ -2374,25 +2402,29 @@ applyTheme(localStorage.getItem(THEME_KEY)||'carbon');
   document.addEventListener('touchmove',e=>{
     if(!pulling||triggered)return;
     const dy=e.touches[0].clientY-startY;
-    if(dy<=0){app.style.transform='';return;}
-    app.style.transition='none';
-    app.style.transform=`translateY(${Math.min(dy*0.25,40)}px)`;
+    const scr=getScr();
+    if(dy<=0){reset(scr);return;}
+    if(scr){scr.style.transition='none';scr.style.transform=`translateY(${Math.min(dy*0.25,50)}px)`;}
   },{passive:true});
 
   document.addEventListener('touchend',e=>{
     if(!pulling)return;
     pulling=false;
+    const scr=getScr();
     const dy=e.changedTouches[0].clientY-startY;
     if(dy>=THRESHOLD&&!triggered){
       triggered=true;
-      app.style.transition='transform .25s ease-in';
-      app.style.transform='translateY(100vh)';
-      setTimeout(()=>location.reload(),280);
+      reset(scr);
+      location.reload();
     } else {
-      app.style.transition='transform .3s ease';
-      app.style.transform='';
-      setTimeout(()=>app.style.transition='',320);
+      reset(scr);
     }
+  },{passive:true});
+
+  document.addEventListener('touchcancel',()=>{
+    if(!pulling)return;
+    pulling=false;
+    reset(getScr());
   },{passive:true});
 })();
 
