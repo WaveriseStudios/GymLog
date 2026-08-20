@@ -442,7 +442,7 @@ input[type=number]{-moz-appearance:textfield;}
 #rankUpNewIcon.ru-enter{animation:ruIconCrash .75s cubic-bezier(.2,1,.4,1) forwards;}
 #rankUpNewIcon.ru-enter-derank{transform:scale(1);opacity:.85;transition:transform .7s cubic-bezier(.2,.8,.4,1),opacity .5s ease;}
 /* title — crashes in */
-#rankUpTitle{font-family:'AoyagiSoseki',sans-serif;font-size:58px;font-weight:normal;letter-spacing:2px;line-height:1;text-align:center;opacity:0;}
+#rankUpTitle{font-family:'Barlow Condensed',sans-serif;font-size:52px;font-weight:900;letter-spacing:-1px;line-height:1;text-align:center;opacity:0;}
 @keyframes ruTitleCrash{0%{transform:scale(2.4);opacity:0}50%{transform:scale(.94);opacity:1}75%{transform:scale(1.04)}100%{transform:scale(1);opacity:1}}
 #rankUpTitle.ru-title-in{animation:ruTitleCrash .6s cubic-bezier(.2,1,.4,1) forwards;}
 #rankUpHint{font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--t2);margin-top:40px;opacity:0;}
@@ -1010,7 +1010,7 @@ function renderProfileTab(){
     const row=document.createElement('div');
     row.className='ex-row divr';
     row.innerHTML=`
-      <div class="ex-left"><div class="ex-name">${exName}</div><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">${badgeHtml}<span style="color:var(--t3);font-size:11px;font-weight:600">${pr.date?new Date(pr.date).toLocaleDateString('en',{month:'short',day:'numeric'}):''}</span></div></div>
+      <div class="ex-left"><div class="ex-name">${exName}</div><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">${badgeHtml}<span style="color:var(--t3);font-size:11px;font-weight:600">${(pr.day||pr.date)?new Date(pr.day||pr.date).toLocaleDateString('en',{month:'short',day:'numeric'}):''}</span></div></div>
       <div class="ex-nums">${valHtml}</div>`;
     card.appendChild(row);
   });
@@ -1281,7 +1281,7 @@ function recomputePR(name, onlyIfBetter=false){
       return spd>acc.spd?{spd,h}:acc;
     },{spd:-1,h:null});
     if(onlyIfBetter&&db.prs[name]&&best.spd<=db.prs[name]._spd) return;
-    db.prs[name]={distance:best.h.distance,duration:best.h.duration,_spd:best.spd,date:best.h.date,_cardio:true};
+    db.prs[name]={distance:best.h.distance,duration:best.h.duration,_spd:best.spd,date:best.h.date,day:best.h.day,_cardio:true};
     return;
   }
   const bw=db.profile?.weight||0;
@@ -1300,7 +1300,7 @@ function recomputePR(name, onlyIfBetter=false){
     const curRm=calcEpley(curBase,cur.reps,cap);
     if(best.rm<=curRm) return;
   }
-  db.prs[name]={weight:best.h.weight,sets:best.h.sets,reps:best.h.reps,date:best.h.date};
+  db.prs[name]={weight:best.h.weight,sets:best.h.sets,reps:best.h.reps,date:best.h.date,day:best.h.day};
 }
 
 function renderRankCard(){
