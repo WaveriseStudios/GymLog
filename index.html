@@ -66,11 +66,6 @@ body{
 .sb::-webkit-scrollbar{display:none;}
 
 /* pull-to-refresh */
-#ptr{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;justify-content:center;height:56px;pointer-events:none;transform:translateY(-56px);transition:transform .2s ease,opacity .2s ease;opacity:0;}
-#ptr.pulling{transition:none;}
-#ptr.ready{opacity:1;}
-#ptr svg{width:22px;height:22px;stroke:var(--acc);stroke-width:2.2;fill:none;transition:transform .3s ease;}
-#ptr.ready svg{transform:rotate(180deg);}
 
 /* nav */
 .nav{
@@ -461,9 +456,6 @@ input[type=number]{-moz-appearance:textfield;}
   <div id="splash-sub">Track · Rank · Improve</div>
 </div>
 
-<div id="ptr">
-  <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-</div>
 
 <input type="file" id="profAvatarInput" accept="image/*" style="display:none">
 <div id="app">
@@ -2366,15 +2358,13 @@ applyTheme(localStorage.getItem(THEME_KEY)||'carbon');
 
 /* ── PULL-TO-REFRESH ── */
 (function(){
-  const ptr=document.getElementById('ptr');
+  const app=document.getElementById('app');
   const THRESHOLD=150;
   let startY=0,pulling=false,triggered=false;
 
   document.addEventListener('touchstart',e=>{
-    // bail if any overlay/sheet is open or touch starts inside one
     if(document.querySelector('.overlay.open')) return;
     if(e.target.closest('.sheet,.overlay')) return;
-    // only start if the active scroll body is at the very top
     const sb=document.querySelector('.scr.on .sb');
     if(!sb||sb.scrollTop>0) return;
     startY=e.touches[0].clientY;
@@ -2384,12 +2374,9 @@ applyTheme(localStorage.getItem(THEME_KEY)||'carbon');
   document.addEventListener('touchmove',e=>{
     if(!pulling||triggered)return;
     const dy=e.touches[0].clientY-startY;
-    if(dy<=0){ptr.style.transform='';ptr.style.opacity='0';ptr.classList.remove('pulling','ready');return;}
-    ptr.classList.add('pulling');
-    ptr.style.transform=`translateY(${Math.min(-56+dy*(66/THRESHOLD),10)}px)`;
-    ptr.style.opacity=Math.min(dy/THRESHOLD,1);
-    if(dy>=THRESHOLD) ptr.classList.add('ready');
-    else ptr.classList.remove('ready');
+    if(dy<=0){app.style.transform='';return;}
+    app.style.transition='none';
+    app.style.transform=`translateY(${Math.min(dy*0.25,40)}px)`;
   },{passive:true});
 
   document.addEventListener('touchend',e=>{
@@ -2398,13 +2385,13 @@ applyTheme(localStorage.getItem(THEME_KEY)||'carbon');
     const dy=e.changedTouches[0].clientY-startY;
     if(dy>=THRESHOLD&&!triggered){
       triggered=true;
-      ptr.style.display='none';
-      setTimeout(()=>location.reload(),90);
+      app.style.transition='transform .25s ease-in';
+      app.style.transform='translateY(100vh)';
+      setTimeout(()=>location.reload(),280);
     } else {
-      ptr.classList.remove('pulling','ready');
-      ptr.style.transition='none';
-      ptr.style.transform='';
-      ptr.style.opacity='0';
+      app.style.transition='transform .3s ease';
+      app.style.transform='';
+      setTimeout(()=>app.style.transition='',320);
     }
   },{passive:true});
 })();
