@@ -1028,9 +1028,11 @@ _auth.onAuthStateChanged(async user => {
     renderPRs();
     renderBestPRs();
     renderTodaySession();
+    renderFriendsTab();
     showToast('✓ Signed in as ' + (user.displayName || user.email).split(' ')[0]);
   } else {
     renderProfileTab();
+    renderFriendsTab();
   }
 });
 
