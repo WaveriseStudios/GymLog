@@ -1,0 +1,19 @@
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <!-- Amethyst gem — #F472B6 pink palette -->
+  <polygon points="34,8 66,8 90,32 90,68 66,92 34,92 10,68 10,32" fill="#D848980"/>
+  <polygon points="40,20 60,20 76,36 76,64 60,80 40,80 24,64 24,36" fill="#F898C8"/>
+  <polygon points="34,8 66,8 60,20 40,20" fill="#FFB4D8"/>
+  <polygon points="10,32 24,36 24,64 10,68" fill="#F472B6"/>
+  <polygon points="90,32 76,36 76,64 90,68" fill="#98086050"/>
+  <polygon points="34,92 66,92 60,80 40,80" fill="#780048"/>
+  <polygon points="10,32 34,8 40,20 24,36" fill="#FFD8EE"/>
+  <polygon points="66,8 90,32 76,36 60,20" fill="#C84898"/>
+  <polygon points="10,68 34,92 40,80 24,64" fill="#580030"/>
+  <polygon points="90,68 66,92 60,80 76,64" fill="#380018"/>
+  <polygon points="44,28 56,28 66,40 66,60 56,72 44,72 34,60 34,40" fill="#FFE0F4" opacity="0.5"/>
+  <polygon points="40,20 54,20 48,30 36,30" fill="white" opacity="0.38"/>
+  <line x1="40" y1="20" x2="40" y2="80" stroke="#780048" stroke-width="0.8" opacity="0.35"/>
+  <line x1="60" y1="20" x2="60" y2="80" stroke="#780048" stroke-width="0.8" opacity="0.35"/>
+  <line x1="24" y1="36" x2="76" y2="36" stroke="#780048" stroke-width="0.8" opacity="0.35"/>
+  <line x1="24" y1="64" x2="76" y2="64" stroke="#780048" stroke-width="0.8" opacity="0.35"/>
+</svg>

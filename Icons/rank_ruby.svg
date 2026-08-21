@@ -1,0 +1,19 @@
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <!-- Ruby gem — #E11D48 red palette -->
+  <polygon points="34,8 66,8 90,32 90,68 66,92 34,92 10,68 10,32" fill="#B80028"/>
+  <polygon points="40,20 60,20 76,36 76,64 60,80 40,80 24,64 24,36" fill="#F04060"/>
+  <polygon points="34,8 66,8 60,20 40,20" fill="#FF7090"/>
+  <polygon points="10,32 24,36 24,64 10,68" fill="#E11D48"/>
+  <polygon points="90,32 76,36 76,64 90,68" fill="#800010"/>
+  <polygon points="34,92 66,92 60,80 40,80" fill="#600000"/>
+  <polygon points="10,32 34,8 40,20 24,36" fill="#FFAABB"/>
+  <polygon points="66,8 90,32 76,36 60,20" fill="#980018"/>
+  <polygon points="10,68 34,92 40,80 24,64" fill="#400000"/>
+  <polygon points="90,68 66,92 60,80 76,64" fill="#280000"/>
+  <polygon points="44,28 56,28 66,40 66,60 56,72 44,72 34,60 34,40" fill="#FFCCCC" opacity="0.45"/>
+  <polygon points="40,20 54,20 48,30 36,30" fill="white" opacity="0.38"/>
+  <line x1="40" y1="20" x2="40" y2="80" stroke="#600000" stroke-width="0.8" opacity="0.35"/>
+  <line x1="60" y1="20" x2="60" y2="80" stroke="#600000" stroke-width="0.8" opacity="0.35"/>
+  <line x1="24" y1="36" x2="76" y2="36" stroke="#600000" stroke-width="0.8" opacity="0.35"/>
+  <line x1="24" y1="64" x2="76" y2="64" stroke="#600000" stroke-width="0.8" opacity="0.35"/>
+</svg>
