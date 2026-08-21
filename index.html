@@ -748,15 +748,14 @@ input[type=number]{-moz-appearance:textfield;}
   </div>
 </div>
 
-<div class="overlay" id="visitorOverlay">
-  <div class="sheet">
-    <div class="sheet-pull"></div>
-    <div class="sheet-hdr">
-      <span class="sheet-title">Profile</span>
-      <button class="sheet-x" id="visitorClose">×</button>
-    </div>
-    <div class="sheet-body" id="visitorBody"></div>
+<div id="visitorOverlay" style="display:none;position:fixed;inset:0;z-index:300;background:var(--bg);flex-direction:column;overflow:hidden">
+  <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--bdr);flex-shrink:0">
+    <button id="visitorClose" class="tap-scale" style="width:34px;height:34px;border-radius:50%;background:var(--card);border:1px solid var(--bdr);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <span style="font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:900;letter-spacing:.5px;color:var(--text)">Profile</span>
   </div>
+  <div id="visitorBody" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch"></div>
 </div>
 
 <div class="overlay" id="friendsOverlay">
@@ -1017,6 +1016,7 @@ _auth.onAuthStateChanged(async user => {
     await loadFromFirestore();
     migrateDB();
     await ensureFriendCode();
+    syncPublicProfile();
     renderProfileTab();
     renderRankCard();
     renderPRs();
@@ -1262,51 +1262,80 @@ function renderFriendsTab() {
   }).join('');
 }
 
+function _profilesCol() { return _db.collection('profiles'); }
+
+function syncPublicProfile() {
+  if (!_user) return;
+  const r = calcOverallRank();
+  _profilesCol().doc(_user.uid).set({
+    name: db.profile?.name || _user.displayName || 'Athlete',
+    avatar: db.profile?.avatar || null,
+    rankTier: r?.tier?.id || null,
+    rankDiv: r?.div || null,
+    prsCount: Object.keys(db.prs||{}).length,
+    workoutDays: new Set((db.history||[]).map(h=>h.day||h.date).filter(Boolean)).size,
+    lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+  }, { merge: true }).catch(() => {});
+}
+
 async function openVisitorProfile(uid, name, code, avatar) {
   const body = document.getElementById('visitorBody');
-  if (!body) return;
+  const overlay = document.getElementById('visitorOverlay');
+  if (!body || !overlay) return;
 
-  function renderVisitor(profile) {
-    const n = profile?.name || name || 'Friend';
-    const av = profile?.avatar || avatar || null;
+  function renderVisitor(p) {
+    const n = p?.name || name || 'Friend';
+    const av = p?.avatar || avatar || null;
     const initials = n[0].toUpperCase();
-    const avatarHtml = av
-      ? `<img src="${av}" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:2px solid var(--bdr)">`
-      : `<div style="width:80px;height:80px;border-radius:50%;background:var(--acc2);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:36px;font-weight:900;color:var(--acc)">${initials}</div>`;
+    const avInner = av ? `<img src="${av}">` : `<span style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:900">${initials}</span>`;
+    const rankBadge = p?.rankTier ? (() => {
+      const c = TIER_COLORS[p.rankTier]||'var(--acc)';
+      const tier = RANK_TIERS.find(t=>t.id===p.rankTier);
+      return `<div class="prf-rank-badge" style="background:color-mix(in srgb,${c} 14%,transparent);color:${c};border:1px solid color-mix(in srgb,${c} 35%,transparent);margin-top:5px">${tier?.label||''} ${ROMAN[(p.rankDiv||1)-1]||''}</div>`;
+    })() : '';
+    const rankIcon = p?.rankTier ? `<img src="${RANK_ICONS[p.rankTier]}" class="prf-av-rank" style="filter:drop-shadow(0 0 4px ${TIER_COLORS[p.rankTier]}bb)">` : '';
+    const prs = p?.prsCount ?? '—';
+    const workouts = p?.workoutDays ?? '—';
     body.innerHTML = `
-      <div style="display:flex;flex-direction:column;align-items:center;padding:16px 0 24px;gap:12px">
-        ${avatarHtml}
-        <div style="text-align:center">
-          <div style="font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:900;color:var(--text);line-height:1">${n}</div>
-          <div style="font-size:11px;font-weight:700;letter-spacing:3px;color:var(--acc);margin-top:6px">${(code||'').toUpperCase()}</div>
+      <div style="padding:6px 14px 32px">
+        <div class="prf-card" style="cursor:default;margin-bottom:10px">
+          <div class="prf-row">
+            <div class="prf-av-wrap">
+              <div class="prf-av" style="cursor:default">${avInner}</div>
+              ${rankIcon}
+            </div>
+            <div class="prf-info">
+              <div class="prf-name">${n}</div>
+              ${rankBadge}
+            </div>
+          </div>
+          <div class="prf-stats">
+            <div class="prf-stat"><span class="prf-stat-n">${prs}</span><span class="prf-stat-l">PRs</span></div>
+            <div class="prf-stat"><span class="prf-stat-n">${workouts}</span><span class="prf-stat-l">Workouts</span></div>
+            <div class="prf-stat"><span class="prf-stat-n" style="font-size:14px;letter-spacing:2px">${(code||'').toUpperCase()}</span><span class="prf-stat-l">Code</span></div>
+          </div>
         </div>
-      </div>
-      <div style="border-top:1px solid var(--bdr);padding-top:16px;display:flex;justify-content:center">
-        <button onclick="removeFriend('${uid}');closeVisitorProfile();" class="prf-btn tap-scale" style="color:var(--err,#ff453a);border-color:var(--err,#ff453a);padding:8px 24px">Remove friend</button>
+        <button onclick="removeFriend('${uid}');closeVisitorProfile();" class="prf-btn tap-scale" style="width:100%;justify-content:center;color:#ff453a;border-color:#ff453a;padding:10px">Remove friend</button>
       </div>`;
   }
 
   renderVisitor({ name, avatar });
-  document.getElementById('visitorOverlay').classList.add('open');
+  overlay.style.display = 'flex';
+  history.pushState({ visitor: uid }, '');
 
   if (_user) {
     try {
-      const snap = await _db.collection('profiles').doc(uid).get();
-      if (snap.exists && document.getElementById('visitorOverlay').classList.contains('open')) {
-        renderVisitor(snap.data());
-      }
+      const snap = await _profilesCol().doc(uid).get();
+      if (overlay.style.display !== 'none' && snap.exists) renderVisitor(snap.data());
     } catch(e) {}
   }
 }
 
 function closeVisitorProfile() {
-  document.getElementById('visitorOverlay').classList.remove('open');
+  document.getElementById('visitorOverlay').style.display = 'none';
 }
 
-document.getElementById('visitorClose').addEventListener('click', closeVisitorProfile);
-document.getElementById('visitorOverlay').addEventListener('click', e => {
-  if (e.target === document.getElementById('visitorOverlay')) closeVisitorProfile();
-});
+document.getElementById('visitorClose').addEventListener('click', () => history.back());
 
 function tsToDate(ts) {
   if (!ts) return null;
@@ -1590,6 +1619,10 @@ document.querySelectorAll('.tap-scale').forEach(el=>{
 // seed an initial state so the very first popstate has somewhere to go back from
 history.replaceState({scr:'sh'}, '', '');
 window.addEventListener('popstate', e=>{
+  // close visitor full-screen page if open
+  if(e.state?.visitor){ closeVisitorProfile(); return; }
+  const visitorEl = document.getElementById('visitorOverlay');
+  if(visitorEl && visitorEl.style.display==='flex'){ closeVisitorProfile(); return; }
   // if any overlay is open, close it instead
   const openOverlay = document.querySelector('.overlay.open');
   if(openOverlay){ openOverlay.classList.remove('open'); history.pushState({scr: document.querySelector('.scr.on')?.id||'sh'}, '', ''); return; }
@@ -3040,6 +3073,7 @@ document.getElementById('profileSave').addEventListener('click', () => {
   if (_user && db.friendCode) {
     _codesCol().doc(db.friendCode).set({ name: db.profile.name || _user.displayName || 'Athlete' }, { merge: true }).catch(() => {});
   }
+  syncPublicProfile();
   closeProfile();
   renderHomeBar();
   renderRankCard();
