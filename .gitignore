@@ -1,3 +1,6 @@
 ﻿.idea/indexLayout.xml
 .idea/vcs.xml
 .claude/launch.json
+.env
+node_modules/
+subscriptions.json
