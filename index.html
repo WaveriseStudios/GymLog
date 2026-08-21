@@ -800,6 +800,11 @@ input[type=number]{-moz-appearance:textfield;}
           <span class="set-row-lbl">Export Data</span>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         </div>
+        <div class="set-row set-row-btn" id="btnImportData">
+          <span class="set-row-lbl">Import Data</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        </div>
+        <input type="file" id="importFileInput" accept=".json" style="display:none">
         <div class="set-row set-row-btn danger" id="btnClearData">
           <span class="set-row-lbl">Clear All Data</span>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
@@ -2643,6 +2648,29 @@ document.getElementById('notifToggle').addEventListener('click', async ()=>{
   if(!db.notif) db.notif={};
   db.notif.enabled=true; persist(); updateNotifToggle(); showToast('Notifications enabled!');
   sendNotif('GymLog ✓', 'Timer notifications are on.');
+});
+
+document.getElementById('btnImportData').addEventListener('click', ()=>{
+  document.getElementById('importFileInput').click();
+});
+document.getElementById('importFileInput').addEventListener('change', e=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ev=>{
+    try{
+      const parsed = JSON.parse(ev.target.result);
+      if(!parsed.history || !Array.isArray(parsed.history)) throw new Error('Invalid file');
+      Object.assign(db, parsed);
+      persist();
+      showToast('Data imported — reloading…');
+      setTimeout(()=>location.reload(), 1200);
+    }catch(err){
+      showToast('Import failed: invalid file');
+    }
+  };
+  reader.readAsText(file);
+  e.target.value='';
 });
 
 document.getElementById('btnExportData').addEventListener('click', ()=>{
