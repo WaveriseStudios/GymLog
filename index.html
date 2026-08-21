@@ -941,16 +941,21 @@ async function loadFromFirestore() {
 
 async function signInWithGoogle() {
   const provider = new firebase.auth.GoogleAuthProvider();
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
   try {
-    // use redirect on mobile (popup is blocked), popup on desktop
-    const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
-    if (isMobile) {
-      await _auth.signInWithRedirect(provider);
+    if (isStandalone) {
+      // installed PWA: redirect breaks in standalone, open in new tab
+      const result = await _auth.signInWithPopup(provider);
+      if (!result) await _auth.signInWithRedirect(provider);
     } else {
-      await _auth.signInWithPopup(provider);
+      await _auth.signInWithRedirect(provider);
     }
   } catch (e) {
-    if (e.code !== 'auth/popup-closed-by-user') showToast('Sign in failed');
+    if (e.code === 'auth/popup-blocked' || e.code === 'auth/operation-not-supported-in-this-environment') {
+      await _auth.signInWithRedirect(provider);
+    } else if (e.code !== 'auth/popup-closed-by-user') {
+      showToast('Sign in failed: ' + e.code);
+    }
   }
 }
 
