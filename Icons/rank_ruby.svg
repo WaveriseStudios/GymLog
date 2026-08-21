@@ -12,8 +12,4 @@
   <polygon points="90,68 66,92 60,80 76,64" fill="#280000"/>
   <polygon points="44,28 56,28 66,40 66,60 56,72 44,72 34,60 34,40" fill="#FFCCCC" opacity="0.45"/>
   <polygon points="40,20 54,20 48,30 36,30" fill="white" opacity="0.38"/>
-  <line x1="40" y1="20" x2="40" y2="80" stroke="#600000" stroke-width="0.8" opacity="0.35"/>
-  <line x1="60" y1="20" x2="60" y2="80" stroke="#600000" stroke-width="0.8" opacity="0.35"/>
-  <line x1="24" y1="36" x2="76" y2="36" stroke="#600000" stroke-width="0.8" opacity="0.35"/>
-  <line x1="24" y1="64" x2="76" y2="64" stroke="#600000" stroke-width="0.8" opacity="0.35"/>
 </svg>

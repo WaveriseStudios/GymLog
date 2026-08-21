@@ -8,12 +8,8 @@
   <polygon points="34,92 66,92 60,80 40,80" fill="#003020"/>
   <polygon points="10,32 34,8 40,20 24,36" fill="#90FFD8"/>
   <polygon points="66,8 90,32 76,36 60,20" fill="#007850"/>
-  <polygon points="10,68 34,92 40,80 24,64" fill="#001808"/>
-  <polygon points="90,68 66,92 60,80 76,64" fill="#000E04"/>
+  <polygon points="10,68 34,92 40,80 24,64" fill="#033818"/>
+  <polygon points="90,68 66,92 60,80 76,64" fill="#022010"/>
   <polygon points="44,28 56,28 66,40 66,60 56,72 44,72 34,60 34,40" fill="#A0FFE0" opacity="0.5"/>
   <polygon points="40,20 54,20 48,30 36,30" fill="white" opacity="0.38"/>
-  <line x1="40" y1="20" x2="40" y2="80" stroke="#003020" stroke-width="0.8" opacity="0.35"/>
-  <line x1="60" y1="20" x2="60" y2="80" stroke="#003020" stroke-width="0.8" opacity="0.35"/>
-  <line x1="24" y1="36" x2="76" y2="36" stroke="#003020" stroke-width="0.8" opacity="0.35"/>
-  <line x1="24" y1="64" x2="76" y2="64" stroke="#003020" stroke-width="0.8" opacity="0.35"/>
 </svg>
