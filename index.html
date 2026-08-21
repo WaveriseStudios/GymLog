@@ -557,7 +557,7 @@ input[type=number]{-moz-appearance:textfield;}
       <!-- avatar + identity -->
       <div class="prf-hero">
         <div class="prf-av-wrap">
-          <img id="scrProfileRankBg" src="" style="display:none;position:absolute;width:200px;height:200px;top:50%;left:50%;transform:translate(-50%,-50%);opacity:0.18;pointer-events:none;z-index:0;border-radius:0">
+          <img id="scrProfileRankBg" src="" style="display:none;position:absolute;width:200px;height:200px;top:50%;left:50%;transform:translate(-50%,-50%);opacity:0.18;pointer-events:none;z-index:0;border-radius:0;image-rendering:pixelated">
           <label class="prf-av tap-scale" id="scrProfileAv" for="profAvatarInput" style="cursor:pointer;touch-action:manipulation;position:relative;z-index:1">G</label>
         </div>
         <div class="prf-hero-name" id="scrProfileHeroName">Athlete</div>
@@ -1171,9 +1171,9 @@ function renderHomeBar() {
 
 /* ── RANK SYSTEM ── */
 const RANK_TIERS = [
-  {id:'iron',     label:'Iron',     threshold:0   },
-  {id:'bronze',   label:'Bronze',   threshold:1.2 },
-  {id:'steel',    label:'Steel',    threshold:2.2 },
+  {id:'wood',     label:'Wood',     threshold:0   },
+  {id:'iron',     label:'Iron',     threshold:1.2 },
+  {id:'bronze',   label:'Bronze',   threshold:2.2 },
   {id:'silver',   label:'Silver',   threshold:3.2 },
   {id:'gold',     label:'Gold',     threshold:4.2 },
   {id:'platinum', label:'Platinum', threshold:5.4 },
@@ -1186,34 +1186,27 @@ const RANK_TIERS = [
 ];
 const ROMAN = ['I','II','III'];
 const RANK_ICONS={
-  iron:     'Icons/rank_iron.svg',
-  bronze:   'Icons/rank_bronze.svg',
-  steel:    'Icons/rank_steel.svg',
-  silver:   'Icons/rank_silver.svg',
-  gold:     'Icons/rank_gold.svg',
-  platinum: 'Icons/rank_platinum.svg',
-  sapphire: 'Icons/rank_sapphire.svg',
-  diamond:  'Icons/rank_diamond.svg',
-  amethyst: 'Icons/rank_amethyst.svg',
-  emerald:  'Icons/rank_emerald.svg',
-  ruby:     'Icons/rank_ruby.svg',
-  mythril:  'Icons/rank_mythril.svg',
+  wood:     'Icons/rank_wood.png',
+  iron:     'Icons/rank_iron.png',
+  bronze:   'Icons/rank_bronze.png',
+  silver:   'Icons/rank_silver.png',
+  gold:     'Icons/rank_gold.png',
+  platinum: 'Icons/rank_platinum.png',
+  sapphire: 'Icons/rank_sapphire.png',
+  diamond:  'Icons/rank_diamond.png',
+  amethyst: 'Icons/rank_amethyst.png',
+  emerald:  'Icons/rank_emerald.png',
+  ruby:     'Icons/rank_ruby.png',
+  mythril:  'Icons/rank_mythril.png',
 };
 function rankIconSvg(id,color,{size=60,glow=true,opacity=1,div=1}={}){
-  const imgSrc=RANK_ICONS[id]||RANK_ICONS.iron;
-  const icon=`<circle cx="30" cy="30" r="22"/><image href="${imgSrc}" x="10" y="10" width="40" height="40" clip-path="circle(20px at 20px 20px)"/>`;
+  const imgSrc=RANK_ICONS[id]||RANK_ICONS.wood;
   const f=glow?`filter:drop-shadow(0 0 ${Math.round(size/7)}px ${color}99)`:'';
   const op=opacity<1?`;opacity:${opacity}`:'';
-  const S='#BEC6CE';
-  const star=([cx,cy])=>`<path d="M${cx},${cy-5} L${cx+2},${cy-2} L${cx+5},${cy} L${cx+2},${cy+2} L${cx},${cy+5} L${cx-2},${cy+2} L${cx-5},${cy} L${cx-2},${cy-2} Z" fill="${S}" stroke="none"/>`;
-  let decos='';
-  if(div===1){decos+=star([30,8]);}
-  else if(div===2){decos+=star([8,30])+star([52,30]);}
-  else if(div>=3){decos+=star([30,8])+star([49,41])+star([11,41]);}
-  return `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" style="${f}${op}"><g fill="none" stroke="${color}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${icon}${decos}</g></svg>`;
+  return `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" style="${f}${op}"><image href="${imgSrc}" x="5" y="5" width="50" height="50" style="image-rendering:pixelated"/></svg>`;
 }
 const TIER_COLORS = {
-  iron:'#7A8A96',     bronze:'#C47A32',    steel:'#4E7A96',    silver:'#9AAEBB',
+  wood:'#8B6343',     iron:'#7A8A96',      bronze:'#C47A32',   silver:'#9AAEBB',
   gold:'#CFA020',     platinum:'#94A3B8',  sapphire:'#2563EB', diamond:'#67E8F9',
   amethyst:'#F472B6', emerald:'#10B981',   ruby:'#E11D48',     mythril:'#9333EA',
 };
@@ -1392,9 +1385,9 @@ function buildRankTimeline(markerStep){
   const badges=RANK_TIERS.map((t,ti)=>{
     const isPast=ti<activeTierIdx,isActive=ti===activeTierIdx,isFuture=ti>activeTierIdx;
     const color=TIER_COLORS[t.id];
-    const fillOpacity=isActive?'1':isPast?'0.35':'0.12';
+    const fillOpacity=isActive?'1':isPast?'1':'0.12';
     const strokeOpacity=isFuture?'0.3':'1';
-    const glow=isActive?`filter:drop-shadow(0 0 8px ${color}cc)`:isFuture?'opacity:0.25':'opacity:0.55';
+    const glow=isActive?`filter:drop-shadow(0 0 8px ${color}cc)`:isFuture?'opacity:0.25':'opacity:1';
     const pips=[1,2,3].map(d=>{
       const filled=isPast||(isActive&&d<=activeDiv),cur=isActive&&d===activeDiv;
       return `<span class="rlt-pip${filled?' filled':''}${cur?' cur':''}" style="${filled?`background:${color};border-color:${color}`:''}"></span>`;
@@ -1403,7 +1396,7 @@ function buildRankTimeline(markerStep){
     const pctLabel=entryPct<=0.5?'top 0.5%':entryPct<=1?'top 1%':`top ${Math.round(entryPct)}%`;
     const cellDiv=isPast?3:isActive?activeDiv:1;
     return `<div class="rlt-cell${isActive?' active':''}">
-      ${rankIconSvg(t.id,color,{size:44,glow:isActive,opacity:isFuture?0.2:isPast?0.45:1,div:cellDiv})}
+      ${rankIconSvg(t.id,color,{size:44,glow:isActive,opacity:isFuture?0.2:1,div:cellDiv})}
       <div class="rlt-cell-name" style="color:${isActive?color:color}">${t.label}</div>
       <div style="font-size:9px;font-weight:700;letter-spacing:.3px;color:${isActive?color:'var(--t2)'};opacity:.85;margin-top:1px">${pctLabel}</div>
       <div class="rlt-pips">${pips}</div>
@@ -1494,7 +1487,7 @@ const DAY_KEYS  = ['mon','tue','wed','thu','fri','sat','sun'];
 const DAY_SHORT = ['MON','TUE','WED','THU','FRI','SAT','SUN'];
 const DAY_LONG  = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 const LETTERS   = ['M','T','W','T','F','S','S'];
-const TIER_SHORT = {iron:'Iron',bronze:'Brz',steel:'Steel',silver:'Slv',gold:'Gold',platinum:'Plat',sapphire:'Sph',diamond:'Dia',amethyst:'Amy',emerald:'Emr',ruby:'Ruby',mythril:'Mythril'};
+const TIER_SHORT = {wood:'Wood',iron:'Iron',bronze:'Brz',silver:'Slv',gold:'Gold',platinum:'Plat',sapphire:'Sph',diamond:'Dia',amethyst:'Amy',emerald:'Emr',ruby:'Ruby',mythril:'Mythril'};
 
 function todayKey(){return DAY_KEYS[[6,0,1,2,3,4,5][new Date().getDay()]];}
 function uid(){return Math.random().toString(36).slice(2)+Date.now().toString(36);}
@@ -2000,7 +1993,7 @@ function buildYouVsOthers(name,p){
   const base=isBW?(bw*bwFrac+(pr.weight||0)):(pr.weight||0);
   const e1rm=Math.round(calcEpley(base,pr.reps,isBW?0:30));
   const e1rmLabel=isBW?`BW + ${Math.max(0,e1rm-Math.round(bw*bwFrac))} kg`:`${e1rm} kg`;
-  // avg tier = Steel (index 2)
+  // avg tier = Bronze (index 2)
   const AVG_IDX=2;
   // dot timeline — 10 tiers, no divisions
   const dots=RANK_TIERS.map((t,i)=>{
@@ -2009,7 +2002,7 @@ function buildYouVsOthers(name,p){
     const isAvg=i===AVG_IDX;
     const c=TIER_COLORS[t.id];
     const dotSize=isCur||isAvg?14:8;
-    const opacity=isCur?1:isPast?0.55:0.2;
+    const opacity=isCur?1:isPast?1:0.2;
   
     // connector line before this dot (except first)
     const line=i>0?`<div style="flex:1;height:2px;background:${i<=tierIdx?TIER_COLORS[RANK_TIERS[i-1].id]:'var(--bdr)'};opacity:${i<=tierIdx?0.5:1};margin-bottom:${isCur||i===tierIdx+1?'3px':'6px'};align-self:center;margin-top:${isCur||i===tierIdx?'3px':'6px'}"></div>`:'';
@@ -2017,8 +2010,10 @@ function buildYouVsOthers(name,p){
       <div style="height:14px;display:flex;align-items:center;justify-content:center">
         ${isCur?`<span style="font-size:8px;color:${c};font-weight:800;letter-spacing:.5px">YOU</span>`:isAvg?`<span style="font-size:8px;color:var(--t3);font-weight:800;letter-spacing:.5px">AVG</span>`:''}
       </div>
-      <div style="width:${dotSize}px;height:${dotSize}px;border-radius:50%;background:${isCur||isPast?c:'var(--bdr)'};opacity:${opacity};${isCur?`box-shadow:0 0 10px ${c}99`:''}"></div>
-      <img src="${RANK_ICONS[t.id]}" style="width:16px;height:16px;border-radius:50%;opacity:${isCur?1:isPast?0.6:0.25}">
+      <div style="height:16px;display:flex;align-items:center;justify-content:center">
+        <div style="width:${dotSize}px;height:${dotSize}px;border-radius:50%;background:${isCur||isPast?c:'var(--bdr)'};opacity:${opacity};${isCur?`box-shadow:0 0 10px ${c}99`:''}"></div>
+      </div>
+      <img src="${RANK_ICONS[t.id]}" style="width:16px;height:16px;opacity:${isCur?1:isPast?1:0.25};image-rendering:pixelated">
     </div>`;
   }).join('');
   return `<div class="card" style="margin:0 0 16px;border-radius:14px;padding:16px 18px 20px">
@@ -2435,7 +2430,7 @@ document.getElementById('exSave').addEventListener('click',()=>{
   const _newExRank=(!cardio&&db.prs[name]&&p?.weight)?scoreToTierDiv(calcExScore(db.prs[name],p,name)):null;
   if(_newExRank){
     if(!_prevExRank){
-      setTimeout(()=>showRankUp('iron',1,_newExRank.tier.id,_newExRank.div,false,name),400);
+      setTimeout(()=>showRankUp('wood',1,_newExRank.tier.id,_newExRank.div,false,name),400);
     } else {
       const prevIdx=RANK_TIERS.findIndex(t=>t.id===_prevExRank.tier.id);
       const newIdx=RANK_TIERS.findIndex(t=>t.id===_newExRank.tier.id);
@@ -2729,8 +2724,8 @@ applyTheme(localStorage.getItem(THEME_KEY)||'carbon');
   const r=calcOverallRank();
   const color=r?TIER_COLORS[r.tier.id]:'var(--acc)';
   const divLabel=r?ROMAN[r.div-1]:'I';
-  const rankLabel=r?`${r.tier.label} ${ROMAN[r.div-1]}`:'Iron I';
-  document.getElementById('splash-logo').innerHTML=rankIconSvg(r?r.tier.id:'iron',color,{size:140,glow:true,div:r?r.div:1});
+  const rankLabel=r?`${r.tier.label} ${ROMAN[r.div-1]}`:'Wood I';
+  document.getElementById('splash-logo').innerHTML=rankIconSvg(r?r.tier.id:'wood',color,{size:140,glow:true,div:r?r.div:1});
   document.getElementById('splash-wordmark').textContent=rankLabel;
   const dismiss=()=>{splash.classList.add('hide');setTimeout(()=>splash.remove(),600);};
   if(document.fonts){
