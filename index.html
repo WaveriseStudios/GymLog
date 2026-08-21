@@ -2596,6 +2596,17 @@ document.getElementById('btnClearData').addEventListener('click', ()=>{
   location.reload();
 });
 
+/* ── INIT: validate all PRs against history ── */
+(function validatePRs(){
+  let dirty=false;
+  Object.keys(db.prs).forEach(name=>{
+    const hasHistory=db.history.some(h=>h.name===name);
+    if(!hasHistory){delete db.prs[name];dirty=true;return;}
+    recomputePR(name);dirty=true;
+  });
+  if(dirty) persist();
+})();
+
 /* ── INIT ── */
 renderHomeBar();
 renderRankCard();
