@@ -1301,7 +1301,7 @@ let _chatUnsub = null;
 let _chatListUnsub = null;
 let _chatFriendUid = null;
 let _chatPresenceUnsub = null;
-let _chatMeta = {};  // chatId -> metadata, seeded from db.chatMeta on startup
+let _chatMeta = db.chatMeta || {};  // seeded from localStorage immediately
 
 function escHtml(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -1337,8 +1337,8 @@ function chatAvatarHtml(profile, size=48) {
 function subscribeChatList() {
   if (_chatListUnsub) { _chatListUnsub(); _chatListUnsub = null; }
   if (!_user) return;
-  // seed from local cache immediately so chat list renders on first tap
-  _chatMeta = db.chatMeta || {};
+  // render immediately from cache, then live updates replace it
+  if (document.getElementById('sc')?.classList.contains('on')) renderChatList();
   _chatListUnsub = _db.collection('chats')
     .where('participants', 'array-contains', _user.uid)
     .onSnapshot(snap => {
@@ -1427,7 +1427,6 @@ async function openChat(friendUid, friendName) {
   }, e => {});
 
   // messages listener
-  let prevDateStr = null;
   _chatUnsub = _chatMsgCol(_user.uid, friendUid)
     .orderBy('ts')
     .limitToLast(100)
@@ -1435,21 +1434,21 @@ async function openChat(friendUid, friendName) {
       const el = document.getElementById('chatMessages');
       if (!el) return;
       el.innerHTML = '';
-      prevDateStr = null;
+      let prevTs = null;
       snap.forEach(doc => {
         const m = doc.data();
         const mine = m.senderUid === _user.uid;
         const d = m.ts?.toDate ? m.ts.toDate() : null;
-        const dateStr = d ? d.toLocaleDateString([], {weekday:'short',month:'short',day:'numeric'}) : null;
 
-        // date separator
-        if (dateStr && dateStr !== prevDateStr) {
-          prevDateStr = dateStr;
+        // separator only when gap > 1 hour from previous message
+        if (d && (!prevTs || (d - prevTs) > 3600000)) {
+          const dateStr = d.toLocaleDateString([], {weekday:'short',month:'short',day:'numeric'});
           const sep = document.createElement('div');
           sep.style.cssText = 'text-align:center;margin:10px 0 6px;';
           sep.innerHTML = `<span style="font-size:11px;color:var(--t3);background:var(--bg2);padding:3px 10px;border-radius:20px;border:1px solid var(--bdr)">${dateStr}</span>`;
           el.appendChild(sep);
         }
+        prevTs = d;
 
         const time = d ? d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : '';
         const bubble = document.createElement('div');
@@ -1472,6 +1471,10 @@ async function sendChatMessage() {
   input.value = '';
   const myName = db.profile?.name || _user.displayName || 'Athlete';
   const cid = _chatId(_user.uid, _chatFriendUid);
+  // optimistic local update so chat list shows message immediately
+  _chatMeta[cid] = { ...(_chatMeta[cid]||{}), participants:[_user.uid,_chatFriendUid], lastMessage:text, lastMessageTime:{_ms:Date.now()}, lastMessageSenderUid:_user.uid, lastMessageSenderName:myName };
+  db.chatMeta = _chatMeta;
+  persist();
   const ts = firebase.firestore.FieldValue.serverTimestamp();
   try {
     const batch = _db.batch();
