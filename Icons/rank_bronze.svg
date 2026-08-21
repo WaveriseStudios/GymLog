@@ -1,15 +1,8 @@
 <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-  <!-- Bronze gem — #C47A32 palette -->
-  <polygon points="34,8 66,8 90,32 90,68 66,92 34,92 10,68 10,32" fill="#A86020"/>
-  <polygon points="40,20 60,20 76,36 76,64 60,80 40,80 24,64 24,36" fill="#DCA054"/>
-  <polygon points="34,8 66,8 60,20 40,20" fill="#F0B068"/>
-  <polygon points="10,32 24,36 24,64 10,68" fill="#C47A32"/>
-  <polygon points="90,32 76,36 76,64 90,68" fill="#6E3A00"/>
-  <polygon points="34,92 66,92 60,80 40,80" fill="#522800"/>
-  <polygon points="10,32 34,8 40,20 24,36" fill="#FFD080"/>
-  <polygon points="66,8 90,32 76,36 60,20" fill="#A06828"/>
-  <polygon points="10,68 34,92 40,80 24,64" fill="#5A3010"/>
-  <polygon points="90,68 66,92 60,80 76,64" fill="#3A1800"/>
-  <polygon points="44,28 56,28 66,40 66,60 56,72 44,72 34,60 34,40" fill="#FFD898" opacity="0.45"/>
-  <polygon points="40,20 54,20 48,30 36,30" fill="white" opacity="0.35"/>
+  <!-- Bronze: smooth cabochon dome, no facets, just a polished round stone -->
+  <circle cx="50" cy="53" r="42" fill="#8B4F20"/>
+  <circle cx="50" cy="50" r="42" fill="#C47A32"/>
+  <ellipse cx="42" cy="38" rx="26" ry="18" fill="#D89040" opacity="0.85"/>
+  <ellipse cx="36" cy="30" rx="15" ry="10" fill="#F0B448" opacity="0.7"/>
+  <ellipse cx="30" cy="24" rx="7" ry="4.5" fill="white" opacity="0.32"/>
 </svg>

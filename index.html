@@ -557,7 +557,7 @@ input[type=number]{-moz-appearance:textfield;}
       <!-- avatar + identity -->
       <div class="prf-hero">
         <div class="prf-av-wrap">
-          <img id="scrProfileRankBg" src="" style="display:none;position:absolute;width:255px;height:255px;top:50%;left:50%;transform:translate(-50%,-50%);opacity:0.18;pointer-events:none;z-index:0;border-radius:0">
+          <img id="scrProfileRankBg" src="" style="display:none;position:absolute;width:200px;height:200px;top:50%;left:50%;transform:translate(-50%,-50%);opacity:0.18;pointer-events:none;z-index:0;border-radius:0">
           <label class="prf-av tap-scale" id="scrProfileAv" for="profAvatarInput" style="cursor:pointer;touch-action:manipulation;position:relative;z-index:1">G</label>
         </div>
         <div class="prf-hero-name" id="scrProfileHeroName">Athlete</div>
@@ -1201,7 +1201,7 @@ const RANK_ICONS={
 };
 function rankIconSvg(id,color,{size=60,glow=true,opacity=1,div=1}={}){
   const imgSrc=RANK_ICONS[id]||RANK_ICONS.iron;
-  const icon=`<circle cx="30" cy="30" r="22"/><image href="${imgSrc}" x="8" y="8" width="44" height="44" clip-path="circle(22px at 22px 22px)"/>`;
+  const icon=`<circle cx="30" cy="30" r="22"/><image href="${imgSrc}" x="10" y="10" width="40" height="40" clip-path="circle(20px at 20px 20px)"/>`;
   const f=glow?`filter:drop-shadow(0 0 ${Math.round(size/7)}px ${color}99)`:'';
   const op=opacity<1?`;opacity:${opacity}`:'';
   const S='#BEC6CE';
@@ -2730,7 +2730,7 @@ applyTheme(localStorage.getItem(THEME_KEY)||'carbon');
   const color=r?TIER_COLORS[r.tier.id]:'var(--acc)';
   const divLabel=r?ROMAN[r.div-1]:'I';
   const rankLabel=r?`${r.tier.label} ${ROMAN[r.div-1]}`:'Iron I';
-  document.getElementById('splash-logo').innerHTML=rankIconSvg(r?r.tier.id:'iron',color,{size:90,glow:true,div:r?r.div:1});
+  document.getElementById('splash-logo').innerHTML=rankIconSvg(r?r.tier.id:'iron',color,{size:140,glow:true,div:r?r.div:1});
   document.getElementById('splash-wordmark').textContent=rankLabel;
   const dismiss=()=>{splash.classList.add('hide');setTimeout(()=>splash.remove(),600);};
   if(document.fonts){

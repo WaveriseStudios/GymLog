@@ -1,26 +1,9 @@
 <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-  <!-- Iron gem — #7A8A96 palette, light from top-left -->
-  <polygon points="34,8 66,8 90,32 90,68 66,92 34,92 10,68 10,32" fill="#6A7A86"/>
-  <!-- Table face -->
-  <polygon points="40,20 60,20 76,36 76,64 60,80 40,80 24,64 24,36" fill="#96A8B4"/>
-  <!-- Top edge — light -->
-  <polygon points="34,8 66,8 60,20 40,20" fill="#AABBC8"/>
-  <!-- Left edge — medium-light -->
-  <polygon points="10,32 24,36 24,64 10,68" fill="#8A9AA6"/>
-  <!-- Right edge — shadow -->
-  <polygon points="90,32 76,36 76,64 90,68" fill="#4A5A66"/>
-  <!-- Bottom edge — dark -->
-  <polygon points="34,92 66,92 60,80 40,80" fill="#3A4A56"/>
-  <!-- Top-left corner — lightest -->
-  <polygon points="10,32 34,8 40,20 24,36" fill="#BCC8D2"/>
-  <!-- Top-right corner — medium -->
-  <polygon points="66,8 90,32 76,36 60,20" fill="#7A8E9C"/>
-  <!-- Bottom-left corner — dark -->
-  <polygon points="10,68 34,92 40,80 24,64" fill="#3E5060"/>
-  <!-- Bottom-right corner — darkest -->
-  <polygon points="90,68 66,92 60,80 76,64" fill="#28383E"/>
-  <!-- Inner step -->
-  <polygon points="44,28 56,28 66,40 66,60 56,72 44,72 34,60 34,40" fill="#A8BAC4" opacity="0.5"/>
-  <!-- Specular highlight top-left of table -->
-  <polygon points="40,20 54,20 48,30 36,30" fill="white" opacity="0.35"/>
+  <!-- Iron: rough uncut rock chunk, no real facets -->
+  <polygon points="28,10 66,8 84,30 86,68 60,90 22,88 8,60 12,28" fill="#5A6870"/>
+  <polygon points="34,20 66,16 80,36 76,68 54,82 26,76 16,52 22,32" fill="#7A8A96"/>
+  <polygon points="34,20 54,16 48,32 30,34" fill="#9AAAB4" opacity="0.7"/>
+  <polygon points="62,18 78,30 70,44 58,34" fill="#8A9AA6" opacity="0.5"/>
+  <line x1="54" y1="42" x2="62" y2="60" stroke="#4A5A66" stroke-width="1.5" opacity="0.5"/>
+  <line x1="36" y1="54" x2="48" y2="70" stroke="#4A5A66" stroke-width="1" opacity="0.4"/>
 </svg>

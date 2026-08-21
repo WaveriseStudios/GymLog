@@ -1,15 +1,25 @@
 <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-  <!-- Sapphire gem — #2563EB palette -->
-  <polygon points="34,8 66,8 90,32 90,68 66,92 34,92 10,68 10,32" fill="#1040C8"/>
-  <polygon points="40,20 60,20 76,36 76,64 60,80 40,80 24,64 24,36" fill="#4070F0"/>
-  <polygon points="34,8 66,8 60,20 40,20" fill="#6090FF"/>
-  <polygon points="10,32 24,36 24,64 10,68" fill="#2563EB"/>
-  <polygon points="90,32 76,36 76,64 90,68" fill="#042078"/>
-  <polygon points="34,92 66,92 60,80 40,80" fill="#021050"/>
-  <polygon points="10,32 34,8 40,20 24,36" fill="#90B8FF"/>
-  <polygon points="66,8 90,32 76,36 60,20" fill="#1848A8"/>
-  <polygon points="10,68 34,92 40,80 24,64" fill="#010830"/>
-  <polygon points="90,68 66,92 60,80 76,64" fill="#010520"/>
-  <polygon points="44,28 56,28 66,40 66,60 56,72 44,72 34,60 34,40" fill="#A0C4FF" opacity="0.45"/>
-  <polygon points="40,20 54,20 48,30 36,30" fill="white" opacity="0.38"/>
+  <!-- Sapphire: hexagonal step cut — 2 rings of 6 facets + table + inner facet lines -->
+  <!-- Step 1: outer hex → step1 hex (6 facets) -->
+  <polygon points="50,8 84,28 76,31 50,16" fill="#5090F8"/>
+  <polygon points="84,28 84,72 76,69 76,31" fill="#1B4FBF"/>
+  <polygon points="84,72 50,92 50,84 76,69" fill="#0A2880"/>
+  <polygon points="50,92 16,72 24,69 50,84" fill="#061870"/>
+  <polygon points="16,72 16,28 24,31 24,69" fill="#0E2C80"/>
+  <polygon points="16,28 50,8 50,16 24,31" fill="#3A70D8"/>
+  <!-- Step 2: step1 hex → table hex (6 facets) -->
+  <polygon points="50,16 76,31 68,35 50,24" fill="#60A0FF"/>
+  <polygon points="76,31 76,69 68,65 68,35" fill="#1840B0"/>
+  <polygon points="76,69 50,84 50,76 68,65" fill="#0C2070"/>
+  <polygon points="50,84 24,69 32,65 50,76" fill="#081048"/>
+  <polygon points="24,69 24,31 32,35 32,65" fill="#102268"/>
+  <polygon points="24,31 50,16 50,24 32,35" fill="#3868C8"/>
+  <!-- Table hexagon -->
+  <polygon points="50,24 68,35 68,65 50,76 32,65 32,35" fill="#7AB4FF"/>
+  <!-- Inner facet lines across table for extra complexity -->
+  <line x1="50" y1="24" x2="50" y2="76" stroke="#4080D8" stroke-width="0.8" opacity="0.6"/>
+  <line x1="32" y1="35" x2="68" y2="65" stroke="#4080D8" stroke-width="0.8" opacity="0.6"/>
+  <line x1="68" y1="35" x2="32" y2="65" stroke="#4080D8" stroke-width="0.8" opacity="0.6"/>
+  <!-- Table specular -->
+  <ellipse cx="44" cy="30" rx="10" ry="5" fill="white" opacity="0.3"/>
 </svg>

@@ -1,15 +1,12 @@
 <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-  <!-- Silver gem — #9AAEBB palette -->
-  <polygon points="34,8 66,8 90,32 90,68 66,92 34,92 10,68 10,32" fill="#7A9AA8"/>
-  <polygon points="40,20 60,20 76,36 76,64 60,80 40,80 24,64 24,36" fill="#BED0D8"/>
-  <polygon points="34,8 66,8 60,20 40,20" fill="#D8E8F0"/>
-  <polygon points="10,32 24,36 24,64 10,68" fill="#9AAEBB"/>
-  <polygon points="90,32 76,36 76,64 90,68" fill="#4A6470"/>
-  <polygon points="34,92 66,92 60,80 40,80" fill="#385060"/>
-  <polygon points="10,32 34,8 40,20 24,36" fill="#EAF4F8"/>
-  <polygon points="66,8 90,32 76,36 60,20" fill="#6A8898"/>
-  <polygon points="10,68 34,92 40,80 24,64" fill="#304858"/>
-  <polygon points="90,68 66,92 60,80 76,64" fill="#202E38"/>
-  <polygon points="44,28 56,28 66,40 66,60 56,72 44,72 34,60 34,40" fill="#E8F4FA" opacity="0.5"/>
-  <polygon points="40,20 54,20 48,30 36,30" fill="white" opacity="0.4"/>
+  <!-- Silver: hexagonal rose cut — 6 triangular facets meeting at dome apex -->
+  <polygon points="50,8 84,28 84,72 50,92 16,72 16,28" fill="#4A5C68"/>
+  <polygon points="50,28 50,8 84,28" fill="#D8EAF2"/>
+  <polygon points="50,28 84,28 84,72" fill="#9AAEBB"/>
+  <polygon points="50,28 84,72 50,92" fill="#6A8090"/>
+  <polygon points="50,28 50,92 16,72" fill="#3A5060"/>
+  <polygon points="50,28 16,72 16,28" fill="#6E8898"/>
+  <polygon points="50,28 16,28 50,8" fill="#BECCD8"/>
+  <circle cx="50" cy="28" r="5" fill="white" opacity="0.4"/>
+  <ellipse cx="44" cy="16" rx="9" ry="5" fill="white" opacity="0.2"/>
 </svg>
