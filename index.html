@@ -310,24 +310,34 @@ input[type=number]{-moz-appearance:textfield;}
 .day.sel:not(.td) .day-dot{background:var(--acc);}
 .tiny-btn{width:30px;height:30px;border-radius:8px;background:var(--card2);color:var(--t3);display:flex;align-items:center;justify-content:center;font-size:13px;border:none;cursor:pointer;flex-shrink:0;}
 
-/* profile tab (TikTok style) */
-.prf-topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 18px 10px;background:var(--bg);position:sticky;top:0;z-index:10;}
-.prf-username{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:900;letter-spacing:.5px;color:var(--t1);}
+/* profile tab */
+.prf-topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 18px 8px;background:var(--bg);position:sticky;top:0;z-index:10;}
+.prf-topbar-name{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:900;letter-spacing:.3px;color:var(--text);}
 .prf-settings-btn{background:none;border:none;color:var(--t2);cursor:pointer;padding:4px;display:flex;align-items:center;}
-.prf-hero{display:flex;flex-direction:column;align-items:center;padding:90px 20px 4px;overflow:visible;}
-.prf-av-wrap{position:relative;width:96px;height:96px;display:flex;align-items:center;justify-content:center;overflow:visible;}
-.prf-av{width:96px;height:96px;border-radius:50%;background:var(--acc);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:38px;font-weight:900;overflow:hidden;cursor:pointer;border:2.5px solid var(--bdr2);position:relative;}
+/* identity card */
+.prf-card{background:var(--card);border:1px solid var(--bdr);border-radius:16px;margin:0 14px 10px;padding:16px;}
+.prf-row{display:flex;align-items:center;gap:14px;margin-bottom:14px;}
+.prf-av-wrap{flex-shrink:0;position:relative;}
+.prf-av{width:64px;height:64px;border-radius:50%;background:var(--acc);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:900;overflow:hidden;cursor:pointer;border:2px solid var(--bdr);}
 .prf-av img{width:100%;height:100%;object-fit:cover;}
-.prf-hero-name{margin-top:10px;font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:900;letter-spacing:.5px;color:var(--t1);}
-.prf-rank-badge{margin-top:6px;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:3px 10px;border-radius:20px;display:inline-block;}
-.prf-stats{display:flex;align-items:center;justify-content:center;gap:0;padding:16px 20px 12px;}
+.prf-av-rank{position:absolute;bottom:-4px;right:-4px;width:26px;height:26px;image-rendering:pixelated;}
+.prf-info{flex:1;min-width:0;}
+.prf-name{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:900;color:var(--text);line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.prf-rank-badge{font-size:10px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;padding:2px 8px;border-radius:20px;display:inline-flex;align-items:center;margin-top:5px;}
+/* stats row inside card */
+.prf-stats{display:flex;border-top:1px solid var(--bdr);padding-top:12px;gap:0;}
 .prf-stat{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;}
-.prf-stat-n{font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:900;color:var(--t1);line-height:1;}
-.prf-stat-l{font-size:11px;font-weight:600;color:var(--t3);}
-.prf-stat-div{width:1px;height:28px;background:var(--bdr);}
-.prf-actions{display:flex;gap:8px;padding:0 16px 20px;}
-.prf-btn{flex:1;padding:9px 0;border-radius:10px;background:var(--card2);border:1.5px solid var(--bdr);color:var(--t1);font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;}
-.prf-btn-icon{flex:0 0 42px;display:flex;align-items:center;justify-content:center;}
+.prf-stat+.prf-stat{border-left:1px solid var(--bdr);}
+.prf-stat-n{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:900;color:var(--text);line-height:1;}
+.prf-stat-l{font-size:10px;font-weight:600;letter-spacing:.4px;text-transform:uppercase;color:var(--t2);}
+/* action buttons */
+.prf-actions{display:flex;gap:8px;margin:0 14px 14px;}
+.prf-btn{background:var(--card);border:1.5px solid var(--bdr);border-radius:20px;padding:8px 14px;font-size:13px;font-weight:600;color:var(--t2);font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;white-space:nowrap;}
+.prf-btn-main{flex:1;}
+.prf-btn-sq{width:36px;height:36px;padding:0;flex-shrink:0;border-radius:50%;}
+/* kept for compat */
+.prf-hero-name{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:900;color:var(--text);}
+.prf-stat-div{display:none;}
 
 /* profile panel */
 .prof-avatar-area{display:flex;flex-direction:row;align-items:center;gap:14px;margin-bottom:20px;}
@@ -546,35 +556,38 @@ input[type=number]{-moz-appearance:textfield;}
 
   <!-- PROFILE SCREEN -->
   <div class="scr" id="spr">
-    <!-- topbar -->
-    <div class="prf-topbar">
-      <span></span>
-      <button class="prf-settings-btn" onclick="openSettings()">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-      </button>
-    </div>
-    <div class="sb">
-      <!-- avatar + identity -->
-      <div class="prf-hero">
-        <div class="prf-av-wrap">
-          <img id="scrProfileRankBg" src="" style="display:none;position:absolute;width:200px;height:200px;top:50%;left:50%;transform:translate(-50%,-50%);opacity:0.18;pointer-events:none;z-index:0;border-radius:0;image-rendering:pixelated">
-          <label class="prf-av tap-scale" id="scrProfileAv" for="profAvatarInput" style="cursor:pointer;touch-action:manipulation;position:relative;z-index:1">G</label>
+    <div class="scr-hd"><h1>Profile</h1></div>
+    <div class="sb" style="padding-top:6px">
+      <!-- identity + stats card -->
+      <div class="prf-card">
+        <div class="prf-row">
+          <div class="prf-av-wrap">
+            <label class="prf-av tap-scale" id="scrProfileAv" for="profAvatarInput" style="touch-action:manipulation">G</label>
+            <img id="scrProfileRankBg" src="" class="prf-av-rank" style="display:none">
+          </div>
+          <div class="prf-info">
+            <div class="prf-name" id="scrProfileHeroName">Athlete</div>
+            <div id="scrProfileRank"></div>
+          </div>
         </div>
-        <div class="prf-hero-name" id="scrProfileHeroName">Athlete</div>
-        <div id="scrProfileRank"></div>
-      </div>
-      <!-- stats row -->
-      <div class="prf-stats">
-        <div class="prf-stat"><span class="prf-stat-n" id="scrStatWorkouts">0</span><span class="prf-stat-l">Friends</span></div>
-        <div class="prf-stat-div"></div>
-        <div class="prf-stat"><span class="prf-stat-n" id="scrStatPRs">0</span><span class="prf-stat-l">PRs</span></div>
+        <div class="prf-stats">
+          <div class="prf-stat"><span class="prf-stat-n" id="scrStatPRs">0</span><span class="prf-stat-l">PRs</span></div>
+          <div class="prf-stat"><span class="prf-stat-n" id="scrStatWorkouts">0</span><span class="prf-stat-l">Workouts</span></div>
+          <div class="prf-stat"><span class="prf-stat-n" id="scrStatFriends">0</span><span class="prf-stat-l">Friends</span></div>
+        </div>
       </div>
       <!-- action buttons -->
       <div class="prf-actions">
-        <button class="prf-btn" onclick="openProfile()">Edit Profile</button>
-        <button class="prf-btn" onclick="showToast('Coming soon!')">Friends</button>
-        <button class="prf-btn prf-btn-icon" onclick="openRankBreakdown()">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        <button class="prf-btn prf-btn-main tap-scale" onclick="openProfile()">Edit Profile</button>
+        <button class="prf-btn tap-scale" onclick="showToast('Coming soon!')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Friends
+        </button>
+        <button class="prf-btn prf-btn-sq tap-scale" onclick="openRankBreakdown()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        </button>
+        <button class="prf-btn prf-btn-sq tap-scale" onclick="openSettings()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         </button>
       </div>
       <!-- PR list -->
@@ -969,6 +982,8 @@ function renderProfileTab(){
   // hero name
   const heroName=document.getElementById('scrProfileHeroName');
   if(heroName) heroName.textContent=name||'Athlete';
+  const topName=document.getElementById('scrProfileTopName');
+  if(topName) topName.textContent=name||'Athlete';
   // avatar
   const av=document.getElementById('scrProfileAv');
   const r=calcOverallRank();
@@ -977,9 +992,21 @@ function renderProfileTab(){
     else{av.textContent=name?name[0].toUpperCase():'G';}
   }
   const rankBgEl=document.getElementById('scrProfileRankBg');
+  const rankStatWrap=document.getElementById('scrStatRankWrap');
+  const rankStatIcon=document.getElementById('scrStatRankIcon');
   if(rankBgEl){
-    if(r){rankBgEl.src=RANK_ICONS[r.tier.id];rankBgEl.style.display='';}
-    else{rankBgEl.style.display='none';}
+    if(r){
+      rankBgEl.src=RANK_ICONS[r.tier.id];
+      rankBgEl.style.display='';
+      rankBgEl.style.filter=`drop-shadow(0 0 4px ${TIER_COLORS[r.tier.id]}bb)`;
+    }else{rankBgEl.style.display='none';}
+  }
+  if(rankStatWrap&&rankStatIcon){
+    if(r){
+      rankStatIcon.src=RANK_ICONS[r.tier.id];
+      rankStatIcon.style.filter=`drop-shadow(0 0 4px ${TIER_COLORS[r.tier.id]}aa)`;
+      rankStatWrap.style.display='';
+    }else{rankStatWrap.style.display='none';}
   }
   const rankEl=document.getElementById('scrProfileRank');
   if(rankEl){
@@ -994,12 +1021,15 @@ function renderProfileTab(){
     }
   }
   // stats
-  const workouts=(db.friends||[]).length;
   const prsCount=Object.keys(db.prs||{}).length;
+  const workoutDays=new Set((db.history||[]).map(h=>h.day||h.date).filter(Boolean)).size;
+  const friendsCount=(db.friends||[]).length;
   const wsEl=document.getElementById('scrStatWorkouts');
   const psEl=document.getElementById('scrStatPRs');
-  if(wsEl) wsEl.textContent=workouts;
+  const fsEl=document.getElementById('scrStatFriends');
+  if(wsEl) wsEl.textContent=workoutDays;
   if(psEl) psEl.textContent=prsCount;
+  if(fsEl) fsEl.textContent=friendsCount;
   // top 5 PRs
   const bp=document.getElementById('scrBestPRs');
   if(!bp) return;
