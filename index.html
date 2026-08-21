@@ -935,20 +935,14 @@ async function loadFromFirestore() {
 
 async function signInWithGoogle() {
   const provider = new firebase.auth.GoogleAuthProvider();
-  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
   try {
-    if (isStandalone) {
-      // installed PWA: redirect breaks in standalone, open in new tab
-      const result = await _auth.signInWithPopup(provider);
-      if (!result) await _auth.signInWithRedirect(provider);
-    } else {
-      await _auth.signInWithRedirect(provider);
-    }
+    await _auth.signInWithPopup(provider);
   } catch (e) {
     if (e.code === 'auth/popup-blocked' || e.code === 'auth/operation-not-supported-in-this-environment') {
+      // popup blocked — fall back to redirect
       await _auth.signInWithRedirect(provider);
     } else if (e.code !== 'auth/popup-closed-by-user') {
-      showToast('Sign in failed: ' + e.code);
+      showToast('Sign in error: ' + e.code);
     }
   }
 }
@@ -977,7 +971,7 @@ _auth.onAuthStateChanged(async user => {
     renderPRs();
     renderBestPRs();
     renderTodaySession();
-    showToast('Signed in as ' + (user.displayName || user.email));
+    showToast('✓ Signed in as ' + (user.displayName || user.email).split(' ')[0]);
   } else {
     renderProfileTab();
   }
