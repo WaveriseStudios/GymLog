@@ -940,9 +940,15 @@ async function loadFromFirestore() {
 }
 
 async function signInWithGoogle() {
+  const provider = new firebase.auth.GoogleAuthProvider();
   try {
-    const provider = new firebase.auth.GoogleAuthProvider();
-    await _auth.signInWithPopup(provider);
+    // use redirect on mobile (popup is blocked), popup on desktop
+    const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+    if (isMobile) {
+      await _auth.signInWithRedirect(provider);
+    } else {
+      await _auth.signInWithPopup(provider);
+    }
   } catch (e) {
     if (e.code !== 'auth/popup-closed-by-user') showToast('Sign in failed');
   }
@@ -953,6 +959,9 @@ async function signOutFirebase() {
   showToast('Signed out');
   renderProfileTab();
 }
+
+// handle redirect result after Google sign-in on mobile
+_auth.getRedirectResult().catch(e => { if(e.code) showToast('Sign in failed'); });
 
 _auth.onAuthStateChanged(async user => {
   _user = user;
