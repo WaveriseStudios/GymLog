@@ -266,7 +266,6 @@ body{
 .overlay.open{opacity:1;pointer-events:auto;}
 .sheet{width:100%;max-height:90dvh;max-height:90vh;background:var(--bg2);border-radius:22px 22px 0 0;overflow-y:auto;-webkit-overflow-scrolling:touch;transform:translateY(100%);transition:transform .28s cubic-bezier(.32,.72,0,1);padding-bottom:32px;}
 .sheet::-webkit-scrollbar{display:none;}
-.sheet-flex{overflow-y:hidden!important;display:flex;flex-direction:column;}
 .overlay.open .sheet{transform:translateY(0);}
 .sheet-pull{width:40px;height:4px;background:var(--bdr);border-radius:2px;margin:12px auto 0;}
 .sheet-hdr{display:flex;align-items:center;justify-content:space-between;padding:14px 18px 10px;}
@@ -558,10 +557,15 @@ input[type=number]{-moz-appearance:textfield;}
   </div>
 
 
-  <!-- CHAT SCREEN -->
-  <div class="scr" id="sc">
-    <div class="scr-hd"><h1>Chat</h1></div>
-    <div class="sb" id="chatList" style="padding:8px 14px 32px"></div>
+  <!-- FRIENDS SCREEN -->
+  <div class="scr" id="sf">
+    <div class="scr-hd" style="display:flex;align-items:center;justify-content:space-between;padding-right:16px">
+      <h1>Friends</h1>
+      <button onclick="openFriends()" style="width:36px;height:36px;border-radius:50%;background:var(--card);border:1px solid var(--bdr);display:flex;align-items:center;justify-content:center;cursor:pointer" class="tap-scale">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
+    </div>
+    <div class="sb" id="friendsTabList" style="padding:8px 14px 32px"></div>
   </div>
 
   <!-- PROFILE SCREEN -->
@@ -591,10 +595,6 @@ input[type=number]{-moz-appearance:textfield;}
       </div>
       <!-- action buttons -->
       <div class="prf-actions">
-        <button class="prf-btn tap-scale" style="flex:1" onclick="openFriends()">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-          Friends
-        </button>
         <button class="prf-btn tap-scale" style="flex:1" onclick="openRankBreakdown()">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
           Ranks
@@ -623,9 +623,9 @@ input[type=number]{-moz-appearance:textfield;}
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
       PR
     </button>
-    <button class="nb" data-t="sc">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-      Chat
+    <button class="nb" data-t="sf">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Friends
     </button>
     <button class="nb" data-t="spr" id="profileTab">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
@@ -748,24 +748,14 @@ input[type=number]{-moz-appearance:textfield;}
   </div>
 </div>
 
-<div class="overlay" id="chatOverlay">
-  <div class="sheet sheet-flex" style="height:92%">
+<div class="overlay" id="visitorOverlay">
+  <div class="sheet">
     <div class="sheet-pull"></div>
-    <div class="sheet-hdr" style="gap:12px">
-      <div id="chatHdrAvatar" style="flex-shrink:0;width:32px;height:32px;border-radius:50%;background:var(--acc2)"></div>
-      <div style="flex:1;min-width:0">
-        <div class="sheet-title" id="chatThreadName" style="font-size:17px">Chat</div>
-        <div id="chatSubtitle" style="font-size:11px;color:#22c55e;font-weight:600;margin-top:-2px"></div>
-      </div>
-      <button class="sheet-x" id="chatClose">×</button>
+    <div class="sheet-hdr">
+      <span class="sheet-title">Profile</span>
+      <button class="sheet-x" id="visitorClose">×</button>
     </div>
-    <div id="chatMessages" style="flex:1;overflow-y:auto;padding:12px 16px;display:flex;flex-direction:column;gap:8px;-webkit-overflow-scrolling:touch"></div>
-    <div style="display:flex;gap:8px;padding:10px 14px 20px;border-top:1px solid var(--bdr);background:var(--bg2)">
-      <input id="chatInput" type="text" placeholder="Message…" autocomplete="off" autocorrect="off" spellcheck="false" style="flex:1;background:var(--bg2);border:1.5px solid var(--bdr);border-radius:20px;padding:9px 14px;font-size:14px;color:var(--text);font-family:inherit;outline:none">
-      <button onclick="sendChatMessage()" style="width:38px;height:38px;border-radius:50%;background:var(--acc);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-      </button>
-    </div>
+    <div class="sheet-body" id="visitorBody"></div>
   </div>
 </div>
 
@@ -999,10 +989,6 @@ async function signInWithGoogle() {
 }
 
 async function signOutFirebase() {
-  if (_presenceTimer) { clearInterval(_presenceTimer); _presenceTimer = null; }
-  if (_chatListUnsub) { _chatListUnsub(); _chatListUnsub = null; }
-  if (_chatUnsub) { _chatUnsub(); _chatUnsub = null; }
-  if (_chatPresenceUnsub) { _chatPresenceUnsub(); _chatPresenceUnsub = null; }
   await _auth.signOut();
   // wipe local data so signing in with a different account starts fresh
   localStorage.removeItem(STORE);
@@ -1031,8 +1017,6 @@ _auth.onAuthStateChanged(async user => {
     await loadFromFirestore();
     migrateDB();
     await ensureFriendCode();
-    startPresence();
-    subscribeChatList();
     renderProfileTab();
     renderRankCard();
     renderPRs();
@@ -1184,7 +1168,7 @@ async function processFriendRequests() {
       }
       await doc.ref.delete();
     }
-    if (changed) { persist(); renderFriendsSheet(); renderProfileTab(); }
+    if (changed) { persist(); renderFriendsSheet(); renderProfileTab(); renderFriendsTab(); }
   } catch(e) { console.warn('processFriendRequests error', e); }
 }
 
@@ -1226,6 +1210,7 @@ async function submitAddFriend() {
     showToast(`Added ${theirName}!`);
     renderFriendsSheet();
     renderProfileTab();
+    renderFriendsTab();
   } catch(e) {
     console.warn('addFriend error', e);
     showToast('Error adding friend');
@@ -1239,76 +1224,89 @@ async function removeFriend(uid) {
   persist();
   renderFriendsSheet();
   renderProfileTab();
+  renderFriendsTab();
   showToast('Friend removed');
 }
 
-/* ── PRESENCE ── */
-let _presenceTimer = null;
-const _profileCache = {};
-
-function _profilesCol() { return _db.collection('profiles'); }
-
-async function updatePresence() {
-  if (!_user) return;
-  try {
-    await _profilesCol().doc(_user.uid).set({
-      name: db.profile?.name || _user.displayName || 'Athlete',
-      avatar: db.profile?.avatar || null,
-      lastSeen: firebase.firestore.FieldValue.serverTimestamp()
-    }, { merge: true });
-  } catch(e) {}
+function renderFriendsTab() {
+  const el = document.getElementById('friendsTabList');
+  if (!el) return;
+  const friends = db.friends || [];
+  if (!_user) {
+    el.innerHTML = `<div style="text-align:center;color:var(--t3);font-size:13px;padding:60px 0">Sign in to add friends</div>`;
+    return;
+  }
+  if (friends.length === 0) {
+    el.innerHTML = `<div style="text-align:center;padding:60px 0">
+      <div style="font-size:13px;color:var(--t3);margin-bottom:12px">No friends yet</div>
+      <button onclick="openFriends()" class="tap-scale" style="background:var(--acc);color:#fff;border:none;border-radius:20px;padding:10px 22px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">Add a friend</button>
+    </div>`;
+    return;
+  }
+  el.innerHTML = friends.map(f => {
+    const initials = (f.name || '?')[0].toUpperCase();
+    const avatarHtml = f.avatar
+      ? `<img src="${f.avatar}" style="width:52px;height:52px;border-radius:50%;object-fit:cover;flex-shrink:0">`
+      : `<div style="width:52px;height:52px;border-radius:50%;background:var(--acc2);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:900;color:var(--acc);flex-shrink:0">${initials}</div>`;
+    const safeName = (f.name||'Friend').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    const safeCode = (f.code||'').replace(/'/g,"\\'");
+    const safeAvatar = (f.avatar||'').replace(/'/g,"\\'").replace(/"/g,'&quot;');
+    return `<div onclick="openVisitorProfile('${f.uid}','${safeName}','${safeCode}','${safeAvatar}')" class="tap-scale" style="display:flex;align-items:center;gap:14px;background:var(--card);border:1px solid var(--bdr);border-radius:14px;padding:14px;margin-bottom:10px;cursor:pointer">
+      ${avatarHtml}
+      <div style="flex:1;min-width:0">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:900;color:var(--text);line-height:1">${f.name||'Friend'}</div>
+        <div style="font-size:11px;font-weight:700;letter-spacing:2px;color:var(--t3);margin-top:3px">${(f.code||'').toUpperCase()}</div>
+      </div>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+    </div>`;
+  }).join('');
 }
 
-function startPresence() {
-  if (_presenceTimer) clearInterval(_presenceTimer);
-  updatePresence();
-  _presenceTimer = setInterval(updatePresence, 60000);
+async function openVisitorProfile(uid, name, code, avatar) {
+  const body = document.getElementById('visitorBody');
+  if (!body) return;
+
+  function renderVisitor(profile) {
+    const n = profile?.name || name || 'Friend';
+    const av = profile?.avatar || avatar || null;
+    const initials = n[0].toUpperCase();
+    const avatarHtml = av
+      ? `<img src="${av}" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:2px solid var(--bdr)">`
+      : `<div style="width:80px;height:80px;border-radius:50%;background:var(--acc2);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:36px;font-weight:900;color:var(--acc)">${initials}</div>`;
+    body.innerHTML = `
+      <div style="display:flex;flex-direction:column;align-items:center;padding:16px 0 24px;gap:12px">
+        ${avatarHtml}
+        <div style="text-align:center">
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:900;color:var(--text);line-height:1">${n}</div>
+          <div style="font-size:11px;font-weight:700;letter-spacing:3px;color:var(--acc);margin-top:6px">${(code||'').toUpperCase()}</div>
+        </div>
+      </div>
+      <div style="border-top:1px solid var(--bdr);padding-top:16px;display:flex;justify-content:center">
+        <button onclick="removeFriend('${uid}');closeVisitorProfile();" class="prf-btn tap-scale" style="color:var(--err,#ff453a);border-color:var(--err,#ff453a);padding:8px 24px">Remove friend</button>
+      </div>`;
+  }
+
+  renderVisitor({ name, avatar });
+  document.getElementById('visitorOverlay').classList.add('open');
+
+  if (_user) {
+    try {
+      const snap = await _db.collection('profiles').doc(uid).get();
+      if (snap.exists && document.getElementById('visitorOverlay').classList.contains('open')) {
+        renderVisitor(snap.data());
+      }
+    } catch(e) {}
+  }
 }
 
-document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible' && _user) updatePresence();
+function closeVisitorProfile() {
+  document.getElementById('visitorOverlay').classList.remove('open');
+}
+
+document.getElementById('visitorClose').addEventListener('click', closeVisitorProfile);
+document.getElementById('visitorOverlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('visitorOverlay')) closeVisitorProfile();
 });
-
-function isOnline(lastSeen) {
-  const d = tsToDate(lastSeen);
-  return d ? (Date.now() - d.getTime()) < 90000 : false;
-}
-
-function fmtLastSeen(lastSeen) {
-  const d = tsToDate(lastSeen);
-  if (!d) return '';
-  const diff = Math.floor((Date.now() - d.getTime()) / 1000);
-  if (diff < 90) return 'Online';
-  if (diff < 3600) return `${Math.floor(diff/60)}m ago`;
-  if (diff < 86400) return `${Math.floor(diff/3600)}h ago`;
-  return lastSeen.toDate().toLocaleDateString([], {month:'short',day:'numeric'});
-}
-
-async function fetchProfile(uid) {
-  if (_profileCache[uid] && (Date.now() - (_profileCache[uid]._fetchedAt||0)) < 30000) return _profileCache[uid];
-  try {
-    const snap = await _profilesCol().doc(uid).get();
-    const data = snap.exists ? snap.data() : {};
-    data._fetchedAt = Date.now();
-    _profileCache[uid] = data;
-    return data;
-  } catch(e) { return {}; }
-}
-
-/* ── CHAT ── */
-
-let _chatUnsub = null;
-let _chatListUnsub = null;
-let _chatFriendUid = null;
-let _chatPresenceUnsub = null;
-let _chatMeta = {};  // seeded from db.chatMeta after db loads (see migrateDB)
-
-function escHtml(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-function _chatId(uid1, uid2) { return [uid1, uid2].sort().join('_'); }
-function _chatDoc(uid1, uid2) { return _db.collection('chats').doc(_chatId(uid1, uid2)); }
-function _chatMsgCol(uid1, uid2) { return _chatDoc(uid1, uid2).collection('messages'); }
 
 function tsToDate(ts) {
   if (!ts) return null;
@@ -1316,201 +1314,6 @@ function tsToDate(ts) {
   if (ts._ms) return new Date(ts._ms);
   return null;
 }
-function fmtChatTime(ts) {
-  const d = tsToDate(ts);
-  if (!d) return '';
-  const now = new Date();
-  const diffDays = Math.floor((now - d) / 86400000);
-  if (diffDays === 0) return d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
-  if (diffDays === 1) return 'Yesterday';
-  if (diffDays < 7) return d.toLocaleDateString([], {weekday:'short'});
-  return d.toLocaleDateString([], {month:'short',day:'numeric'});
-}
-
-function chatAvatarHtml(profile, size=48) {
-  const name = profile?.name || '?';
-  const initials = name[0].toUpperCase();
-  if (profile?.avatar) return `<img src="${profile.avatar}" style="width:${size}px;height:${size}px;border-radius:50%;object-fit:cover;flex-shrink:0;display:block">`;
-  return `<div style="width:${size}px;height:${size}px;border-radius:50%;background:var(--acc2);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:${Math.round(size*0.45)}px;font-weight:900;color:var(--acc);flex-shrink:0">${initials}</div>`;
-}
-
-function subscribeChatList() {
-  if (_chatListUnsub) { _chatListUnsub(); _chatListUnsub = null; }
-  if (!_user) return;
-  // render immediately from cache, then live updates replace it
-  if (document.getElementById('sc')?.classList.contains('on')) renderChatList();
-  _chatListUnsub = _db.collection('chats')
-    .where('participants', 'array-contains', _user.uid)
-    .onSnapshot(snap => {
-      _chatMeta = {};
-      snap.forEach(doc => {
-        const d = doc.data();
-        // convert Firestore Timestamps to plain ms for localStorage serialisation
-        _chatMeta[doc.id] = {
-          ...d,
-          lastMessageTime: d.lastMessageTime?.toMillis ? { _ms: d.lastMessageTime.toMillis() } : d.lastMessageTime
-        };
-      });
-      db.chatMeta = _chatMeta;
-      persist();
-      if (document.getElementById('sc')?.classList.contains('on')) renderChatList();
-    }, e => console.warn('chatList snap error', e));
-}
-
-async function renderChatList() {
-  const el = document.getElementById('chatList');
-  if (!el) return;
-  if (!_user) {
-    el.innerHTML = `<div style="text-align:center;color:var(--t3);font-size:13px;padding:60px 0">Sign in to chat with friends</div>`;
-    return;
-  }
-  const friends = db.friends || [];
-  if (friends.length === 0) {
-    el.innerHTML = `<div style="text-align:center;color:var(--t3);font-size:13px;padding:60px 0">Add friends to start chatting</div>`;
-    return;
-  }
-
-  // fetch latest profiles for all friends in parallel
-  const profiles = await Promise.all(friends.map(f => fetchProfile(f.uid)));
-
-  // build rows with metadata, sort by last message time desc
-  const rows = friends.map((f, i) => {
-    const cid = _chatId(_user.uid, f.uid);
-    const meta = _chatMeta[cid];
-    const profile = profiles[i];
-    return { f, profile, meta, ts: tsToDate(meta?.lastMessageTime)?.getTime() || 0 };
-  }).sort((a, b) => b.ts - a.ts);
-
-  el.innerHTML = rows.map(({ f, profile, meta }) => {
-    const online = isOnline(profile?.lastSeen);
-    const name = profile?.name || f.name || 'Friend';
-    const lastMsg = meta?.lastMessage ? escHtml(meta.lastMessage.length > 42 ? meta.lastMessage.slice(0,42)+'…' : meta.lastMessage) : '<span style="color:var(--t3)">Say hi!</span>';
-    const timeStr = meta?.lastMessageTime ? fmtChatTime(meta.lastMessageTime) : '';
-    const safeName = name.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-    return `<div onclick="openChat('${f.uid}','${safeName}')" class="tap-scale" style="display:flex;align-items:center;gap:14px;padding:12px 0;border-bottom:1px solid var(--bdr);cursor:pointer">
-      <div style="position:relative;flex-shrink:0">
-        ${chatAvatarHtml(profile, 52)}
-        ${online ? `<span style="position:absolute;bottom:1px;right:1px;width:13px;height:13px;border-radius:50%;background:#22c55e;border:2px solid var(--bg)"></span>` : ''}
-      </div>
-      <div style="flex:1;min-width:0">
-        <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:3px">
-          <span style="font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:900;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(name)}</span>
-          <span style="font-size:11px;color:var(--t3);flex-shrink:0">${timeStr}</span>
-        </div>
-        <div style="font-size:13px;color:var(--t2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${meta?.lastMessageSenderUid === _user.uid ? '<span style="color:var(--t3)">You: </span>' : ''}${lastMsg}</div>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-async function openChat(friendUid, friendName) {
-  if (!_user) { showToast('Sign in to chat'); return; }
-  _chatFriendUid = friendUid;
-  document.getElementById('chatThreadName').textContent = friendName;
-  document.getElementById('chatSubtitle').textContent = '…';
-  document.getElementById('chatMessages').innerHTML = '';
-  document.getElementById('chatInput').value = '';
-  document.getElementById('chatOverlay').classList.add('open');
-
-  if (_chatUnsub) { _chatUnsub(); _chatUnsub = null; }
-  if (_chatPresenceUnsub) { _chatPresenceUnsub(); _chatPresenceUnsub = null; }
-
-  // live presence in header
-  _chatPresenceUnsub = _profilesCol().doc(friendUid).onSnapshot(snap => {
-    const data = snap.data() || {};
-    const online = isOnline(data.lastSeen);
-    const sub = document.getElementById('chatSubtitle');
-    if (sub) sub.textContent = online ? 'Online' : (data.lastSeen ? 'Last seen ' + fmtLastSeen(data.lastSeen) : '');
-    // update avatar if name/avatar changed
-    const hdrAv = document.getElementById('chatHdrAvatar');
-    if (hdrAv) hdrAv.outerHTML = chatAvatarHtml(data, 32).replace('<div ','<div id="chatHdrAvatar" ').replace('<img ','<img id="chatHdrAvatar" ');
-  }, e => {});
-
-  // messages listener
-  _chatUnsub = _chatMsgCol(_user.uid, friendUid)
-    .orderBy('ts')
-    .limitToLast(100)
-    .onSnapshot(snap => {
-      const el = document.getElementById('chatMessages');
-      if (!el) return;
-      el.innerHTML = '';
-      let prevTs = null;
-      snap.forEach(doc => {
-        const m = doc.data();
-        const mine = m.senderUid === _user.uid;
-        const d = m.ts?.toDate ? m.ts.toDate() : null;
-
-        // separator only when gap > 1 hour from previous message
-        if (d && (!prevTs || (d - prevTs) > 3600000)) {
-          const dateStr = d.toLocaleDateString([], {weekday:'short',month:'short',day:'numeric'});
-          const sep = document.createElement('div');
-          sep.style.cssText = 'text-align:center;margin:10px 0 6px;';
-          sep.innerHTML = `<span style="font-size:11px;color:var(--t3);background:var(--bg2);padding:3px 10px;border-radius:20px;border:1px solid var(--bdr)">${dateStr}</span>`;
-          el.appendChild(sep);
-        }
-        prevTs = d;
-
-        const time = d ? d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : '';
-        const bubble = document.createElement('div');
-        bubble.style.cssText = `display:flex;flex-direction:column;align-items:${mine?'flex-end':'flex-start'};gap:2px;margin-bottom:2px`;
-        bubble.innerHTML = `<div style="max-width:78%;background:${mine?'var(--acc)':'var(--card)'};color:${mine?'#fff':'var(--text)'};border-radius:${mine?'18px 4px 18px 18px':'4px 18px 18px 18px'};padding:9px 13px;font-size:14px;line-height:1.45;word-break:break-word;border:${mine?'none':'1px solid var(--bdr)'}">
-          ${escHtml(m.text)}
-        </div>
-        <div style="font-size:10px;color:var(--t3);padding:0 4px">${time}</div>`;
-        el.appendChild(bubble);
-      });
-      el.scrollTop = el.scrollHeight;
-    }, e => console.warn('chat snapshot error', e));
-}
-
-async function sendChatMessage() {
-  if (!_user || !_chatFriendUid) return;
-  const input = document.getElementById('chatInput');
-  const text = (input.value || '').trim();
-  if (!text) return;
-  input.value = '';
-  const myName = db.profile?.name || _user.displayName || 'Athlete';
-  const cid = _chatId(_user.uid, _chatFriendUid);
-  // optimistic local update so chat list shows message immediately
-  _chatMeta[cid] = { ...(_chatMeta[cid]||{}), participants:[_user.uid,_chatFriendUid], lastMessage:text, lastMessageTime:{_ms:Date.now()}, lastMessageSenderUid:_user.uid, lastMessageSenderName:myName };
-  db.chatMeta = _chatMeta;
-  persist();
-  const ts = firebase.firestore.FieldValue.serverTimestamp();
-  try {
-    const batch = _db.batch();
-    const msgRef = _chatMsgCol(_user.uid, _chatFriendUid).doc();
-    batch.set(msgRef, { text, senderUid: _user.uid, senderName: myName, ts });
-    const metaRef = _db.collection('chats').doc(cid);
-    batch.set(metaRef, {
-      participants: [_user.uid, _chatFriendUid],
-      lastMessage: text,
-      lastMessageTime: ts,
-      lastMessageSenderUid: _user.uid,
-      lastMessageSenderName: myName
-    }, { merge: true });
-    await batch.commit();
-  } catch(e) {
-    console.warn('send message error', e);
-    input.value = text;
-    showToast('Failed to send');
-  }
-}
-
-function closeChat() {
-  document.getElementById('chatOverlay').classList.remove('open');
-  if (_chatUnsub) { _chatUnsub(); _chatUnsub = null; }
-  if (_chatPresenceUnsub) { _chatPresenceUnsub(); _chatPresenceUnsub = null; }
-  _chatFriendUid = null;
-}
-
-document.getElementById('chatClose').addEventListener('click', closeChat);
-document.getElementById('chatOverlay').addEventListener('click', e => {
-  if (e.target === document.getElementById('chatOverlay')) closeChat();
-});
-document.getElementById('chatInput').addEventListener('keydown', e => {
-  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChatMessage(); }
-});
-
 function migrateDB(){
   let dirty=false;
 
@@ -1522,7 +1325,6 @@ function migrateDB(){
   if(!db.notif){db.notif={enabled:false};dirty=true;}
   if(!db.profile){db.profile={name:'',weight:null,height:null,age:null,gender:'m'};dirty=true;}
   if(!Array.isArray(db.friends)){db.friends=[];dirty=true;}
-  if(!db.chatMeta||typeof db.chatMeta!=='object'){db.chatMeta={};dirty=true;}
 
   // migrate old mon/tue/wed schedule keys → YYYY-MM-DD (current week as best guess)
   const OLD_DAYS=['mon','tue','wed','thu','fri','sat','sun'];
@@ -1577,7 +1379,6 @@ function migrateDB(){
 
 let db = loadDB();
 migrateDB();
-_chatMeta = db.chatMeta || {};
 
 /* ── DATE HELPERS ── */
 function localDateStr(d){return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
@@ -1610,7 +1411,7 @@ function usualExsForDate(dateStr){
 
 
 /* ── NAV ── */
-const NAV_ORDER = ['sh','sw','sp','sc','spr'];
+const NAV_ORDER = ['sh','sw','sp','sf','spr'];
 
 function renderProfileTab(){
   const name=db.profile?.name?.trim();
@@ -1721,7 +1522,7 @@ function goScr(t, dir){
   if(t==='sh') renderTodaySession();
   if(t==='sw') renderWeek();
   if(t==='sp') renderPRs();
-  if(t==='sc') renderChatList();
+  if(t==='sf') renderFriendsTab();
   if(t==='spr') renderProfileTab();
   sessionStorage.setItem('gymlog_scr',t);
   // push a history entry so back button returns to previous tab, not closes app
@@ -1747,7 +1548,7 @@ document.querySelectorAll('.nb').forEach(b=>{
   b.addEventListener('click',()=>{
     const from = NAV_ORDER.indexOf(document.querySelector('.scr.on')?.id);
     const to   = NAV_ORDER.indexOf(b.dataset.t);
-    if(b.dataset.t==='sc') renderChatList();
+    if(b.dataset.t==='sf') renderFriendsTab();
     if(b.dataset.t==='spr') renderProfileTab();
     goScr(b.dataset.t, to > from ? 1 : to < from ? -1 : 0);
   });
@@ -1801,7 +1602,7 @@ window.addEventListener('popstate', e=>{
     if(prev==='sh') renderTodaySession();
     if(prev==='sw') renderWeek();
     if(prev==='sp') renderPRs();
-    if(prev==='sc') renderChatList();
+    if(prev==='sf') renderFriendsTab();
     if(prev==='spr') renderProfileTab();
     document.querySelectorAll('.nb').forEach(n=>n.classList.toggle('on', n.dataset.t===prev));
     const next = document.getElementById(prev);
@@ -3238,15 +3039,6 @@ document.getElementById('profileSave').addEventListener('click', () => {
   // keep friend code name in sync
   if (_user && db.friendCode) {
     _codesCol().doc(db.friendCode).set({ name: db.profile.name || _user.displayName || 'Athlete' }, { merge: true }).catch(() => {});
-  }
-  // sync public profile (name + avatar) so friends see updates
-  if (_user) {
-    _profilesCol().doc(_user.uid).set({
-      name: db.profile.name || _user.displayName || 'Athlete',
-      avatar: db.profile.avatar || null,
-      lastSeen: firebase.firestore.FieldValue.serverTimestamp()
-    }, { merge: true }).catch(() => {});
-    delete _profileCache[_user.uid];
   }
   closeProfile();
   renderHomeBar();
