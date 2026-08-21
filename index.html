@@ -959,8 +959,13 @@ async function signOutFirebase() {
   renderProfileTab();
 }
 
-// handle redirect result after Google sign-in on mobile
-_auth.getRedirectResult().catch(e => { if(e.code) showToast('Sign in failed'); });
+// handle redirect result after Google sign-in
+_auth.getRedirectResult().then(result => {
+  if (result?.user) console.log('redirect sign-in ok', result.user.email);
+}).catch(e => {
+  console.error('redirect error', e.code, e.message);
+  if (e.code) showToast('Sign in error: ' + e.code);
+});
 
 _auth.onAuthStateChanged(async user => {
   _user = user;
