@@ -2153,23 +2153,39 @@ function renderTodaySession(){
   const DAYS_L=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
   const dayName=DAYS_L[parseLocalDate(today).getDay()];
 
-  // build logged map: name → {totalSets, best, bestScore, cardio}
+  // build logged map: name → {totalSets, best, bestScore, cardio, sets[]}
   const loggedMap={};
   todayHistoryExs().forEach(h=>{
     const cardio=isCardio(h.name);
-    if(!loggedMap[h.name])loggedMap[h.name]={totalSets:0,best:null,bestScore:-1,cardio};
+    if(!loggedMap[h.name])loggedMap[h.name]={totalSets:0,best:null,bestScore:-1,cardio,sets:[]};
     if(cardio){
-      // keep entry with most distance, then fastest time
       const cur=loggedMap[h.name].best;
       if(!cur||(h.distance||0)>(cur.distance||0)||((h.distance||0)===(cur.distance||0)&&(h.duration||0)<(cur.duration||0)))
         loggedMap[h.name].best=h;
     } else {
-      loggedMap[h.name].totalSets+=(h.sets||1);
+      const n=h.sets||1;
+      loggedMap[h.name].totalSets+=n;
+      loggedMap[h.name].sets.push({weight:h.weight,reps:h.reps,sets:n});
       const isBW=BODYWEIGHT_EX.has(h.name),bw=db.profile?.weight||0;
       const s=calcEpley(isBW?(bw*(BW_FRACTION[h.name]??1)+h.weight):h.weight,h.reps,isBW?0:30);
       if(s>loggedMap[h.name].bestScore){loggedMap[h.name].best=h;loggedMap[h.name].bestScore=s;}
     }
   });
+
+  // collapse identical weight+reps entries, build compact display string
+  function fmtSets(name, g) {
+    const merged = [];
+    g.sets.forEach(s => {
+      const prev = merged.find(m => m.weight === s.weight && m.reps === s.reps);
+      if (prev) prev.sets += s.sets;
+      else merged.push({...s});
+    });
+    if (merged.length === 1) {
+      const m = merged[0];
+      return `${fmtWeight(m.weight, name)} × ${m.reps} · ${m.sets} set${m.sets !== 1 ? 's' : ''}`;
+    }
+    return merged.map(m => `${fmtWeight(m.weight, name)} × ${m.reps} × ${m.sets}`).join(' · ');
+  }
 
   // returns true if today's best for this exercise matches the stored PR
   const isTodayPR=(name,g)=>{
@@ -2198,7 +2214,7 @@ function renderTodaySession(){
     const rows=loggedNames.map(name=>{
       const g=loggedMap[name];
       const prTag=isTodayPR(name,g)?`<span class="pr-tag">PR</span>`:'';
-      const metaStr=g.cardio?fmtCardio(g.best):`${fmtWeight(g.best.weight,name)} × ${g.best.reps} · ${g.totalSets} set${g.totalSets!==1?'s':''}`;
+      const metaStr=g.cardio?fmtCardio(g.best):fmtSets(name,g);
       return `<div class="lw-row" style="cursor:pointer" onclick="openExModal('${today}','${name}')">
         <div class="lw-info">
           <div class="lw-name">${name}${prTag}</div>
@@ -2224,7 +2240,7 @@ function renderTodaySession(){
     if(g){
       // logged today — tap to edit
       const prTag2=isTodayPR(name,g)?`<span class="pr-tag">PR</span>`:'';
-      const metaStr2=g.cardio?fmtCardio(g.best):`${fmtWeight(g.best.weight,name)} × ${g.best.reps} · ${g.totalSets} set${g.totalSets!==1?'s':''}`;
+      const metaStr2=g.cardio?fmtCardio(g.best):fmtSets(name,g);
       return `<div class="lw-row" style="cursor:pointer" onclick="openExModal('${today}','${name}')">
         <div class="lw-info">
           <div class="lw-name" style="color:var(--t2)">${name}${prTag2}</div>
@@ -2309,9 +2325,7 @@ function renderWeekDay(dir){
     // wrapper holds the border and stays fixed; inner slides on swipe
     const wrap=document.createElement('div');
     wrap.className='lw-row';
-    wrap.style.cssText='overflow:hidden;padding:0;';
-    const row=document.createElement('div');
-    row.style.cssText=`display:flex;align-items:center;justify-content:space-between;padding:11px 14px;transition:transform .25s ease;${editable?'cursor:pointer;user-select:none;':'opacity:.7;'}`;
+    wrap.style.cssText=`${editable?'cursor:pointer;user-select:none;':'opacity:.7;'}`;
     const pr=db.prs?.[ex.name];
     let isPR=false;
     if(pr){
@@ -2320,40 +2334,79 @@ function renderWeekDay(dir){
     }
     const prTagW=isPR?`<span class="pr-tag">PR</span>`:'';
     const weekMeta=isCardio(ex.name)?fmtCardio(ex):`${fmtWeight(ex.weight,ex.name)} × ${ex.reps} · ${ex.sets} sets`;
-    row.innerHTML=`<div class="lw-info"><div class="lw-name">${ex.name}${prTagW}</div><div class="lw-meta">${weekMeta}</div></div>`;
-    wrap.appendChild(row);
+    wrap.innerHTML=`<div class="lw-info"><div class="lw-name">${ex.name}${prTagW}</div><div class="lw-meta">${weekMeta}</div></div>`;
     if(editable){
-      wrap.addEventListener('click',()=>openExModal(dateStr,ex.id));
-      let sx2=0,cx=0,drag=false;
-      wrap.addEventListener('touchstart',e=>{sx2=e.touches[0].clientX;cx=0;drag=true;row.style.transition='none';},{passive:true});
-      wrap.addEventListener('touchmove',e=>{if(!drag)return;cx=e.touches[0].clientX-sx2;if(cx>0)cx=0;else e.stopPropagation();row.style.transform=`translateX(${cx}px)`;},{passive:true});
-      wrap.addEventListener('touchend',()=>{
-        drag=false;row.style.transition='transform .25s ease';
-        if(cx<-90){
-          row.style.transform='translateX(-100%)';
+      let holdTimer=null, holding=false;
+      const startHold=()=>{
+        holding=false;
+        wrap.style.transition='background .5s';
+        wrap.style.background='rgba(255,69,58,.15)';
+        holdTimer=setTimeout(()=>{
+          holding=true;
+          const h=wrap.offsetHeight;
+          wrap.style.overflow='hidden';
+          wrap.style.height=h+'px';
+          wrap.offsetHeight;
+          wrap.style.transition='height .18s ease, opacity .18s ease';
+          wrap.style.opacity='0';
+          wrap.style.height='0';
           setTimeout(()=>{
-            const h=wrap.offsetHeight;
-            wrap.style.borderBottomWidth='0';
-            wrap.style.transition='none';
-            wrap.style.height=h+'px';
-            wrap.offsetHeight; // force reflow
-            wrap.style.transition='height .18s ease';
-            wrap.style.height='0';
-            setTimeout(()=>{
-              db.schedule[dateStr]=db.schedule[dateStr].filter(e=>e.id!==ex.id);
-              db.history=db.history.filter(h=>h._entryId!==ex.id);
-              recomputePR(ex.name);
-              persist();renderWeek();renderTodaySession();renderRankCard();renderPRs();renderBestPRs();showToast('Exercise removed');
-            },200);
-          },240);
-        }
-        else row.style.transform='translateX(0)';
-      });
+            db.schedule[dateStr]=db.schedule[dateStr].filter(e=>e.id!==ex.id);
+            db.history=db.history.filter(h=>h._entryId!==ex.id);
+            recomputePR(ex.name);
+            persist();renderWeek();renderTodaySession();renderRankCard();renderPRs();renderBestPRs();showToast('Exercise removed');
+          },200);
+        },500);
+      };
+      const cancelHold=()=>{
+        clearTimeout(holdTimer);
+        wrap.style.background='';
+        wrap.style.transition='';
+      };
+      wrap.addEventListener('mousedown',startHold);
+      wrap.addEventListener('touchstart',startHold,{passive:true});
+      wrap.addEventListener('mouseup',()=>{cancelHold();if(!holding)openExModal(dateStr,ex.id);});
+      wrap.addEventListener('touchend',()=>{cancelHold();if(!holding)openExModal(dateStr,ex.id);});
+      wrap.addEventListener('mouseleave',cancelHold);
+      wrap.addEventListener('touchcancel',cancelHold);
     }
     return wrap;
   }
 
-  exs.forEach(ex=>card.appendChild(makeExRow(ex,true)));
+  // group entries by exercise name
+  const exGroups=[];
+  exs.forEach(ex=>{
+    const g=exGroups.find(g=>g.name===ex.name);
+    if(g) g.entries.push(ex);
+    else exGroups.push({name:ex.name,entries:[ex]});
+  });
+
+  exGroups.forEach(g=>{
+    if(g.entries.length===1){
+      card.appendChild(makeExRow(g.entries[0],true));
+    } else {
+      // merged row — tap opens picker
+      const wrap=document.createElement('div');
+      wrap.className='lw-row';
+      wrap.style.cssText='cursor:pointer;';
+      const hasPR=g.entries.some(ex=>{const pr=db.prs?.[ex.name];return pr&&pr.weight===ex.weight&&pr.reps===ex.reps;});
+      const prTag=hasPR?`<span class="pr-tag">PR</span>`:'';
+      // build compact meta: dedupe weight×reps, accumulate sets
+      const merged=[];
+      g.entries.forEach(ex=>{
+        const n=ex.sets||1;
+        const prev=merged.find(m=>m.weight===ex.weight&&m.reps===ex.reps);
+        if(prev) prev.sets+=n; else merged.push({weight:ex.weight,reps:ex.reps,sets:n,name:ex.name});
+      });
+      const metaStr=merged.length===1
+        ?`${fmtWeight(merged[0].weight,g.name)} × ${merged[0].reps} · ${merged[0].sets} set${merged[0].sets!==1?'s':''}`
+        :merged.map(m=>`${fmtWeight(m.weight,g.name)} × ${m.reps} × ${m.sets}`).join(' · ');
+      wrap.innerHTML=`<div class="lw-info"><div class="lw-name">${g.name}${prTag}</div><div class="lw-meta">${metaStr}</div></div>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>`;
+      wrap.addEventListener('click',()=>openExPicker(dateStr,g));
+      card.appendChild(wrap);
+    }
+  });
 
   const addBtn=document.createElement('button');
   addBtn.className='add-row';
@@ -2516,6 +2569,98 @@ function renderPRs(){
 /* ── EXERCISE MODAL ── */
 let exDay=null,exId=null,exName='',exWeight=60,exSets=3,exReps=8;
 let cardioDist=0,cardioMin=0,cardioSec=0;
+
+function openExPicker(dateStr, g) {
+  // bottom sheet listing each entry for this exercise name
+  const existing = document.getElementById('exPickerOverlay');
+  if (existing) existing.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'exPickerOverlay';
+  overlay.className = 'overlay';
+
+  const sheet = document.createElement('div');
+  sheet.className = 'sheet';
+
+  const close = () => { overlay.classList.remove('open'); setTimeout(()=>overlay.remove(), 300); };
+  overlay.addEventListener('click', e => { if (e.target===overlay) close(); });
+
+  const rows = g.entries.map(ex => {
+    const pr = db.prs?.[ex.name];
+    const isPR = pr && pr.weight===ex.weight && pr.reps===ex.reps;
+    const prTag = isPR ? `<span class="pr-tag">PR</span>` : '';
+    const meta = isCardio(ex.name) ? fmtCardio(ex) : `${fmtWeight(ex.weight, ex.name)} × ${ex.reps} · ${ex.sets||1} set${(ex.sets||1)!==1?'s':''}`;
+    const cardId = 'epick-' + ex.id;
+    return `<div id="${cardId}" class="lw-row" style="cursor:pointer;user-select:none;transition:background .3s;">
+      <div class="lw-info">
+        <div class="lw-name">${meta}${prTag}</div>
+        <div class="lw-meta">Hold to delete · tap to edit</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  sheet.innerHTML = `
+    <div class="sheet-pull"></div>
+    <div class="sheet-hdr">
+      <span class="sheet-title">${g.name}</span>
+      <button class="sheet-x" onclick="document.getElementById('exPickerOverlay').classList.remove('open');setTimeout(()=>document.getElementById('exPickerOverlay')?.remove(),300)">×</button>
+    </div>
+    <div class="sheet-body" style="padding-bottom:16px">
+      <div class="card" style="margin-bottom:14px">${rows}</div>
+      <button onclick="document.getElementById('exPickerOverlay').classList.remove('open');setTimeout(()=>document.getElementById('exPickerOverlay')?.remove(),300);setTimeout(()=>openExModal('${dateStr}',null,'${g.name}'),320)" style="width:100%;background:var(--acc);color:#fff;border:none;border-radius:14px;padding:12px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;">+ Add another set</button>
+    </div>`;
+
+  overlay.appendChild(sheet);
+  document.body.appendChild(overlay);
+  requestAnimationFrame(() => overlay.classList.add('open'));
+
+  // wire tap-to-edit + hold-to-delete for each card
+  g.entries.forEach(ex => {
+    const card = document.getElementById('epick-' + ex.id);
+    if (!card) return;
+    let holdTimer = null;
+    let holding = false;
+
+    const startHold = () => {
+      holding = false;
+      card.style.transition = 'background .5s';
+      card.style.background = 'rgba(255,69,58,.15)';
+      holdTimer = setTimeout(() => {
+        holding = true;
+        card.style.transition = 'height .18s ease, opacity .18s ease, padding .18s ease, margin .18s ease';
+        card.style.overflow = 'hidden';
+        card.style.opacity = '0';
+        card.style.height = card.offsetHeight + 'px';
+        requestAnimationFrame(() => { card.style.height = '0'; card.style.padding = '0'; });
+        setTimeout(() => {
+          db.schedule[dateStr] = (db.schedule[dateStr]||[]).filter(e => e.id !== ex.id);
+          db.history = (db.history||[]).filter(h => h._entryId !== ex.id);
+          recomputePR(g.name);
+          persist(); renderWeek(); renderTodaySession(); renderRankCard(); renderPRs(); renderBestPRs();
+          card.remove();
+          // close when 1 or fewer entries remain (picker no longer needed)
+          if ((db.schedule[dateStr]||[]).filter(e => e.name === g.name).length <= 1) {
+            overlay.classList.remove('open');
+            setTimeout(() => overlay.remove(), 300);
+          }
+          showToast('Removed');
+        }, 200);
+      }, 500);
+    };
+    const cancelHold = () => {
+      clearTimeout(holdTimer);
+      card.style.background = '';
+      card.style.transition = '';
+    };
+
+    card.addEventListener('mousedown', startHold);
+    card.addEventListener('touchstart', startHold, {passive:true});
+    card.addEventListener('mouseup', () => { cancelHold(); if (!holding) { overlay.remove(); openExModal(dateStr, ex.id); } });
+    card.addEventListener('touchend', () => { cancelHold(); if (!holding) { overlay.remove(); openExModal(dateStr, ex.id); } });
+    card.addEventListener('mouseleave', cancelHold);
+    card.addEventListener('touchcancel', cancelHold);
+  });
+}
 
 function openExModal(dayKey,editId,prefillName){
   exDay=dayKey; exId=editId; exName='';
