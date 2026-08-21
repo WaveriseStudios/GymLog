@@ -751,8 +751,12 @@ input[type=number]{-moz-appearance:textfield;}
 <div class="overlay" id="chatOverlay">
   <div class="sheet sheet-flex" style="height:92%">
     <div class="sheet-pull"></div>
-    <div class="sheet-hdr">
-      <span class="sheet-title" id="chatThreadName">Chat</span>
+    <div class="sheet-hdr" style="gap:12px">
+      <div id="chatHdrAvatar" style="flex-shrink:0;width:32px;height:32px;border-radius:50%;background:var(--acc2)"></div>
+      <div style="flex:1;min-width:0">
+        <div class="sheet-title" id="chatThreadName" style="font-size:17px">Chat</div>
+        <div id="chatSubtitle" style="font-size:11px;color:#22c55e;font-weight:600;margin-top:-2px"></div>
+      </div>
       <button class="sheet-x" id="chatClose">×</button>
     </div>
     <div id="chatMessages" style="flex:1;overflow-y:auto;padding:12px 16px;display:flex;flex-direction:column;gap:8px;-webkit-overflow-scrolling:touch"></div>
@@ -995,6 +999,10 @@ async function signInWithGoogle() {
 }
 
 async function signOutFirebase() {
+  if (_presenceTimer) { clearInterval(_presenceTimer); _presenceTimer = null; }
+  if (_chatListUnsub) { _chatListUnsub(); _chatListUnsub = null; }
+  if (_chatUnsub) { _chatUnsub(); _chatUnsub = null; }
+  if (_chatPresenceUnsub) { _chatPresenceUnsub(); _chatPresenceUnsub = null; }
   await _auth.signOut();
   // wipe local data so signing in with a different account starts fresh
   localStorage.removeItem(STORE);
@@ -1023,6 +1031,8 @@ _auth.onAuthStateChanged(async user => {
     await loadFromFirestore();
     migrateDB();
     await ensureFriendCode();
+    startPresence();
+    subscribeChatList();
     renderProfileTab();
     renderRankCard();
     renderPRs();
@@ -1232,82 +1242,207 @@ async function removeFriend(uid) {
   showToast('Friend removed');
 }
 
+/* ── PRESENCE ── */
+let _presenceTimer = null;
+const _profileCache = {};
+
+function _profilesCol() { return _db.collection('profiles'); }
+
+async function updatePresence() {
+  if (!_user) return;
+  try {
+    await _profilesCol().doc(_user.uid).set({
+      name: db.profile?.name || _user.displayName || 'Athlete',
+      avatar: db.profile?.avatar || null,
+      lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+  } catch(e) {}
+}
+
+function startPresence() {
+  if (_presenceTimer) clearInterval(_presenceTimer);
+  updatePresence();
+  _presenceTimer = setInterval(updatePresence, 60000);
+}
+
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && _user) updatePresence();
+});
+
+function isOnline(lastSeen) {
+  if (!lastSeen?.toDate) return false;
+  return (Date.now() - lastSeen.toDate().getTime()) < 90000;
+}
+
+function fmtLastSeen(lastSeen) {
+  if (!lastSeen?.toDate) return '';
+  const diff = Math.floor((Date.now() - lastSeen.toDate().getTime()) / 1000);
+  if (diff < 90) return 'Online';
+  if (diff < 3600) return `${Math.floor(diff/60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff/3600)}h ago`;
+  return lastSeen.toDate().toLocaleDateString([], {month:'short',day:'numeric'});
+}
+
+async function fetchProfile(uid) {
+  if (_profileCache[uid] && (Date.now() - (_profileCache[uid]._fetchedAt||0)) < 30000) return _profileCache[uid];
+  try {
+    const snap = await _profilesCol().doc(uid).get();
+    const data = snap.exists ? snap.data() : {};
+    data._fetchedAt = Date.now();
+    _profileCache[uid] = data;
+    return data;
+  } catch(e) { return {}; }
+}
+
 /* ── CHAT ── */
 
 let _chatUnsub = null;
+let _chatListUnsub = null;
 let _chatFriendUid = null;
+let _chatPresenceUnsub = null;
+let _chatMeta = {};  // chatId -> metadata
 
-function _chatId(uid1, uid2) {
-  return [uid1, uid2].sort().join('_');
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
-function _chatCol(uid1, uid2) {
-  return _db.collection('chats').doc(_chatId(uid1, uid2)).collection('messages');
+function _chatId(uid1, uid2) { return [uid1, uid2].sort().join('_'); }
+function _chatDoc(uid1, uid2) { return _db.collection('chats').doc(_chatId(uid1, uid2)); }
+function _chatMsgCol(uid1, uid2) { return _chatDoc(uid1, uid2).collection('messages'); }
+
+function fmtChatTime(ts) {
+  if (!ts?.toDate) return '';
+  const d = ts.toDate(), now = new Date();
+  const diffDays = Math.floor((now - d) / 86400000);
+  if (diffDays === 0) return d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+  if (diffDays === 1) return 'Yesterday';
+  if (diffDays < 7) return d.toLocaleDateString([], {weekday:'short'});
+  return d.toLocaleDateString([], {month:'short',day:'numeric'});
 }
 
-function renderChatList() {
+function chatAvatarHtml(profile, size=48) {
+  const name = profile?.name || '?';
+  const initials = name[0].toUpperCase();
+  if (profile?.avatar) return `<img src="${profile.avatar}" style="width:${size}px;height:${size}px;border-radius:50%;object-fit:cover;flex-shrink:0;display:block">`;
+  return `<div style="width:${size}px;height:${size}px;border-radius:50%;background:var(--acc2);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:${Math.round(size*0.45)}px;font-weight:900;color:var(--acc);flex-shrink:0">${initials}</div>`;
+}
+
+function subscribeChatList() {
+  if (_chatListUnsub) { _chatListUnsub(); _chatListUnsub = null; }
+  if (!_user) return;
+  _chatListUnsub = _db.collection('chats')
+    .where('participants', 'array-contains', _user.uid)
+    .onSnapshot(snap => {
+      _chatMeta = {};
+      snap.forEach(doc => { _chatMeta[doc.id] = doc.data(); });
+      if (document.getElementById('sc')?.classList.contains('on')) renderChatList();
+    }, e => console.warn('chatList snap error', e));
+}
+
+async function renderChatList() {
   const el = document.getElementById('chatList');
   if (!el) return;
   if (!_user) {
-    el.innerHTML = `<div style="text-align:center;color:var(--t3);font-size:13px;padding:40px 0">Sign in to chat with friends</div>`;
+    el.innerHTML = `<div style="text-align:center;color:var(--t3);font-size:13px;padding:60px 0">Sign in to chat with friends</div>`;
     return;
   }
   const friends = db.friends || [];
   if (friends.length === 0) {
-    el.innerHTML = `<div style="text-align:center;color:var(--t3);font-size:13px;padding:40px 0">Add friends to start chatting</div>`;
+    el.innerHTML = `<div style="text-align:center;color:var(--t3);font-size:13px;padding:60px 0">Add friends to start chatting</div>`;
     return;
   }
-  el.innerHTML = friends.map(f => {
-    const initials = (f.name || '?')[0].toUpperCase();
-    const avatarHtml = f.avatar
-      ? `<img src="${f.avatar}" style="width:48px;height:48px;border-radius:50%;object-fit:cover;flex-shrink:0">`
-      : `<div style="width:48px;height:48px;border-radius:50%;background:var(--acc2);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:900;color:var(--acc);flex-shrink:0">${initials}</div>`;
-    return `<div onclick="openChat('${f.uid}','${(f.name||'Friend').replace(/'/g,"\\'")}','${f.code||''}')" style="display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--bdr);border-radius:14px;padding:12px 14px;margin-bottom:8px;cursor:pointer" class="tap-scale">
-      ${avatarHtml}
-      <div style="flex:1;min-width:0">
-        <div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:900;color:var(--text);line-height:1">${f.name||'Friend'}</div>
-        <div style="font-size:12px;color:var(--t3);margin-top:3px">Tap to chat</div>
+
+  // fetch latest profiles for all friends in parallel
+  const profiles = await Promise.all(friends.map(f => fetchProfile(f.uid)));
+
+  // build rows with metadata, sort by last message time desc
+  const rows = friends.map((f, i) => {
+    const cid = _chatId(_user.uid, f.uid);
+    const meta = _chatMeta[cid];
+    const profile = profiles[i];
+    return { f, profile, meta, ts: meta?.lastMessageTime?.toDate?.()?.getTime() || 0 };
+  }).sort((a, b) => b.ts - a.ts);
+
+  el.innerHTML = rows.map(({ f, profile, meta }) => {
+    const online = isOnline(profile?.lastSeen);
+    const name = profile?.name || f.name || 'Friend';
+    const lastMsg = meta?.lastMessage ? escHtml(meta.lastMessage.length > 42 ? meta.lastMessage.slice(0,42)+'…' : meta.lastMessage) : '<span style="color:var(--t3)">Say hi!</span>';
+    const timeStr = meta?.lastMessageTime ? fmtChatTime(meta.lastMessageTime) : '';
+    const safeName = name.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    return `<div onclick="openChat('${f.uid}','${safeName}')" class="tap-scale" style="display:flex;align-items:center;gap:14px;padding:12px 0;border-bottom:1px solid var(--bdr);cursor:pointer">
+      <div style="position:relative;flex-shrink:0">
+        ${chatAvatarHtml(profile, 52)}
+        ${online ? `<span style="position:absolute;bottom:1px;right:1px;width:13px;height:13px;border-radius:50%;background:#22c55e;border:2px solid var(--bg)"></span>` : ''}
       </div>
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:3px">
+          <span style="font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:900;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(name)}</span>
+          <span style="font-size:11px;color:var(--t3);flex-shrink:0">${timeStr}</span>
+        </div>
+        <div style="font-size:13px;color:var(--t2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${meta?.lastMessageSenderUid === _user.uid ? '<span style="color:var(--t3)">You: </span>' : ''}${lastMsg}</div>
+      </div>
     </div>`;
   }).join('');
 }
 
-function openChat(friendUid, friendName, friendCode) {
+async function openChat(friendUid, friendName) {
   if (!_user) { showToast('Sign in to chat'); return; }
   _chatFriendUid = friendUid;
   document.getElementById('chatThreadName').textContent = friendName;
+  document.getElementById('chatSubtitle').textContent = '…';
   document.getElementById('chatMessages').innerHTML = '';
   document.getElementById('chatInput').value = '';
   document.getElementById('chatOverlay').classList.add('open');
 
-  // unsubscribe previous listener
   if (_chatUnsub) { _chatUnsub(); _chatUnsub = null; }
+  if (_chatPresenceUnsub) { _chatPresenceUnsub(); _chatPresenceUnsub = null; }
 
-  // real-time listener
-  _chatUnsub = _chatCol(_user.uid, friendUid)
+  // live presence in header
+  _chatPresenceUnsub = _profilesCol().doc(friendUid).onSnapshot(snap => {
+    const data = snap.data() || {};
+    const online = isOnline(data.lastSeen);
+    const sub = document.getElementById('chatSubtitle');
+    if (sub) sub.textContent = online ? 'Online' : (data.lastSeen ? 'Last seen ' + fmtLastSeen(data.lastSeen) : '');
+    // update avatar if name/avatar changed
+    const hdrAv = document.getElementById('chatHdrAvatar');
+    if (hdrAv) hdrAv.outerHTML = chatAvatarHtml(data, 32).replace('<div ','<div id="chatHdrAvatar" ').replace('<img ','<img id="chatHdrAvatar" ');
+  }, e => {});
+
+  // messages listener
+  let prevDateStr = null;
+  _chatUnsub = _chatMsgCol(_user.uid, friendUid)
     .orderBy('ts')
     .limitToLast(100)
     .onSnapshot(snap => {
       const el = document.getElementById('chatMessages');
       if (!el) return;
       el.innerHTML = '';
+      prevDateStr = null;
       snap.forEach(doc => {
         const m = doc.data();
         const mine = m.senderUid === _user.uid;
-        const time = m.ts?.toDate ? m.ts.toDate().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : '';
+        const d = m.ts?.toDate ? m.ts.toDate() : null;
+        const dateStr = d ? d.toLocaleDateString([], {weekday:'short',month:'short',day:'numeric'}) : null;
+
+        // date separator
+        if (dateStr && dateStr !== prevDateStr) {
+          prevDateStr = dateStr;
+          const sep = document.createElement('div');
+          sep.style.cssText = 'text-align:center;margin:10px 0 6px;';
+          sep.innerHTML = `<span style="font-size:11px;color:var(--t3);background:var(--bg2);padding:3px 10px;border-radius:20px;border:1px solid var(--bdr)">${dateStr}</span>`;
+          el.appendChild(sep);
+        }
+
+        const time = d ? d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : '';
         const bubble = document.createElement('div');
-        bubble.style.cssText = `display:flex;flex-direction:column;align-items:${mine?'flex-end':'flex-start'};gap:2px`;
-        bubble.innerHTML = `
-          <div style="max-width:75%;background:${mine?'var(--acc)':'var(--card)'};color:${mine?'#fff':'var(--text)'};border-radius:${mine?'18px 18px 4px 18px':'18px 18px 18px 4px'};padding:9px 13px;font-size:14px;line-height:1.4;word-break:break-word">${escHtml(m.text)}</div>
-          <div style="font-size:10px;color:var(--t3);padding:0 4px">${time}</div>`;
+        bubble.style.cssText = `display:flex;flex-direction:column;align-items:${mine?'flex-end':'flex-start'};gap:2px;margin-bottom:2px`;
+        bubble.innerHTML = `<div style="max-width:78%;background:${mine?'var(--acc)':'var(--card)'};color:${mine?'#fff':'var(--text)'};border-radius:${mine?'18px 4px 18px 18px':'4px 18px 18px 18px'};padding:9px 13px;font-size:14px;line-height:1.45;word-break:break-word;border:${mine?'none':'1px solid var(--bdr)'}">
+          ${escHtml(m.text)}
+        </div>
+        <div style="font-size:10px;color:var(--t3);padding:0 4px">${time}</div>`;
         el.appendChild(bubble);
       });
       el.scrollTop = el.scrollHeight;
     }, e => console.warn('chat snapshot error', e));
-}
-
-function escHtml(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 async function sendChatMessage() {
@@ -1317,30 +1452,38 @@ async function sendChatMessage() {
   if (!text) return;
   input.value = '';
   const myName = db.profile?.name || _user.displayName || 'Athlete';
+  const cid = _chatId(_user.uid, _chatFriendUid);
+  const ts = firebase.firestore.FieldValue.serverTimestamp();
   try {
-    await _chatCol(_user.uid, _chatFriendUid).add({
-      text,
-      senderUid: _user.uid,
-      senderName: myName,
-      ts: firebase.firestore.FieldValue.serverTimestamp()
-    });
+    const batch = _db.batch();
+    const msgRef = _chatMsgCol(_user.uid, _chatFriendUid).doc();
+    batch.set(msgRef, { text, senderUid: _user.uid, senderName: myName, ts });
+    const metaRef = _db.collection('chats').doc(cid);
+    batch.set(metaRef, {
+      participants: [_user.uid, _chatFriendUid],
+      lastMessage: text,
+      lastMessageTime: ts,
+      lastMessageSenderUid: _user.uid,
+      lastMessageSenderName: myName
+    }, { merge: true });
+    await batch.commit();
   } catch(e) {
     console.warn('send message error', e);
+    input.value = text;
     showToast('Failed to send');
   }
 }
 
-document.getElementById('chatClose').addEventListener('click', () => {
+function closeChat() {
   document.getElementById('chatOverlay').classList.remove('open');
   if (_chatUnsub) { _chatUnsub(); _chatUnsub = null; }
+  if (_chatPresenceUnsub) { _chatPresenceUnsub(); _chatPresenceUnsub = null; }
   _chatFriendUid = null;
-});
+}
+
+document.getElementById('chatClose').addEventListener('click', closeChat);
 document.getElementById('chatOverlay').addEventListener('click', e => {
-  if (e.target === document.getElementById('chatOverlay')) {
-    document.getElementById('chatOverlay').classList.remove('open');
-    if (_chatUnsub) { _chatUnsub(); _chatUnsub = null; }
-    _chatFriendUid = null;
-  }
+  if (e.target === document.getElementById('chatOverlay')) closeChat();
 });
 document.getElementById('chatInput').addEventListener('keydown', e => {
   if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChatMessage(); }
@@ -3068,9 +3211,18 @@ document.getElementById('profileSave').addEventListener('click', () => {
   db.profile.age    = a || null;
   db.profile.gender = selGender;
   persist();
-  // keep friend code name in sync with in-app profile name
+  // keep friend code name in sync
   if (_user && db.friendCode) {
     _codesCol().doc(db.friendCode).set({ name: db.profile.name || _user.displayName || 'Athlete' }, { merge: true }).catch(() => {});
+  }
+  // sync public profile (name + avatar) so friends see updates
+  if (_user) {
+    _profilesCol().doc(_user.uid).set({
+      name: db.profile.name || _user.displayName || 'Athlete',
+      avatar: db.profile.avatar || null,
+      lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true }).catch(() => {});
+    delete _profileCache[_user.uid];
   }
   closeProfile();
   renderHomeBar();
