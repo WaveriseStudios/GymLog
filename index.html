@@ -3337,19 +3337,39 @@ applyTheme(localStorage.getItem(THEME_KEY)||'carbon');
 (function(){
   const splash=document.getElementById('splash');
   if(!splash) return;
-  // populate with current rank
   const r=calcOverallRank();
   const color=r?TIER_COLORS[r.tier.id]:'var(--acc)';
-  const divLabel=r?ROMAN[r.div-1]:'I';
   const rankLabel=r?`${r.tier.label} ${ROMAN[r.div-1]}`:'Wood I';
   document.getElementById('splash-logo').innerHTML=rankIconSvg(r?r.tier.id:'wood',color,{size:140,glow:true,div:r?r.div:1});
   document.getElementById('splash-wordmark').textContent=rankLabel;
-  const dismiss=()=>{splash.classList.add('hide');setTimeout(()=>splash.remove(),600);};
-  if(document.fonts){
-    document.fonts.ready.then(()=>setTimeout(dismiss,1400));
-  } else {
-    setTimeout(dismiss,1700);
+
+  let fontsReady=false, authReady=false;
+  function tryDismiss(){
+    if(!fontsReady||!authReady) return;
+    splash.classList.add('hide');
+    setTimeout(()=>splash.remove(),600);
   }
+
+  // pre-render all tabs while splash is showing
+  renderTodaySession(); renderWeek(); renderPRs(); renderBestPRs(); renderRankCard(); renderFriendsTab(); renderProfileTab();
+  const last=sessionStorage.getItem('gymlog_scr');
+  if(last && last!=='sh'){
+    if(last==='sw'){weekOffset=0;selWeekDate=null;}
+    const target=document.getElementById(last);
+    if(target) goScr(last); else sessionStorage.removeItem('gymlog_scr');
+  }
+
+  const fontsTimeout=setTimeout(()=>{fontsReady=true;tryDismiss();},1700);
+  if(document.fonts){
+    document.fonts.ready.then(()=>{clearTimeout(fontsTimeout);setTimeout(()=>{fontsReady=true;tryDismiss();},400);});
+  }
+
+  // wait for Firebase auth to resolve before dismissing
+  const unsub=_auth.onAuthStateChanged(()=>{
+    unsub();
+    authReady=true;
+    tryDismiss();
+  });
 })();
 
 /* ── DAILY NUDGE ── */
@@ -3434,15 +3454,6 @@ applyTheme(localStorage.getItem(THEME_KEY)||'carbon');
   },{passive:true});
 })();
 
-// Restore last screen; if week, always reset to current week
-(function(){
-  const last = sessionStorage.getItem('gymlog_scr');
-  if(!last || last === 'sh') return;
-  const target = document.getElementById(last);
-  if(!target){ sessionStorage.removeItem('gymlog_scr'); return; } // stale id (e.g. old 'sg')
-  if(last === 'sw'){ weekOffset=0; selWeekDate=null; }
-  goScr(last);
-})();
 </script>
 </body>
 </html>
