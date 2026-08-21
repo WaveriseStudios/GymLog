@@ -922,18 +922,12 @@ async function loadFromFirestore() {
   try {
     const snap = await _userDoc().get();
     if (snap.exists) {
+      // cloud data exists — it's the source of truth, overwrite local completely
       const cloud = snap.data();
-      // merge history by _entryId — keep all unique entries from both
-      const localHistory = db.history || [];
-      const cloudHistory = cloud.history || [];
-      const seen = new Set(cloudHistory.map(h => h._entryId));
-      cloud.history = [...cloudHistory, ...localHistory.filter(h => !seen.has(h._entryId))];
-      // cloud wins on everything else, but keep local profile if cloud has none
-      if (!cloud.profile?.name && db.profile?.name) cloud.profile = db.profile;
       Object.assign(db, cloud);
       localStorage.setItem(STORE, JSON.stringify(db));
     } else {
-      // first sign-in: upload local data
+      // no cloud data yet — this is a first sign-in, upload whatever is local
       await _userDoc().set(db);
     }
   } catch (e) { console.warn('Firestore load failed', e); }
