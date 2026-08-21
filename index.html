@@ -1301,7 +1301,7 @@ let _chatUnsub = null;
 let _chatListUnsub = null;
 let _chatFriendUid = null;
 let _chatPresenceUnsub = null;
-let _chatMeta = db.chatMeta || {};  // seeded from localStorage immediately
+let _chatMeta = {};  // seeded from db.chatMeta after db loads (see migrateDB)
 
 function escHtml(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -1577,6 +1577,7 @@ function migrateDB(){
 
 let db = loadDB();
 migrateDB();
+_chatMeta = db.chatMeta || {};
 
 /* ── DATE HELPERS ── */
 function localDateStr(d){return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
