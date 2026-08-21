@@ -1017,7 +1017,7 @@ function renderProfileTab(){
     let badgeHtml='';
     if(p?.weight&&!pr._cardio){
       const{tier,div}=scoreToTierDiv(calcExScore(pr,p,exName));
-      badgeHtml=`<span class="rec-rank-badge" style="background:color-mix(in srgb,${TIER_COLORS[tier.id]} 14%,transparent);color:${TIER_COLORS[tier.id]};border:1px solid color-mix(in srgb,${TIER_COLORS[tier.id]} 28%,transparent)">${TIER_SHORT[tier.id]} ${ROMAN[div-1]}</span>`;
+      badgeHtml=`<img src="${RANK_ICONS[tier.id]}" style="width:28px;height:28px;image-rendering:pixelated;filter:drop-shadow(0 0 4px ${TIER_COLORS[tier.id]}99)">`;
     }
     let valHtml;
     if(pr._cardio){
@@ -1029,8 +1029,15 @@ function renderProfileTab(){
     }
     const row=document.createElement('div');
     row.className='ex-row divr';
+    const dateStr=(pr.day||pr.date)?new Date(pr.day||pr.date).toLocaleDateString('en',{month:'short',day:'numeric'}):'';
     row.innerHTML=`
-      <div class="ex-left"><div class="ex-name">${exName}</div><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">${badgeHtml}<span style="color:var(--t3);font-size:11px;font-weight:600">${(pr.day||pr.date)?new Date(pr.day||pr.date).toLocaleDateString('en',{month:'short',day:'numeric'}):''}</span></div></div>
+      <div class="ex-left" style="display:flex;align-items:center;gap:10px">
+        ${badgeHtml}
+        <div>
+          <div class="ex-name">${exName}</div>
+          ${dateStr?`<div style="color:var(--t3);font-size:11px;font-weight:600;margin-top:2px">${dateStr}</div>`:''}
+        </div>
+      </div>
       <div class="ex-nums">${valHtml}</div>`;
     card.appendChild(row);
   });
@@ -1529,7 +1536,7 @@ function renderBestPRs(){
     let badgeHtml='';
     if(p?.weight&&!pr._cardio){
       const{tier,div}=scoreToTierDiv(calcExScore(pr,p,name));
-      badgeHtml=`<span class="rec-rank-badge" style="background:color-mix(in srgb,${TIER_COLORS[tier.id]} 14%,transparent);color:${TIER_COLORS[tier.id]};border:1px solid color-mix(in srgb,${TIER_COLORS[tier.id]} 28%,transparent)">${TIER_SHORT[tier.id]} ${ROMAN[div-1]}</span>`;
+      badgeHtml=`<img src="${RANK_ICONS[tier.id]}" style="width:28px;height:28px;image-rendering:pixelated;filter:drop-shadow(0 0 4px ${TIER_COLORS[tier.id]}99)">`;
     }
     const row = document.createElement('div');
     row.className='ex-row divr';
@@ -1884,7 +1891,7 @@ function renderPRs(){
       valueHtml=`<span class="ex-w">${fmtWeight(pr.weight,name)} × ${pr.reps}</span>`;
       if(p?.weight){
         const{tier,div}=scoreToTierDiv(calcExScore(pr,p,name));
-        badgeHtml=`<span class="rec-rank-badge" style="background:color-mix(in srgb,${TIER_COLORS[tier.id]} 14%,transparent);color:${TIER_COLORS[tier.id]};border:1px solid color-mix(in srgb,${TIER_COLORS[tier.id]} 28%,transparent)">${TIER_SHORT[tier.id]} ${ROMAN[div-1]}</span>`;
+        badgeHtml=`<img src="${RANK_ICONS[tier.id]}" style="width:28px;height:28px;image-rendering:pixelated;filter:drop-shadow(0 0 4px ${TIER_COLORS[tier.id]}99)">`;
       }
     }
     const row=document.createElement('div');
@@ -1892,10 +1899,11 @@ function renderPRs(){
     row.style.cssText='position:relative;overflow:hidden;cursor:pointer;';
     if(!pr._cardio) row.addEventListener('click',()=>openProg(name));
     row.innerHTML=`
-      <div class="ex-left">
-        <div class="ex-name">${name}</div>
-        <div style="display:flex;align-items:center;gap:6px;margin-top:2px">
-          ${badgeHtml}${ago?`<span style="font-size:11px;color:var(--t3)">${ago}</span>`:''}
+      <div class="ex-left" style="display:flex;align-items:center;gap:10px">
+        ${badgeHtml}
+        <div>
+          <div class="ex-name">${name}</div>
+          ${ago?`<div style="font-size:11px;color:var(--t3);margin-top:2px">${ago}</div>`:''}
         </div>
       </div>
       <div class="ex-nums" style="gap:4px">${trend}${valueHtml}</div>`;
