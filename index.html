@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="GymLog">
 <meta name="theme-color" content="#e0e2db">
 <link rel="manifest" href="manifest.json">
@@ -49,9 +49,10 @@ button{cursor:pointer;font-family:inherit;border:none;background:transparent;}
   --tb:  #888;    --tb2: rgba(136,136,136,.1);
 }
 
-html{height:100%;overflow:hidden;}
+html{height:100%;height:-webkit-fill-available;overflow:hidden;}
 body{
   height:100%;
+  min-height:-webkit-fill-available;
   overflow:hidden;
   overscroll-behavior-y:none;
   background:var(--bg);
