@@ -968,8 +968,17 @@ async function signInWithGoogle() {
 
 async function signOutFirebase() {
   await _auth.signOut();
-  showToast('Signed out');
+  // wipe local data so signing in with a different account starts fresh
+  localStorage.removeItem(STORE);
+  db = defDB();
+  migrateDB();
+  showToast('Signed out — data cleared');
   renderProfileTab();
+  renderTodaySession();
+  renderWeek();
+  renderRankCard();
+  renderPRs();
+  renderBestPRs();
 }
 
 // handle redirect result after Google sign-in
