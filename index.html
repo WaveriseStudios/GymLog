@@ -901,11 +901,15 @@ function migrateDB(){
     if(h.weight==null){h.weight=0;dirty=true;}
   });
 
-  // migrate prs: old format was {weight,reps,date} flat — keep as-is but ensure date exists
+  // backfill pr.day from history for any PR missing it
   Object.keys(db.prs).forEach(name=>{
     const pr=db.prs[name];
-    if(pr&&!pr.date&&pr.weight!=null){
-      // no date means it's an old entry; we can't recover the date so just leave it
+    if(pr&&!pr.day&&pr.weight!=null){
+      const match=db.history.find(h=>h.name===name&&h.weight===pr.weight&&h.reps===pr.reps&&h.sets===pr.sets);
+      if(match?.day){pr.day=match.day;dirty=true;}
+      else if(match?.date){
+        try{const d=new Date(match.date);if(!isNaN(d)){pr.day=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;dirty=true;}}catch(e){}
+      }
     }
   });
 
