@@ -1169,7 +1169,7 @@ async function processFriendRequests() {
       const already = (db.friends || []).find(f => f.uid === req.uid);
       if (!already) {
         if (!db.friends) db.friends = [];
-        db.friends.push({ uid: req.uid, name: req.name, code: req.code, avatar: req.avatar || null });
+        db.friends.push({ uid: req.uid, name: req.name, code: req.code, avatar: req.avatar || null, since: new Date().toISOString().slice(0,10) });
         changed = true;
       }
       await doc.ref.delete();
@@ -1200,7 +1200,7 @@ async function submitAddFriend() {
 
     // add them to my friends locally
     if (!db.friends) db.friends = [];
-    db.friends.push({ uid: theirUid, name: theirName, code, avatar: theirAvatar });
+    db.friends.push({ uid: theirUid, name: theirName, code, avatar: theirAvatar, since: new Date().toISOString().slice(0,10) });
     persist();
 
     // notify them via friendRequests collection (anyone authenticated can write)
@@ -1249,7 +1249,6 @@ function renderFriendsTab() {
     </div>`;
     return;
   }
-  const friendCounts = {};
   el.innerHTML = friends.map(f => {
     const initials = (f.name || '?')[0].toUpperCase();
     const avatarHtml = f.avatar
@@ -1258,25 +1257,17 @@ function renderFriendsTab() {
     const safeName = (f.name||'Friend').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
     const safeCode = (f.code||'').replace(/'/g,"\\'");
     const safeAvatar = (f.avatar||'').replace(/'/g,"\\'").replace(/"/g,'&quot;');
+    const sinceStr = f.since ? new Date(f.since).toLocaleDateString('en',{month:'short',day:'numeric',year:'numeric'}) : null;
+    const subline = sinceStr ? `Friends since ${sinceStr}` : '';
     return `<div onclick="openVisitorProfile('${f.uid}','${safeName}','${safeCode}','${safeAvatar}')" class="tap-scale" style="display:flex;align-items:center;gap:14px;background:var(--card);border:1px solid var(--bdr);border-radius:14px;padding:14px;margin-bottom:10px;cursor:pointer">
       ${avatarHtml}
       <div style="flex:1;min-width:0">
         <div style="font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:900;color:var(--text);line-height:1">${f.name||'Friend'}</div>
-        <div id="fcount-${f.uid}" style="font-size:11px;font-weight:700;letter-spacing:2px;color:var(--t3);margin-top:3px">—</div>
+        ${subline ? `<div style="font-size:11px;font-weight:600;color:var(--t3);margin-top:3px">${subline}</div>` : ''}
       </div>
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
     </div>`;
   }).join('');
-  if (_user) {
-    friends.forEach(f => {
-      _profilesCol().doc(f.uid).get().then(snap => {
-        const el2 = document.getElementById('fcount-' + f.uid);
-        if (!el2) return;
-        const n = snap.exists ? (snap.data().friendsCount || 0) : 0;
-        el2.textContent = n === 1 ? '1 friend' : `${n} friends`;
-      }).catch(() => {});
-    });
-  }
 }
 
 function _profilesCol() { return _db.collection('profiles'); }
@@ -1326,6 +1317,7 @@ async function openVisitorProfile(uid, name, code, avatar) {
     const rankIcon = p?.rankTier ? `<img src="${RANK_ICONS[p.rankTier]}" class="prf-av-rank" style="filter:drop-shadow(0 0 4px ${TIER_COLORS[p.rankTier]}bb)">` : '';
     const prsCount = p?.prsCount ?? '—';
     const workouts = p?.workoutDays ?? '—';
+    const friendsCount = p?.friendsCount ?? '—';
 
     // best PRs section
     let bestPRsHtml = '';
@@ -1366,7 +1358,7 @@ async function openVisitorProfile(uid, name, code, avatar) {
           <div class="prf-stats">
             <div class="prf-stat"><span class="prf-stat-n">${prsCount}</span><span class="prf-stat-l">PRs</span></div>
             <div class="prf-stat"><span class="prf-stat-n">${workouts}</span><span class="prf-stat-l">Workouts</span></div>
-            <div class="prf-stat"><span class="prf-stat-n" style="font-size:13px;letter-spacing:1px">${(code||'').toUpperCase()}</span><span class="prf-stat-l">Code</span></div>
+            <div class="prf-stat"><span class="prf-stat-n">${friendsCount}</span><span class="prf-stat-l">Friends</span></div>
           </div>
         </div>
         <div style="padding:0 14px 12px">
