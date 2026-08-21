@@ -314,8 +314,9 @@ input[type=number]{-moz-appearance:textfield;}
 .prf-topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 18px 10px;background:var(--bg);position:sticky;top:0;z-index:10;}
 .prf-username{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:900;letter-spacing:.5px;color:var(--t1);}
 .prf-settings-btn{background:none;border:none;color:var(--t2);cursor:pointer;padding:4px;display:flex;align-items:center;}
-.prf-hero{display:flex;flex-direction:column;align-items:center;padding:10px 20px 4px;}
-.prf-av{width:96px;height:96px;border-radius:50%;background:var(--acc);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:38px;font-weight:900;overflow:hidden;cursor:pointer;border:2.5px solid var(--bdr2);}
+.prf-hero{display:flex;flex-direction:column;align-items:center;padding:90px 20px 4px;overflow:visible;}
+.prf-av-wrap{position:relative;width:96px;height:96px;display:flex;align-items:center;justify-content:center;overflow:visible;}
+.prf-av{width:96px;height:96px;border-radius:50%;background:var(--acc);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:38px;font-weight:900;overflow:hidden;cursor:pointer;border:2.5px solid var(--bdr2);position:relative;}
 .prf-av img{width:100%;height:100%;object-fit:cover;}
 .prf-hero-name{margin-top:10px;font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:900;letter-spacing:.5px;color:var(--t1);}
 .prf-rank-badge{margin-top:6px;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:3px 10px;border-radius:20px;display:inline-block;}
@@ -555,7 +556,10 @@ input[type=number]{-moz-appearance:textfield;}
     <div class="sb">
       <!-- avatar + identity -->
       <div class="prf-hero">
-        <label class="prf-av tap-scale" id="scrProfileAv" for="profAvatarInput" style="cursor:pointer;touch-action:manipulation">G</label>
+        <div class="prf-av-wrap">
+          <img id="scrProfileRankBg" src="" style="display:none;position:absolute;width:255px;height:255px;top:50%;left:50%;transform:translate(-50%,-50%);opacity:0.18;pointer-events:none;z-index:0;border-radius:0">
+          <label class="prf-av tap-scale" id="scrProfileAv" for="profAvatarInput" style="cursor:pointer;touch-action:manipulation;position:relative;z-index:1">G</label>
+        </div>
         <div class="prf-hero-name" id="scrProfileHeroName">Athlete</div>
         <div id="scrProfileRank"></div>
       </div>
@@ -967,12 +971,16 @@ function renderProfileTab(){
   if(heroName) heroName.textContent=name||'Athlete';
   // avatar
   const av=document.getElementById('scrProfileAv');
+  const r=calcOverallRank();
   if(av){
     if(db.profile?.avatar){av.innerHTML=`<img src="${db.profile.avatar}">`;}
     else{av.textContent=name?name[0].toUpperCase():'G';}
   }
-  // rank badge with tier color
-  const r=calcOverallRank();
+  const rankBgEl=document.getElementById('scrProfileRankBg');
+  if(rankBgEl){
+    if(r){rankBgEl.src=RANK_ICONS[r.tier.id];rankBgEl.style.display='';}
+    else{rankBgEl.style.display='none';}
+  }
   const rankEl=document.getElementById('scrProfileRank');
   if(rankEl){
     if(r){
@@ -1171,30 +1179,29 @@ const RANK_TIERS = [
   {id:'platinum', label:'Platinum', threshold:5.4 },
   {id:'sapphire', label:'Sapphire', threshold:7.0 },
   {id:'diamond',  label:'Diamond',  threshold:9.0 },
-  {id:'amethyst', label:'Quartz',   threshold:11.5},
+  {id:'amethyst', label:'Amethyst', threshold:11.5},
   {id:'emerald',  label:'Emerald',  threshold:14.0},
   {id:'ruby',     label:'Ruby',     threshold:17.0},
   {id:'mythril',  label:'Mythril',  threshold:21.0},
 ];
 const ROMAN = ['I','II','III'];
 const RANK_ICONS={
-  iron:     '土', // Earth
-  bronze:   '木', // Wood
-  steel:    '金', // Metal
-  silver:   '水', // Water
-  gold:     '火', // Fire
-  platinum: '風', // Wind
-  sapphire: '蒼', // Azure
-  diamond:  '雷', // Thunder
-  amethyst: '紫', // Quartz
-  emerald:  '氷', // Ice
-  ruby:     '光', // Light
-  mythril:  '空', // Void
+  iron:     'Icons/icon_r0_c0_no_bg.png',
+  bronze:   'Icons/icon_r0_c1_no_bg.png',
+  steel:    'Icons/icon_r0_c2_no_bg.png',
+  silver:   'Icons/icon_r0_c3_no_bg.png',
+  gold:     'Icons/icon_r1_c0_no_bg.png',
+  platinum: 'Icons/icon_r1_c1_no_bg.png',
+  sapphire: 'Icons/icon_r1_c2_no_bg.png',
+  diamond:  'Icons/icon_r1_c3_no_bg.png',
+  amethyst: 'Icons/icon_r2_c0_no_bg.png',
+  emerald:  'Icons/icon_r2_c1_no_bg.png',
+  ruby:     'Icons/icon_r2_c2_no_bg.png',
+  mythril:  'Icons/icon_r2_c3_no_bg.png',
 };
 function rankIconSvg(id,color,{size=60,glow=true,opacity=1,div=1}={}){
-  const kanji=RANK_ICONS[id]||RANK_ICONS.iron;
-  const fs=Math.round(size*0.38);
-  const icon=`<circle cx="30" cy="30" r="22"/><text x="30" y="33" text-anchor="middle" dominant-baseline="middle" font-size="27" font-family="'AoyagiSoseki',serif" fill="${'%%C%%'}" stroke="none">${kanji}</text>`.replace('%%C%%',color);
+  const imgSrc=RANK_ICONS[id]||RANK_ICONS.iron;
+  const icon=`<circle cx="30" cy="30" r="22"/><image href="${imgSrc}" x="8" y="8" width="44" height="44" clip-path="circle(22px at 22px 22px)"/>`;
   const f=glow?`filter:drop-shadow(0 0 ${Math.round(size/7)}px ${color}99)`:'';
   const op=opacity<1?`;opacity:${opacity}`:'';
   const S='#BEC6CE';
@@ -1487,7 +1494,7 @@ const DAY_KEYS  = ['mon','tue','wed','thu','fri','sat','sun'];
 const DAY_SHORT = ['MON','TUE','WED','THU','FRI','SAT','SUN'];
 const DAY_LONG  = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 const LETTERS   = ['M','T','W','T','F','S','S'];
-const TIER_SHORT = {iron:'Iron',bronze:'Brz',steel:'Steel',silver:'Slv',gold:'Gold',platinum:'Plat',sapphire:'Sph',diamond:'Dia',amethyst:'Qtz',emerald:'Emr',ruby:'Ruby',mythril:'Mythril'};
+const TIER_SHORT = {iron:'Iron',bronze:'Brz',steel:'Steel',silver:'Slv',gold:'Gold',platinum:'Plat',sapphire:'Sph',diamond:'Dia',amethyst:'Amy',emerald:'Emr',ruby:'Ruby',mythril:'Mythril'};
 
 function todayKey(){return DAY_KEYS[[6,0,1,2,3,4,5][new Date().getDay()]];}
 function uid(){return Math.random().toString(36).slice(2)+Date.now().toString(36);}
@@ -2003,7 +2010,7 @@ function buildYouVsOthers(name,p){
     const c=TIER_COLORS[t.id];
     const dotSize=isCur||isAvg?14:8;
     const opacity=isCur?1:isPast?0.55:0.2;
-    const kanji=RANK_ICONS[t.id]||'';
+  
     // connector line before this dot (except first)
     const line=i>0?`<div style="flex:1;height:2px;background:${i<=tierIdx?TIER_COLORS[RANK_TIERS[i-1].id]:'var(--bdr)'};opacity:${i<=tierIdx?0.5:1};margin-bottom:${isCur||i===tierIdx+1?'3px':'6px'};align-self:center;margin-top:${isCur||i===tierIdx?'3px':'6px'}"></div>`:'';
     return `${line}<div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;gap:3px">
@@ -2011,7 +2018,7 @@ function buildYouVsOthers(name,p){
         ${isCur?`<span style="font-size:8px;color:${c};font-weight:800;letter-spacing:.5px">YOU</span>`:isAvg?`<span style="font-size:8px;color:var(--t3);font-weight:800;letter-spacing:.5px">AVG</span>`:''}
       </div>
       <div style="width:${dotSize}px;height:${dotSize}px;border-radius:50%;background:${isCur||isPast?c:'var(--bdr)'};opacity:${opacity};${isCur?`box-shadow:0 0 10px ${c}99`:''}"></div>
-      <div style="font-family:'AoyagiSoseki',serif;font-size:11px;color:${isCur?c:'var(--t3)'};opacity:${isCur?1:isPast?0.6:0.25}">${kanji}</div>
+      <img src="${RANK_ICONS[t.id]}" style="width:16px;height:16px;border-radius:50%;opacity:${isCur?1:isPast?0.6:0.25}">
     </div>`;
   }).join('');
   return `<div class="card" style="margin:0 0 16px;border-radius:14px;padding:16px 18px 20px">
@@ -2391,6 +2398,7 @@ document.getElementById('exSave').addEventListener('click',()=>{
   if(!db.schedule[exDay]) db.schedule[exDay]=[];
   // capture per-exercise rank before save
   const p=db.profile;
+  const wasEdit=!!exId;
   const _prevExRank=(!isCardio(name)&&db.prs[name]&&p?.weight)?scoreToTierDiv(calcExScore(db.prs[name],p,name)):null;
 
   // use the schedule entry's id as the stable link to its history row
@@ -2425,13 +2433,17 @@ document.getElementById('exSave').addEventListener('click',()=>{
   showToast(exId?'Exercise updated':'Exercise added');
   // check for per-exercise rank change
   const _newExRank=(!cardio&&db.prs[name]&&p?.weight)?scoreToTierDiv(calcExScore(db.prs[name],p,name)):null;
-  if(_prevExRank&&_newExRank){
-    const prevIdx=RANK_TIERS.findIndex(t=>t.id===_prevExRank.tier.id);
-    const newIdx=RANK_TIERS.findIndex(t=>t.id===_newExRank.tier.id);
-    const isUp=newIdx>prevIdx||(newIdx===prevIdx&&_newExRank.div>_prevExRank.div);
-    const isDown=newIdx<prevIdx||(newIdx===prevIdx&&_newExRank.div<_prevExRank.div);
-    if(isUp) setTimeout(()=>showRankUp(_prevExRank.tier.id,_prevExRank.div,_newExRank.tier.id,_newExRank.div,false,name),400);
-    else if(isDown) setTimeout(()=>showRankUp(_prevExRank.tier.id,_prevExRank.div,_newExRank.tier.id,_newExRank.div,true,name),400);
+  if(_newExRank){
+    if(!_prevExRank){
+      setTimeout(()=>showRankUp('iron',1,_newExRank.tier.id,_newExRank.div,false,name),400);
+    } else {
+      const prevIdx=RANK_TIERS.findIndex(t=>t.id===_prevExRank.tier.id);
+      const newIdx=RANK_TIERS.findIndex(t=>t.id===_newExRank.tier.id);
+      const isUp=newIdx>prevIdx||(newIdx===prevIdx&&_newExRank.div>_prevExRank.div);
+      const isDown=newIdx<prevIdx||(newIdx===prevIdx&&_newExRank.div<_prevExRank.div);
+      if(isUp) setTimeout(()=>showRankUp(_prevExRank.tier.id,_prevExRank.div,_newExRank.tier.id,_newExRank.div,false,name),400);
+      else if(isDown) setTimeout(()=>showRankUp(_prevExRank.tier.id,_prevExRank.div,_newExRank.tier.id,_newExRank.div,true,name),400);
+    }
   }
 });
 
@@ -2553,7 +2565,7 @@ function showToast(msg) {
 function fmtTime(s){return`${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;}
 
 
-const NOTIF_ICON = new URL('./icon-192.png', location.href).href;
+const NOTIF_ICON = new URL('./icon-192_no_bg.png', location.href).href;
 let _swReg = null;
 if('serviceWorker' in navigator){
   navigator.serviceWorker.register('./sw.js');
