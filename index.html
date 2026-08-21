@@ -1249,7 +1249,8 @@ function renderFriendsTab() {
     </div>`;
     return;
   }
-  el.innerHTML = friends.map(f => {
+
+  function buildCard(f) {
     const initials = (f.name || '?')[0].toUpperCase();
     const avatarHtml = f.avatar
       ? `<img src="${f.avatar}" style="width:52px;height:52px;border-radius:50%;object-fit:cover;flex-shrink:0">`
@@ -1267,7 +1268,24 @@ function renderFriendsTab() {
       </div>
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
     </div>`;
-  }).join('');
+  }
+
+  // render immediately from cache
+  el.innerHTML = friends.map(buildCard).join('');
+
+  // refresh friend data in background, update cache + re-render if anything changed
+  friends.forEach(f => {
+    _profilesCol().doc(f.uid).get().then(snap => {
+      if (!snap.exists) return;
+      const d = snap.data();
+      const entry = (db.friends || []).find(x => x.uid === f.uid);
+      if (!entry) return;
+      let changed = false;
+      if (d.name && d.name !== entry.name) { entry.name = d.name; changed = true; }
+      if (d.avatar !== undefined && d.avatar !== entry.avatar) { entry.avatar = d.avatar; changed = true; }
+      if (changed) { persist(); el.innerHTML = (db.friends||[]).map(buildCard).join(''); }
+    }).catch(() => {});
+  });
 }
 
 function _profilesCol() { return _db.collection('profiles'); }
