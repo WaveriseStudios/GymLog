@@ -590,7 +590,7 @@ input[type=number]{-moz-appearance:textfield;}
         <!-- centered avatar + name -->
         <div class="prf3-hero-center tap-scale" onclick="openProfile()" style="cursor:pointer">
           <div class="prf3-av-wrap">
-            <label class="prf3-av" id="scrProfileAv" for="profAvatarInput" style="touch-action:manipulation">G</label>
+            <div class="prf3-av" id="scrProfileAv" style="touch-action:manipulation;cursor:default">G</div>
             <img id="scrProfileRankBg" src="" class="prf3-av-rank" style="display:none">
           </div>
           <div class="prf3-name" id="scrProfileHeroName">Athlete</div>
@@ -798,60 +798,73 @@ input[type=number]{-moz-appearance:textfield;}
   <div class="sheet">
     <div class="sheet-pull"></div>
     <div class="sheet-hdr">
-      <span class="sheet-title">My Profile</span>
+      <span class="sheet-title">Edit Profile</span>
       <button class="sheet-x" id="profileClose">×</button>
     </div>
     <div class="sheet-body">
-      <!-- avatar -->
-      <div class="prof-avatar-area">
+      <!-- avatar + name + media buttons -->
+      <div style="display:flex;flex-direction:column;align-items:center;gap:12px;padding:8px 0 20px">
         <div class="prof-avatar" id="profAvatar">
           <span class="prof-avatar-initials" id="profInitials">?</span>
         </div>
-        <div style="flex:1;display:flex;flex-direction:column;gap:6px">
-          <input class="prof-name-inp" id="inName" type="text" placeholder="Your name" autocomplete="off" autocorrect="off" spellcheck="false" style="text-align:left">
-          <span class="prof-avatar-hint">Tap photo to change</span>
-          <button id="profBgBtn" style="background:var(--card2);border:1px solid var(--bdr);border-radius:10px;padding:6px 10px;font-size:11px;font-weight:700;color:var(--t2);font-family:inherit;cursor:pointer;display:flex;align-items:center;gap:6px;width:fit-content">
+        <input class="prof-name-inp" id="inName" type="text" placeholder="Your name" autocomplete="off" autocorrect="off" spellcheck="false" style="max-width:220px">
+        <div style="display:flex;gap:8px">
+          <button id="profAvatarBtn" style="background:var(--card2);border:1px solid var(--bdr);border-radius:10px;padding:6px 12px;font-size:11px;font-weight:700;color:var(--t2);font-family:inherit;cursor:pointer;display:flex;align-items:center;gap:6px">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+            Photo
+          </button>
+          <button id="profBgBtn" style="background:var(--card2);border:1px solid var(--bdr);border-radius:10px;padding:6px 12px;font-size:11px;font-weight:700;color:var(--t2);font-family:inherit;cursor:pointer;display:flex;align-items:center;gap:6px">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-            Set background
+            Background
           </button>
         </div>
       </div>
       <!-- account -->
-      <div id="profAccountRow" style="margin-bottom:14px"></div>
-      <!-- stats grid -->
-      <div class="prof-grid">
-        <div class="prof-cell">
-          <span class="prof-cell-lbl">Body Weight (kg)</span>
-          <input id="inWeight" type="number" inputmode="decimal" placeholder="75" min="30" max="200" step="0.5">
+      <div class="set-section-lbl">Account</div>
+      <div id="profAccountRow" style="margin-bottom:4px"></div>
+      <!-- socials -->
+      <div class="card set-card" style="margin-bottom:4px">
+        <div class="set-row">
+          <div style="display:flex;align-items:center;gap:10px">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E1306C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="5"/><circle cx="17.5" cy="6.5" r="1" fill="#E1306C" stroke="none"/></svg>
+            <span class="set-row-lbl">Instagram</span>
+          </div>
+          <input id="inInstagram" type="text" inputmode="url" placeholder="@username" autocomplete="off" autocorrect="off" spellcheck="false" style="background:transparent;border:none;outline:none;color:var(--t2);font-size:13px;font-weight:600;text-align:right;width:120px;font-family:inherit">
         </div>
-        <div class="prof-cell">
-          <span class="prof-cell-lbl">Height (cm)</span>
-          <input id="inHeight" type="number" inputmode="numeric" placeholder="175" min="140" max="220">
+        <div class="set-row">
+          <div style="display:flex;align-items:center;gap:10px">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="var(--text)"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.28 8.28 0 0 0 4.84 1.54V6.78a4.85 4.85 0 0 1-1.07-.09z"/></svg>
+            <span class="set-row-lbl">TikTok</span>
+          </div>
+          <input id="inTiktok" type="text" inputmode="url" placeholder="@username" autocomplete="off" autocorrect="off" spellcheck="false" style="background:transparent;border:none;outline:none;color:var(--t2);font-size:13px;font-weight:600;text-align:right;width:120px;font-family:inherit">
         </div>
-        <div class="prof-cell">
-          <span class="prof-cell-lbl">Age</span>
-          <input id="inAge" type="number" inputmode="numeric" placeholder="25" min="14" max="80">
-        </div>
-        <div class="prof-cell" style="justify-content:space-between">
-          <span class="prof-cell-lbl">Gender</span>
-          <div class="gender-row" style="margin:0;gap:6px">
-            <button class="gender-btn active" id="gBtnM" style="padding:6px 0;font-size:12px">Male</button>
-            <button class="gender-btn" id="gBtnF" style="padding:6px 0;font-size:12px">Female</button>
+      </div>
+      <!-- body stats -->
+      <div class="set-section-lbl">Body</div>
+      <div class="card" style="padding:10px;margin-bottom:4px">
+        <div class="prof-grid" style="margin-bottom:0">
+          <div class="prof-cell" style="background:transparent">
+            <span class="prof-cell-lbl">Weight (kg)</span>
+            <input id="inWeight" type="number" inputmode="decimal" placeholder="75" min="30" max="200" step="0.5">
+          </div>
+          <div class="prof-cell" style="background:transparent">
+            <span class="prof-cell-lbl">Height (cm)</span>
+            <input id="inHeight" type="number" inputmode="numeric" placeholder="175" min="140" max="220">
+          </div>
+          <div class="prof-cell" style="background:transparent">
+            <span class="prof-cell-lbl">Age</span>
+            <input id="inAge" type="number" inputmode="numeric" placeholder="25" min="14" max="80">
+          </div>
+          <div class="prof-cell" style="background:transparent;justify-content:space-between">
+            <span class="prof-cell-lbl">Gender</span>
+            <div class="gender-row" style="margin:0;gap:6px">
+              <button class="gender-btn active" id="gBtnM" style="padding:6px 0;font-size:12px">Male</button>
+              <button class="gender-btn" id="gBtnF" style="padding:6px 0;font-size:12px">Female</button>
+            </div>
           </div>
         </div>
       </div>
-      <!-- social links -->
-      <div class="prof-grid" style="margin-top:4px">
-        <div class="prof-cell" style="grid-column:span 2">
-          <span class="prof-cell-lbl">Instagram</span>
-          <input id="inInstagram" type="text" inputmode="url" placeholder="@username" autocomplete="off" autocorrect="off" spellcheck="false" style="text-align:right">
-        </div>
-        <div class="prof-cell" style="grid-column:span 2">
-          <span class="prof-cell-lbl">TikTok</span>
-          <input id="inTiktok" type="text" inputmode="url" placeholder="@username" autocomplete="off" autocorrect="off" spellcheck="false" style="text-align:right">
-        </div>
-      </div>
-      <button class="btn-save" id="profileSave">Save Profile</button>
+      <button class="btn-save" id="profileSave">Save</button>
     </div>
   </div>
 </div>
@@ -3483,7 +3496,7 @@ function openProfile() {
   const acRow = document.getElementById('profAccountRow');
   if (acRow) {
     if (_user) {
-      acRow.innerHTML = `<div style="background:var(--bg2);border:1px solid var(--bdr);border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:10px">
+      acRow.innerHTML = `<div class="card" style="padding:12px 14px;display:flex;align-items:center;gap:10px;margin-bottom:4px">
         ${_user.photoURL ? `<img src="${_user.photoURL}" style="width:32px;height:32px;border-radius:50%;flex-shrink:0">` : `<div style="width:32px;height:32px;border-radius:50%;background:var(--acc2);display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--acc);flex-shrink:0">${(_user.displayName||'?')[0]}</div>`}
         <div style="flex:1;min-width:0">
           <div style="font-size:13px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${_user.displayName||_user.email}</div>
@@ -3492,7 +3505,7 @@ function openProfile() {
         <button class="prf-btn tap-scale" onclick="signOutFirebase()" style="flex-shrink:0;padding:6px 12px;font-size:12px">Sign out</button>
       </div>`;
     } else {
-      acRow.innerHTML = `<button onclick="signInWithGoogle()" class="tap-scale" style="width:100%;background:var(--bg2);border:1.5px solid var(--bdr);border-radius:14px;padding:12px 14px;display:flex;align-items:center;justify-content:center;gap:10px;font-size:14px;font-weight:700;color:var(--text);font-family:inherit;cursor:pointer">
+      acRow.innerHTML = `<button onclick="signInWithGoogle()" class="tap-scale" style="width:100%;background:var(--card);border:1.5px solid var(--bdr);border-radius:14px;padding:12px 14px;display:flex;align-items:center;justify-content:center;gap:10px;font-size:14px;font-weight:700;color:var(--text);font-family:inherit;cursor:pointer;margin-bottom:4px">
         <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
         Continue with Google
       </button>`;
@@ -3505,8 +3518,8 @@ function closeProfile() {
   document.getElementById('profileOverlay').classList.remove('open');
 }
 
-// avatar tap → file picker
-document.getElementById('profAvatar').addEventListener('click',()=>document.getElementById('profAvatarInput').click());
+// avatar photo button → file picker
+document.getElementById('profAvatarBtn').addEventListener('click',()=>document.getElementById('profAvatarInput').click());
 document.getElementById('profAvatarInput').addEventListener('change',e=>{
   const file=e.target.files[0];
   if(!file) return;
