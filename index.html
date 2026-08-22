@@ -1314,25 +1314,20 @@ function renderFriendsTab() {
   const el = document.getElementById('friendsTabList');
   if (!el) return;
   const friends = db.friends || [];
-  // fixed add button at bottom (above nav)
-  let fixedBtn = document.getElementById('friendsAddFixedBtn');
-  if (!fixedBtn) {
-    fixedBtn = document.createElement('button');
-    fixedBtn.id = 'friendsAddFixedBtn';
-    fixedBtn.className = 'add-row tap-scale';
-    fixedBtn.style.cssText = 'position:fixed;bottom:calc(env(safe-area-inset-bottom) + 80px);left:14px;right:14px;width:auto;background:var(--card);border:1px solid var(--bdr);border-radius:14px;z-index:70;';
-    fixedBtn.innerHTML = '<span class="add-ic">+</span>Add friend';
-    fixedBtn.onclick = openFriends;
-    document.getElementById('app').appendChild(fixedBtn);
-  }
-  fixedBtn.style.display = document.querySelector('.scr.on')?.id === 'sf' ? 'flex' : 'none';
+  const addBtn = `<button onclick="openFriends()" class="add-row tap-scale" style="border-top:1px solid var(--bdr);width:100%"><span class="add-ic">+</span>Add friend</button>`;
 
   if (!_user) {
-    el.innerHTML = `<div style="text-align:center;color:var(--t3);font-size:13px;padding:60px 0">Sign in to add friends</div>`;
+    el.innerHTML = `<div class="card" style="overflow:hidden">
+      <div style="text-align:center;padding:28px 16px;color:var(--t3);font-size:13px">Sign in to add friends</div>
+      ${addBtn}
+    </div>`;
     return;
   }
   if (friends.length === 0) {
-    el.innerHTML = `<div style="text-align:center;color:var(--t3);font-size:13px;padding:60px 0">No friends yet — add your first one!</div>`;
+    el.innerHTML = `<div class="card" style="overflow:hidden">
+      <div style="text-align:center;padding:28px 16px;color:var(--t3);font-size:13px">No friends yet</div>
+      ${addBtn}
+    </div>`;
     return;
   }
 
@@ -1346,7 +1341,7 @@ function renderFriendsTab() {
     const safeAvatar = (f.avatar||'').replace(/'/g,"\\'").replace(/"/g,'&quot;');
     const sinceStr = f.since ? new Date(f.since).toLocaleDateString('en',{month:'short',day:'numeric',year:'numeric'}) : null;
     const subline = sinceStr ? `Friends since ${sinceStr}` : '';
-    return `<div onclick="openVisitorProfile('${f.uid}','${safeName}','${safeCode}','${safeAvatar}')" class="lw-row tap-scale" style="cursor:pointer">
+    return `<div onclick="openVisitorProfile('${f.uid}','${safeName}','${safeCode}','${safeAvatar}')" class="lw-row tap-scale" style="cursor:pointer;border-top:1px solid var(--bdr)">
       ${avatarHtml}
       <div class="lw-info" style="flex:1;min-width:0;margin-left:12px">
         <div class="lw-name">${f.name||'Friend'}</div>
@@ -1357,7 +1352,7 @@ function renderFriendsTab() {
   }
 
   function renderList() {
-    el.innerHTML = `<div class="card" style="margin-bottom:80px">${friends.map(buildCard).join('')}</div>`;
+    el.innerHTML = `<div class="card" style="overflow:hidden">${friends.map(buildCard).join('')}${addBtn}</div>`;
   }
 
   renderList();
@@ -1719,8 +1714,6 @@ function goScr(t, dir){
   if(t==='sw') renderWeek();
   if(t==='sp') renderPRs();
   if(t==='sf'){ renderFriendsTab(); if(_user) processFriendRequests(); }
-  const _fab = document.getElementById('friendsAddFixedBtn');
-  if(_fab) _fab.style.display = t==='sf' ? 'flex' : 'none';
   if(t==='spr') renderProfileTab();
   sessionStorage.setItem('gymlog_scr',t);
   // push a history entry so back button returns to previous tab, not closes app
