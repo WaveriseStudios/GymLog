@@ -315,34 +315,29 @@ input[type=number]{-moz-appearance:textfield;}
 .day.sel:not(.td) .day-dot{background:var(--acc);}
 .tiny-btn{width:30px;height:30px;border-radius:8px;background:var(--card2);color:var(--t3);display:flex;align-items:center;justify-content:center;font-size:13px;border:none;cursor:pointer;flex-shrink:0;}
 
-/* profile tab */
-.prf-topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 18px 8px;background:var(--bg);position:sticky;top:0;z-index:10;}
-.prf-topbar-name{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:900;letter-spacing:.3px;color:var(--text);}
-.prf-settings-btn{background:none;border:none;color:var(--t2);cursor:pointer;padding:4px;display:flex;align-items:center;}
-/* identity card */
-.prf-card{background:var(--card);border:1px solid var(--bdr);border-radius:16px;margin:0 14px 10px;padding:16px;}
-.prf-row{display:flex;align-items:center;gap:14px;margin-bottom:14px;}
+/* profile tab – hero layout */
+.prf3-hero{position:relative;height:260px;overflow:hidden;flex-shrink:0;}
+.prf3-hero-bg{position:absolute;inset:0;background:linear-gradient(135deg,#1a0a0a 0%,#2d1010 50%,#0d0d1a 100%);background-size:cover;background-position:center;filter:blur(0px);transform:scale(1.05);}
+.prf3-hero-overlay{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,.3) 0%,rgba(0,0,0,.55) 100%);}
+.prf3-hero-actions{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-between;padding:14px 16px;z-index:2;}
+.prf3-ic-btn{width:34px;height:34px;border-radius:50%;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;color:#fff;cursor:pointer;backdrop-filter:blur(8px);}
+.prf3-hero-center{position:absolute;bottom:22px;left:0;right:0;display:flex;flex-direction:column;align-items:center;z-index:2;}
+.prf3-av-wrap{position:relative;flex-shrink:0;}
+.prf3-av{width:80px;height:80px;border-radius:50%;background:var(--acc2);color:var(--acc);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:32px;font-weight:900;overflow:hidden;cursor:pointer;border:3px solid rgba(255,255,255,.3);box-shadow:0 4px 20px rgba(0,0,0,.4);}
+.prf3-av img{width:100%;height:100%;object-fit:cover;}
+.prf3-av-rank{position:absolute;bottom:-4px;right:-4px;width:28px;height:28px;image-rendering:pixelated;}
+.prf3-name{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:900;color:#fff;line-height:1;margin-top:10px;letter-spacing:-.2px;text-shadow:0 1px 8px rgba(0,0,0,.5);}
+/* stat strip */
+.prf3-stat-strip{display:flex;align-items:center;background:var(--card);border-bottom:1px solid var(--bdr);padding:16px 0;}
+.prf3-stat{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;}
+.prf3-stat-div{width:1px;height:32px;background:var(--bdr);flex-shrink:0;}
+.prf3-stat-n{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:900;color:var(--text);line-height:1;}
+.prf3-stat-l{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--t3);}
+/* compat */
 .prf-av-wrap{flex-shrink:0;position:relative;}
-.prf-av{width:64px;height:64px;border-radius:50%;background:var(--acc);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:900;overflow:hidden;cursor:pointer;border:2px solid var(--bdr);}
-.prf-av img{width:100%;height:100%;object-fit:cover;}
 .prf-av-rank{position:absolute;bottom:-4px;right:-4px;width:26px;height:26px;image-rendering:pixelated;}
-.prf-info{flex:1;min-width:0;}
-.prf-name{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:900;color:var(--text);line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.prf-rank-badge{font-size:10px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;padding:2px 8px;border-radius:20px;display:inline-flex;align-items:center;margin-top:5px;}
-/* stats row inside card */
-.prf-stats{display:flex;border-top:1px solid var(--bdr);padding-top:12px;gap:0;}
-.prf-stat{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;}
-.prf-stat+.prf-stat{border-left:1px solid var(--bdr);}
-.prf-stat-n{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:900;color:var(--text);line-height:1;}
-.prf-stat-l{font-size:10px;font-weight:600;letter-spacing:.4px;text-transform:uppercase;color:var(--t2);}
-/* action buttons */
-.prf-actions{display:flex;gap:8px;margin:0 14px 14px;}
+.prf-rank-badge{font-size:10px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;padding:2px 8px;border-radius:20px;display:inline-flex;align-items:center;}
 .prf-btn{background:var(--card);border:1.5px solid var(--bdr);border-radius:20px;padding:8px 14px;font-size:13px;font-weight:600;color:var(--t2);font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;white-space:nowrap;}
-.prf-btn-main{flex:1;}
-.prf-btn-sq{width:36px;height:36px;padding:0;flex-shrink:0;border-radius:50%;}
-/* kept for compat */
-.prf-hero-name{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:900;color:var(--text);}
-.prf-stat-div{display:none;}
 
 /* profile panel */
 .prof-avatar-area{display:flex;flex-direction:row;align-items:center;gap:14px;margin-bottom:20px;}
@@ -524,6 +519,7 @@ input[type=number]{-moz-appearance:textfield;}
 
 
 <input type="file" id="profAvatarInput" accept="image/*" style="display:none">
+<input type="file" id="profBgInput" accept="image/*" style="display:none">
 <div id="app">
 
   <!-- HOME -->
@@ -561,13 +557,7 @@ input[type=number]{-moz-appearance:textfield;}
 
   <!-- VISITOR PROFILE SCREEN -->
   <div class="scr" id="sv">
-    <div class="scr-hd" style="display:flex;align-items:center;justify-content:space-between">
-      <h1 id="svTitle" style="margin:0">Profile</h1>
-      <button id="svBack" class="tap-scale" style="width:32px;height:32px;border-radius:50%;background:var(--card);border:1px solid var(--bdr);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-      </button>
-    </div>
-    <div class="sb" id="svBody" style="padding-top:6px"></div>
+    <div class="sb" id="svBody" style="padding-top:0"></div>
   </div>
 
   <!-- FRIENDS SCREEN -->
@@ -580,49 +570,53 @@ input[type=number]{-moz-appearance:textfield;}
 
   <!-- PROFILE SCREEN -->
   <div class="scr" id="spr">
-    <div class="scr-hd"><h1>Profile</h1></div>
-    <div class="sb" style="padding-top:6px">
-      <!-- identity + stats card -->
-      <div class="prf-card tap-scale" onclick="openProfile()" style="cursor:pointer">
-        <div class="prf-row">
-          <div class="prf-av-wrap">
-            <label class="prf-av tap-scale" id="scrProfileAv" for="profAvatarInput" style="touch-action:manipulation">G</label>
-            <img id="scrProfileRankBg" src="" class="prf-av-rank" style="display:none">
-          </div>
-          <div class="prf-info">
-            <div class="prf-name" id="scrProfileHeroName">Athlete</div>
-            <div id="scrProfileRank"></div>
-          </div>
-          <div style="display:flex;gap:6px;flex-shrink:0;align-items:center">
-            <div id="scrGoogleBadge" style="display:none;flex-shrink:0;width:28px;height:28px;border-radius:50%;background:var(--bg2);border:1.5px solid var(--bdr);align-items:center;justify-content:center">
-              <svg width="16" height="16" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-            </div>
-            <div id="scrIgBadge" style="display:none;flex-shrink:0;width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#FCAF45 0%,#FD1D1D 50%,#833AB4 100%);align-items:center;justify-content:center">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke="white"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r=".8" fill="white" stroke="none"/></svg>
-            </div>
-            <div id="scrTtBadge" style="display:none;flex-shrink:0;width:28px;height:28px;border-radius:50%;background:#010101;align-items:center;justify-content:center">
-              <svg width="13" height="13" viewBox="0 0 24 24"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.19 8.19 0 0 0 4.78 1.52V6.76a4.85 4.85 0 0 1-1.01-.07z" fill="#69C9D0" transform="translate(-0.7,0)"/><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.19 8.19 0 0 0 4.78 1.52V6.76a4.85 4.85 0 0 1-1.01-.07z" fill="#EE1D52" transform="translate(0.7,0)"/><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.19 8.19 0 0 0 4.78 1.52V6.76a4.85 4.85 0 0 1-1.01-.07z" fill="white"/></svg>
-            </div>
-          </div>
+    <div class="sb" style="padding-bottom:0">
+
+      <!-- hero section -->
+      <div class="prf3-hero" id="scrProfileHero">
+        <!-- bg: blurred avatar or gradient -->
+        <div class="prf3-hero-bg" id="scrProfileHeroBg"></div>
+        <div class="prf3-hero-overlay"></div>
+        <!-- top action buttons -->
+        <div class="prf3-hero-actions">
+          <button class="prf3-ic-btn tap-scale" onclick="openRankBreakdown()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          </button>
+          <button class="prf3-ic-btn tap-scale" onclick="openSettings()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          </button>
         </div>
-        <div class="prf-stats">
-          <div class="prf-stat"><span class="prf-stat-n" id="scrStatPRs">0</span><span class="prf-stat-l">PRs</span></div>
-          <div class="prf-stat"><span class="prf-stat-n" id="scrStatWorkouts">0</span><span class="prf-stat-l">Workouts</span></div>
-          <div class="prf-stat"><span class="prf-stat-n" id="scrStatFriends">0</span><span class="prf-stat-l">Friends</span></div>
+        <!-- centered avatar + name -->
+        <div class="prf3-hero-center tap-scale" onclick="openProfile()" style="cursor:pointer">
+          <div class="prf3-av-wrap">
+            <label class="prf3-av" id="scrProfileAv" for="profAvatarInput" style="touch-action:manipulation">G</label>
+            <img id="scrProfileRankBg" src="" class="prf3-av-rank" style="display:none">
+          </div>
+          <div class="prf3-name" id="scrProfileHeroName">Athlete</div>
+          <div id="scrProfileRank" style="margin-top:6px"></div>
         </div>
       </div>
-      <!-- action buttons -->
-      <div class="prf-actions">
-        <button class="prf-btn tap-scale" style="flex:1" onclick="openRankBreakdown()">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-          Ranks
-        </button>
-        <button class="prf-btn tap-scale" style="flex:1" onclick="openSettings()">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-          Settings
-        </button>
+
+      <!-- stat strip -->
+      <div class="prf3-stat-strip">
+        <div class="prf3-stat">
+          <span class="prf3-stat-n" id="scrStatPRs">0</span>
+          <span class="prf3-stat-l">PRs</span>
+        </div>
+        <div class="prf3-stat-div"></div>
+        <div class="prf3-stat">
+          <span class="prf3-stat-n" id="scrStatWorkouts">0</span>
+          <span class="prf3-stat-l">Workouts</span>
+        </div>
+        <div class="prf3-stat-div"></div>
+        <div class="prf3-stat">
+          <span class="prf3-stat-n" id="scrStatFriends">0</span>
+          <span class="prf3-stat-l">Friends</span>
+        </div>
       </div>
-      <!-- PR list -->
+
+      <!-- socials + PR list -->
+      <div id="scrSocials"></div>
       <div id="scrBestPRs" style="padding:0 0 32px"></div>
     </div>
   </div>
@@ -815,6 +809,10 @@ input[type=number]{-moz-appearance:textfield;}
         <div style="flex:1;display:flex;flex-direction:column;gap:6px">
           <input class="prof-name-inp" id="inName" type="text" placeholder="Your name" autocomplete="off" autocorrect="off" spellcheck="false" style="text-align:left">
           <span class="prof-avatar-hint">Tap photo to change</span>
+          <button id="profBgBtn" style="background:var(--card2);border:1px solid var(--bdr);border-radius:10px;padding:6px 10px;font-size:11px;font-weight:700;color:var(--t2);font-family:inherit;cursor:pointer;display:flex;align-items:center;gap:6px;width:fit-content">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            Set background
+          </button>
         </div>
       </div>
       <!-- account -->
@@ -1366,7 +1364,7 @@ function renderFriendsTab() {
     const igIcon = f.instagram ? `<div style="display:flex;align-items:center;gap:3px;color:var(--t3);font-size:11px;font-weight:600"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke="#E1306C"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r=".5" fill="#E1306C" stroke="none"/></svg>@${f.instagram}</div>` : '';
     const ttIcon = f.tiktok   ? `<div style="display:flex;align-items:center;gap:3px;color:var(--t3);font-size:11px;font-weight:600"><svg width="11" height="11" viewBox="0 0 24 24" fill="#EE1D52"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.19 8.19 0 0 0 4.78 1.52V6.76a4.85 4.85 0 0 1-1.01-.07z"/></svg>@${f.tiktok}</div>` : '';
     const socials = (igIcon || ttIcon) ? `<div style="display:flex;gap:8px;margin-top:3px">${igIcon}${ttIcon}</div>` : '';
-    return `<div onclick="openVisitorProfile('${f.uid}','${safeName}','${safeCode}','${safeAvatar}')" class="lw-row tap-scale" style="cursor:pointer;border-top:1px solid var(--bdr)">
+    return `<div data-friend-uid="${f.uid}" data-friend-name="${safeName}" data-friend-code="${safeCode}" data-friend-avatar="${safeAvatar}" class="lw-row tap-scale friend-card-row" style="cursor:pointer;border-top:1px solid var(--bdr)">
       ${avHtml}
       <div style="flex:1;min-width:0;margin-left:10px">
         <div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:900;color:var(--text);line-height:1.1">${f.name||'Friend'}</div>
@@ -1389,10 +1387,36 @@ function renderFriendsTab() {
       const f2 = _friendsQ ? friends.filter(f => (f.name||'').toLowerCase().includes(_friendsQ)) : friends;
       const r2 = f2.length ? f2.map(buildCard).join('') : `<div style="padding:24px;text-align:center;color:var(--t3);font-size:13px">No results</div>`;
       el.querySelector('.card').innerHTML = r2 + addBtn;
+      wireCards();
     });
   }
 
+  function wireCards() {
+    el.querySelectorAll('.friend-card-row').forEach(row => {
+      let pressTimer = null;
+      let didLong = false;
+      const start = () => {
+        didLong = false;
+        pressTimer = setTimeout(() => {
+          didLong = true;
+          const uid2 = row.dataset.friendUid;
+          const n2 = row.dataset.friendName || 'this friend';
+          if (confirm(`Remove ${n2}?`)) {
+            removeFriend(uid2);
+          }
+        }, 500);
+      };
+      const cancel = () => clearTimeout(pressTimer);
+      const tap = () => { if (!didLong) openVisitorProfile(row.dataset.friendUid, row.dataset.friendName, row.dataset.friendCode, row.dataset.friendAvatar); };
+      row.addEventListener('pointerdown', start);
+      row.addEventListener('pointerup', cancel);
+      row.addEventListener('pointercancel', cancel);
+      row.addEventListener('pointerleave', cancel);
+      row.addEventListener('click', tap);
+    });
+  }
   renderList();
+  wireCards();
 
   // refresh friend data in background
   friends.forEach(f => {
@@ -1406,7 +1430,7 @@ function renderFriendsTab() {
       if (d.avatar !== undefined && d.avatar !== entry.avatar) { entry.avatar = d.avatar; changed = true; }
       if (d.instagram !== undefined && d.instagram !== entry.instagram) { entry.instagram = d.instagram; changed = true; }
       if (d.tiktok !== undefined && d.tiktok !== entry.tiktok) { entry.tiktok = d.tiktok; changed = true; }
-      if (changed) { persist(); renderList(); }
+      if (changed) { persist(); renderList(); wireCards(); }
     }).catch(() => {});
   });
 }
@@ -1435,6 +1459,7 @@ function syncPublicProfile() {
     friendsCount: (db.friends||[]).length,
     instagram: p?.instagram || null,
     tiktok: p?.tiktok || null,
+    heroBg: p?.heroBg || null,
     bestPRs,
     lastSeen: firebase.firestore.FieldValue.serverTimestamp()
   }, { merge: true }).catch(() => {});
@@ -1442,80 +1467,115 @@ function syncPublicProfile() {
 
 let _svPrevTab = 'sf';
 
+// ── shared profile hero builder ─────────────────────────────────────────────
+// Used by both own profile (renderProfileTab) and visitor profile (renderVisitor).
+// Returns a complete HTML string ready to inject into a container.
+function buildProfileHero(o) {
+  const c = o.rankTier ? (TIER_COLORS[o.rankTier]||'#C0392B') : '#C0392B';
+  // hero background priority: custom heroBg → blurred avatar → rank gradient
+  const bgStyle = o.heroBg
+    ? `background-image:url('${o.heroBg}');background-size:cover;background-position:center;filter:brightness(.75);transform:scale(1.05)`
+    : o.avatar
+      ? `background-image:url('${o.avatar}');background-size:cover;background-position:center;filter:blur(20px) brightness(.6);transform:scale(1.12)`
+      : `background-image:radial-gradient(ellipse at 60% 40%,${c}55 0%,transparent 70%),linear-gradient(135deg,#140a0a 0%,#1a0e1a 100%);transform:scale(1.05)`;
+
+  const initials = (o.name||'?')[0].toUpperCase();
+  const avInner = o.avatar
+    ? `<img src="${o.avatar}" style="width:100%;height:100%;object-fit:cover">`
+    : `<span style="font-family:'Barlow Condensed',sans-serif;font-size:32px;font-weight:900">${initials}</span>`;
+
+  const rankIcon = o.rankTier
+    ? `<img src="${RANK_ICONS[o.rankTier]}" class="prf3-av-rank" style="filter:drop-shadow(0 0 4px ${c}bb)">`
+    : '';
+  const rankBadge = o.rankTier ? (()=>{
+    const t = RANK_TIERS.find(t=>t.id===o.rankTier);
+    return `<div class="prf-rank-badge" style="background:color-mix(in srgb,${c} 25%,rgba(0,0,0,.4));color:#fff;border:1px solid color-mix(in srgb,${c} 50%,transparent);backdrop-filter:blur(6px);margin-top:6px">${t?.label||''} ${ROMAN[(o.rankDiv||1)-1]||''}</div>`;
+  })() : '';
+
+  // socials section (below stat strip)
+  const _igSvgCard = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke="#E1306C"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r=".8" fill="#E1306C" stroke="none"/></svg>`;
+  const _ttSvgCard = `<svg width="14" height="14" viewBox="0 0 24 24"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.19 8.19 0 0 0 4.78 1.52V6.76a4.85 4.85 0 0 1-1.01-.07z" fill="var(--text)"/></svg>`;
+  const _socialRow = (href, icon, label) => `<a href="${href}" target="_blank" rel="noopener" class="ex-row divr tap-scale" style="text-decoration:none;display:flex;align-items:center">
+    <div class="ex-left" style="display:flex;align-items:center;gap:10px">${icon}<span class="ex-name">${label}</span></div>
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke-width="2" style="stroke:var(--t3);flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg>
+  </a>`;
+  let socialsHtml = '';
+  if (o.instagram || o.tiktok) {
+    const rows = [
+      o.instagram ? _socialRow(`https://instagram.com/${o.instagram}`, _igSvgCard, `@${o.instagram}`) : '',
+      o.tiktok    ? _socialRow(`https://tiktok.com/@${o.tiktok}`,       _ttSvgCard, `@${o.tiktok}`)    : '',
+    ].join('');
+    socialsHtml = `<div class="card-hd" style="padding:0 20px 8px">Socials</div><div class="card" style="margin:0 16px">${rows}</div>`;
+  }
+
+  // best PRs list
+  let bestPRsHtml = '';
+  if ((o.bestPRs||[]).length) {
+    const rows = o.bestPRs.map(pr => {
+      const badge = pr.tierId ? `<img src="${RANK_ICONS[pr.tierId]}" style="width:28px;height:28px;image-rendering:pixelated;filter:drop-shadow(0 0 4px ${TIER_COLORS[pr.tierId]}99)">` : '';
+      const val = pr.cardio ? '' : `<span class="ex-w">${fmtWeight(pr.weight??0,pr.name)} × ${pr.reps}</span>`;
+      const dateStr = pr.day ? new Date(pr.day).toLocaleDateString('en',{month:'short',day:'numeric'}) : '';
+      return `<div class="ex-row divr">
+        <div class="ex-left" style="display:flex;align-items:center;gap:10px">
+          ${badge}
+          <div>
+            <div class="ex-name">${pr.name}</div>
+            ${dateStr?`<div style="color:var(--t3);font-size:11px;font-weight:600;margin-top:2px">${dateStr}</div>`:''}
+          </div>
+        </div>
+        <div class="ex-nums">${val}</div>
+      </div>`;
+    }).join('');
+    bestPRsHtml = `<div class="card-hd" style="padding:0 20px 8px">Best PRs</div><div class="card" style="margin:0 16px">${rows}</div>`;
+  }
+
+  return `<div>
+    <div class="prf3-hero">
+      <div class="prf3-hero-bg" style="${bgStyle}"></div>
+      <div class="prf3-hero-overlay"></div>
+      ${o.actionButtons||''}
+      <div class="prf3-hero-center">
+        <div class="prf3-av-wrap">
+          <div class="prf3-av" style="cursor:default">${avInner}</div>
+          ${rankIcon}
+        </div>
+        <div class="prf3-name">${o.name||'Athlete'}</div>
+        ${rankBadge}
+      </div>
+    </div>
+    <div class="prf3-stat-strip">
+      <div class="prf3-stat"><span class="prf3-stat-n">${o.prsCount??'—'}</span><span class="prf3-stat-l">PRs</span></div>
+      <div class="prf3-stat-div"></div>
+      <div class="prf3-stat"><span class="prf3-stat-n">${o.workouts??'—'}</span><span class="prf3-stat-l">Workouts</span></div>
+      <div class="prf3-stat-div"></div>
+      <div class="prf3-stat"><span class="prf3-stat-n">${o.friendsCount??'—'}</span><span class="prf3-stat-l">Friends</span></div>
+    </div>
+    ${o.footer||''}
+    <div style="padding:14px 0 32px">${socialsHtml}${socialsHtml&&bestPRsHtml?'<div style="height:14px"></div>':''}${bestPRsHtml}</div>
+  </div>`;
+}
+// ───────────────────────────────────────────────────────────────────────────
+
 async function openVisitorProfile(uid, name, code, avatar) {
   const body = document.getElementById('svBody');
   if (!body) return;
   _svPrevTab = document.querySelector('.scr.on')?.id || 'sf';
 
   function renderVisitor(p) {
-    const n = p?.name || name || 'Friend';
-    const av = p?.avatar || avatar || null;
-    const initials = n[0].toUpperCase();
-    const avInner = av ? `<img src="${av}">` : `<span style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:900">${initials}</span>`;
-    const rankBadge = p?.rankTier ? (()=>{
-      const c = TIER_COLORS[p.rankTier]||'var(--acc)';
-      const t = RANK_TIERS.find(t=>t.id===p.rankTier);
-      return `<div class="prf-rank-badge" style="background:color-mix(in srgb,${c} 14%,transparent);color:${c};border:1px solid color-mix(in srgb,${c} 35%,transparent);margin-top:5px">${t?.label||''} ${ROMAN[(p.rankDiv||1)-1]||''}</div>`;
-    })() : '';
-    const rankIcon = p?.rankTier ? `<img src="${RANK_ICONS[p.rankTier]}" class="prf-av-rank" style="filter:drop-shadow(0 0 4px ${TIER_COLORS[p.rankTier]}bb)">` : '';
-    const prsCount = p?.prsCount ?? '—';
-    const workouts = p?.workoutDays ?? '—';
-    const friendsCount = p?.friendsCount ?? '—';
-    const igHandle = p?.instagram || null;
-    const ttHandle = p?.tiktok || null;
-    const _svBadge = (href, bg, svgInner) => `<a href="${href}" target="_blank" rel="noopener" class="tap-scale" style="flex-shrink:0;width:28px;height:28px;border-radius:50%;background:${bg};display:flex;align-items:center;justify-content:center;text-decoration:none">${svgInner}</a>`;
-    const _igSvg = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke="white"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r=".8" fill="white" stroke="none"/></svg>`;
-    const _ttSvg = `<svg width="13" height="13" viewBox="0 0 24 24"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.19 8.19 0 0 0 4.78 1.52V6.76a4.85 4.85 0 0 1-1.01-.07z" fill="#69C9D0" transform="translate(-0.7,0)"/><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.19 8.19 0 0 0 4.78 1.52V6.76a4.85 4.85 0 0 1-1.01-.07z" fill="#EE1D52" transform="translate(0.7,0)"/><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.19 8.19 0 0 0 4.78 1.52V6.76a4.85 4.85 0 0 1-1.01-.07z" fill="white"/></svg>`;
-    const socialBadges = `<div style="display:flex;gap:6px;flex-shrink:0;align-items:center">${igHandle ? _svBadge(`https://instagram.com/${igHandle}`,'linear-gradient(135deg,#FCAF45 0%,#FD1D1D 50%,#833AB4 100%)',_igSvg) : ''}${ttHandle ? _svBadge(`https://tiktok.com/@${ttHandle}`,'#010101',_ttSvg) : ''}</div>`;
-
-    // best PRs section
-    let bestPRsHtml = '';
-    if ((p?.bestPRs||[]).length) {
-      const rows = p.bestPRs.map(pr => {
-        const badge = pr.tierId ? `<img src="${RANK_ICONS[pr.tierId]}" style="width:28px;height:28px;image-rendering:pixelated;filter:drop-shadow(0 0 4px ${TIER_COLORS[pr.tierId]}99)">` : '';
-        const val = pr.cardio ? '' : `<span class="ex-w">${fmtWeight(pr.weight??0,pr.name)} × ${pr.reps}</span>`;
-        const dateStr = pr.day ? new Date(pr.day).toLocaleDateString('en',{month:'short',day:'numeric'}) : '';
-        return `<div class="ex-row divr">
-          <div class="ex-left" style="display:flex;align-items:center;gap:10px">
-            ${badge}
-            <div>
-              <div class="ex-name">${pr.name}</div>
-              ${dateStr?`<div style="color:var(--t3);font-size:11px;font-weight:600;margin-top:2px">${dateStr}</div>`:''}
-            </div>
-          </div>
-          <div class="ex-nums">${val}</div>
-        </div>`;
-      }).join('');
-      bestPRsHtml = `<div class="card-hd" style="padding:0 20px 8px">Best PRs</div><div class="card" style="margin:0 16px">${rows}</div>`;
-    }
-
-    const titleEl = document.getElementById('svTitle');
-    if (titleEl) titleEl.textContent = n;
-    body.innerHTML = `
-      <div style="padding-top:0">
-        <div class="prf-card" style="cursor:default">
-          <div class="prf-row">
-            <div class="prf-av-wrap">
-              <div class="prf-av" style="cursor:default">${avInner}</div>
-              ${rankIcon}
-            </div>
-            <div class="prf-info">
-              <div class="prf-name">${n}</div>
-              ${rankBadge}
-            </div>
-            ${(igHandle||ttHandle) ? socialBadges : ''}
-          </div>
-          <div class="prf-stats">
-            <div class="prf-stat"><span class="prf-stat-n">${prsCount}</span><span class="prf-stat-l">PRs</span></div>
-            <div class="prf-stat"><span class="prf-stat-n">${workouts}</span><span class="prf-stat-l">Workouts</span></div>
-            <div class="prf-stat"><span class="prf-stat-n">${friendsCount}</span><span class="prf-stat-l">Friends</span></div>
-          </div>
-        </div>
-        <div style="padding:0 14px 12px">
-          <button onclick="removeFriend('${uid}');closeVisitorProfile();" class="prf-btn tap-scale" style="width:100%;justify-content:center;color:#ff453a;border-color:#ff453a;padding:10px">Remove friend</button>
-        </div>
-        <div style="padding-bottom:32px">${bestPRsHtml}</div>
-      </div>`;
+    const html = buildProfileHero({
+      heroBg:      p?.heroBg  || null,
+      avatar:      p?.avatar  || avatar || null,
+      rankTier:    p?.rankTier || null,
+      rankDiv:     p?.rankDiv  || null,
+      name:        p?.name    || name || 'Friend',
+      instagram:   p?.instagram || null,
+      tiktok:      p?.tiktok   || null,
+      prsCount:    p?.prsCount    ?? '—',
+      workouts:    p?.workoutDays ?? '—',
+      friendsCount:p?.friendsCount ?? '—',
+      bestPRs:     p?.bestPRs || [],
+    });
+    body.innerHTML = html;
   }
 
   renderVisitor({ name, avatar });
@@ -1545,7 +1605,6 @@ function closeVisitorProfile() {
   prev?.addEventListener('animationend',()=>prev?.classList.remove('scr-el'),{once:true});
 }
 
-document.getElementById('svBack').addEventListener('click', () => history.back());
 
 function tsToDate(ts) {
   if (!ts) return null;
@@ -1581,6 +1640,15 @@ function migrateDB(){
     (db.schedule[dateKey]||[]).forEach(ex=>{
       if(!ex.id){ex.id=Math.random().toString(36).slice(2)+Date.now().toString(36);dirty=true;}
     });
+  });
+
+  // remove orphaned schedule entries: any entry whose id has no matching history _entryId
+  const historyIds=new Set((db.history||[]).map(h=>h._entryId).filter(Boolean));
+  Object.keys(db.schedule).forEach(dateKey=>{
+    const before=(db.schedule[dateKey]||[]).length;
+    db.schedule[dateKey]=(db.schedule[dateKey]||[]).filter(ex=>!ex.id||historyIds.has(ex.id));
+    if(db.schedule[dateKey].length!==before) dirty=true;
+    if(!db.schedule[dateKey].length) delete db.schedule[dateKey];
   });
 
   // backfill history entries: _entryId and day
@@ -1667,6 +1735,27 @@ function renderProfileTab(){
     if(db.profile?.avatar){av.innerHTML=`<img src="${db.profile.avatar}">`;}
     else{av.textContent=name?name[0].toUpperCase():'G';}
   }
+  // hero background: blurred avatar or accent gradient
+  const heroBg=document.getElementById('scrProfileHeroBg');
+  if(heroBg){
+    if(db.profile?.heroBg){
+      heroBg.style.backgroundImage=`url('${db.profile.heroBg}')`;
+      heroBg.style.backgroundSize='cover';
+      heroBg.style.backgroundPosition='center';
+      heroBg.style.filter='brightness(.75)';
+      heroBg.style.transform='scale(1.05)';
+    } else if(db.profile?.avatar){
+      heroBg.style.backgroundImage=`url('${db.profile.avatar}')`;
+      heroBg.style.backgroundSize='cover';
+      heroBg.style.backgroundPosition='center';
+      heroBg.style.filter='blur(20px) brightness(.6)';
+      heroBg.style.transform='scale(1.12)';
+    } else {
+      const c=r?TIER_COLORS[r.tier.id]:'#C0392B';
+      heroBg.style.backgroundImage=`radial-gradient(ellipse at 60% 40%,${c}55 0%,transparent 70%),linear-gradient(135deg,#140a0a 0%,#1a0e1a 100%)`;
+      heroBg.style.filter='';heroBg.style.transform='scale(1.05)';
+    }
+  }
   const rankBgEl=document.getElementById('scrProfileRankBg');
   const rankStatWrap=document.getElementById('scrStatRankWrap');
   const rankStatIcon=document.getElementById('scrStatRankIcon');
@@ -1689,10 +1778,10 @@ function renderProfileTab(){
     if(r){
       const c=TIER_COLORS[r.tier.id];
       rankEl.className='prf-rank-badge';
-      rankEl.style.cssText=`background:color-mix(in srgb,${c} 14%,transparent);color:${c};border:1px solid color-mix(in srgb,${c} 35%,transparent)`;
+      rankEl.style.cssText=`background:color-mix(in srgb,${c} 25%,rgba(0,0,0,.4));color:#fff;border:1px solid color-mix(in srgb,${c} 50%,transparent);backdrop-filter:blur(6px);margin-top:6px`;
       rankEl.textContent=`${r.tier.label} ${ROMAN[r.div-1]}`;
     } else {
-      rankEl.className='';rankEl.style.cssText='color:var(--t3);font-size:11px;margin-top:6px';
+      rankEl.className='';rankEl.style.cssText='color:rgba(255,255,255,.5);font-size:11px;margin-top:6px';
       rankEl.textContent='Set your profile to rank';
     }
   }
@@ -1706,13 +1795,23 @@ function renderProfileTab(){
   if(wsEl) wsEl.textContent=workoutDays;
   if(psEl) psEl.textContent=prsCount;
   if(fsEl) fsEl.textContent=friendsCount;
-  // google badge on card
-  const gBadge=document.getElementById('scrGoogleBadge');
-  if(gBadge){gBadge.style.display=_user?'flex':'none';}
-  const igBadge=document.getElementById('scrIgBadge');
-  const ttBadge=document.getElementById('scrTtBadge');
-  if(igBadge){igBadge.style.display=db.profile?.instagram?'flex':'none';}
-  if(ttBadge){ttBadge.style.display=db.profile?.tiktok?'flex':'none';}
+  const rankTileEl=document.getElementById('scrStatRank');
+  if(rankTileEl){rankTileEl.textContent=r?`${r.tier.label} ${ROMAN[r.div-1]}`:'—';}
+  // socials section
+  const socialsEl=document.getElementById('scrSocials');
+  if(socialsEl){
+    const ig=db.profile?.instagram||null;
+    const tt=db.profile?.tiktok||null;
+    if(ig||tt){
+      const _igSvg=`<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke="#E1306C"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r=".8" fill="#E1306C" stroke="none"/></svg>`;
+      const _ttSvg=`<svg width="14" height="14" viewBox="0 0 24 24"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.19 8.19 0 0 0 4.78 1.52V6.76a4.85 4.85 0 0 1-1.01-.07z" fill="var(--text)"/></svg>`;
+      const row=(href,icon,label)=>`<a href="${href}" target="_blank" rel="noopener" class="ex-row divr tap-scale" style="text-decoration:none;display:flex;align-items:center"><div class="ex-left" style="display:flex;align-items:center;gap:10px">${icon}<span class="ex-name">${label}</span></div><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke-width="2" style="stroke:var(--t3);flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg></a>`;
+      const rows=[ig?row(`https://instagram.com/${ig}`,_igSvg,`@${ig}`):'',tt?row(`https://tiktok.com/@${tt}`,_ttSvg,`@${tt}`):''].join('');
+      socialsEl.innerHTML=`<div class="card-hd" style="padding:14px 20px 8px">Socials</div><div class="card" style="margin:0 16px">${rows}</div>`;
+    } else {
+      socialsEl.innerHTML='';
+    }
+  }
   // top 5 PRs
   const bp=document.getElementById('scrBestPRs');
   if(!bp) return;
@@ -1722,7 +1821,7 @@ function renderProfileTab(){
   if(p?.weight) entries.sort((a,b)=>calcExScore(b[1],p,b[0])-calcExScore(a[1],p,a[0]));
   else entries.sort((a,b)=>(b[1].date||'').localeCompare(a[1].date||''));
   const top5=entries.slice(0,5);
-  bp.innerHTML=`<div class="card-hd" style="padding:0 20px 8px">Best PRs</div>`;
+  bp.innerHTML=`<div class="card-hd" style="padding:14px 20px 8px">Best PRs</div>`;
   const card=document.createElement('div');
   card.className='card';
   card.style.margin='0 16px';
@@ -2029,7 +2128,7 @@ function recomputePR(name, onlyIfBetter=false){
   const isBW=BODYWEIGHT_EX.has(name);
   const bwFrac=BW_FRACTION[name]??1;
   const cap=isBW?0:30;
-  const best=db.history.filter(h=>h.name===name).reduce((acc,h)=>{
+  const best=db.history.filter(h=>h.name===name&&(h.reps||0)>0).reduce((acc,h)=>{
     const base=isBW?bw*bwFrac+h.weight:h.weight;
     const rm=calcEpley(base,h.reps,cap);
     return rm>acc.rm?{rm,h}:acc;
@@ -3393,6 +3492,33 @@ document.getElementById('profAvatarInput').addEventListener('change',e=>{
       persist();
       renderProfAvatar();
       renderProfileTab();
+    };
+    img.src=ev.target.result;
+  };
+  reader.readAsDataURL(file);
+  e.target.value='';
+});
+
+document.getElementById('profBgBtn').addEventListener('click',()=>document.getElementById('profBgInput').click());
+document.getElementById('profBgInput').addEventListener('change',e=>{
+  const file=e.target.files[0];
+  if(!file) return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    const img=new Image();
+    img.onload=()=>{
+      const W=800,H=500;
+      const canvas=document.createElement('canvas');
+      canvas.width=W;canvas.height=H;
+      const ctx=canvas.getContext('2d');
+      const scale=Math.max(W/img.width,H/img.height);
+      const sw=img.width*scale,sh=img.height*scale;
+      ctx.drawImage(img,(W-sw)/2,(H-sh)/2,sw,sh);
+      if(!db.profile) db.profile={};
+      db.profile.heroBg=canvas.toDataURL('image/jpeg',0.75);
+      persist();
+      renderProfileTab();
+      showToast('Background updated');
     };
     img.src=ev.target.result;
   };
