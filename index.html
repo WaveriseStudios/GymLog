@@ -559,7 +559,10 @@ input[type=number]{-moz-appearance:textfield;}
   <!-- PR -->
   <div class="scr" id="sp">
     <div class="pr-hd"><h1>Records</h1><span class="pr-ct" id="prCount"></span></div>
-    <div style="display:flex;gap:6px;padding:0 14px 10px;overflow-x:auto;scrollbar-width:none" id="prSortBar"></div>
+    <div style="display:flex;align-items:center;gap:8px;padding:0 22px 10px;overflow-x:auto;scrollbar-width:none">
+      <span style="font-size:12px;font-weight:600;color:var(--t3);white-space:nowrap;flex-shrink:0">Filter by:</span>
+      <div style="display:flex;gap:6px;flex-shrink:0" id="prSortBar"></div>
+    </div>
     <div class="sb" id="prList"></div>
   </div>
 
@@ -624,7 +627,7 @@ input[type=number]{-moz-appearance:textfield;}
         </div>
       </div>
 
-      <!-- socials + PR list -->
+      <!-- socials + best PRs -->
       <div id="scrSocials"></div>
       <div id="scrBestPRs" style="padding:0 0 32px"></div>
     </div>
@@ -1495,10 +1498,9 @@ function syncPublicProfile() {
   const r = calcOverallRank();
   const p = db.profile;
   const entries = Object.entries(db.prs||{});
-  // build best PRs snapshot (same sort as renderBestPRs)
-  if (p?.weight) entries.sort((a,b)=>calcExScore(b[1],p,b[0])-calcExScore(a[1],p,a[0]));
-  else entries.sort((a,b)=>(b[1].date||'').localeCompare(a[1].date||''));
-  const bestPRs = entries.slice(0,5).map(([name,pr])=>{
+  // recent PRs sorted by date desc
+  entries.sort((a,b)=>(b[1].day||b[1].date||'').localeCompare(a[1].day||a[1].date||''));
+  const recentPRs = entries.slice(0,30).map(([name,pr])=>{
     const tier = (!pr._cardio && p?.weight) ? scoreToTierDiv(calcExScore(pr,p,name)).tier : null;
     return { name, weight:pr.weight||null, reps:pr.reps||null, day:pr.day||pr.date||null, cardio:!!pr._cardio, tierId:tier?.id||null };
   });
@@ -1513,7 +1515,7 @@ function syncPublicProfile() {
     instagram: p?.instagram || null,
     tiktok: p?.tiktok || null,
     heroBg: p?.heroBg || null,
-    bestPRs,
+    recentPRs,
     lastSeen: firebase.firestore.FieldValue.serverTimestamp()
   }, { merge: true }).catch(() => {});
 }
@@ -1579,10 +1581,12 @@ function buildProfileHero(o) {
     socialsHtml = `<div class="card-hd" style="padding:0 20px 8px">Socials</div><div style="margin:0 16px;display:flex;gap:10px">${chips}</div>`;
   }
 
-  // best PRs list
+  // recent PRs list (5 shown, view all button if more)
   let bestPRsHtml = '';
-  if ((o.bestPRs||[]).length) {
-    const rows = o.bestPRs.map(pr => {
+  const allPRs = o.recentPRs || o.bestPRs || [];
+  if (allPRs.length) {
+    const show = allPRs.slice(0,5);
+    const rows = show.map(pr => {
       const badge = pr.tierId ? `<img src="${RANK_ICONS[pr.tierId]}" style="width:28px;height:28px;image-rendering:pixelated;filter:drop-shadow(0 0 4px ${TIER_COLORS[pr.tierId]}99)">` : '';
       const val = pr.cardio ? '' : `<span class="ex-w">${fmtWeight(pr.weight??0,pr.name)} × ${pr.reps}</span>`;
       const dateStr = pr.day ? new Date(pr.day).toLocaleDateString('en',{month:'short',day:'numeric'}) : '';
@@ -1597,7 +1601,11 @@ function buildProfileHero(o) {
         <div class="ex-nums">${val}</div>
       </div>`;
     }).join('');
-    bestPRsHtml = `<div class="card-hd" style="padding:0 20px 8px">Best PRs</div><div class="card" style="margin:0 16px">${rows}</div>`;
+    const totalPRs = o.prsCount ?? allPRs.length;
+    const viewAllBtn = totalPRs > 5
+      ? `<button class="add-row tap-scale" style="width:100%;border-top:1px solid var(--bdr)" onclick="openFriendPRs(${JSON.stringify(JSON.stringify(allPRs))},${JSON.stringify(o.name||'Friend')})"><span class="add-ic" style="font-size:13px">→</span>View all ${totalPRs} PRs</button>`
+      : '';
+    bestPRsHtml = `<div class="card-hd" style="padding:0 20px 8px">Latest PRs</div><div class="card" style="margin:0 16px;overflow:hidden">${rows}${viewAllBtn}</div>`;
   }
 
   return `<div>
@@ -1644,7 +1652,7 @@ async function openVisitorProfile(uid, name, code, avatar, heroBg) {
       prsCount:    p?.prsCount    ?? '—',
       workouts:    p?.workoutDays ?? '—',
       friendsCount:p?.friendsCount ?? '—',
-      bestPRs:     p?.bestPRs || [],
+      recentPRs:   p?.recentPRs || p?.bestPRs || [],
     });
     body.innerHTML = html;
   }
@@ -1664,6 +1672,46 @@ async function openVisitorProfile(uid, name, code, avatar, heroBg) {
       if (sv.classList.contains('on') && snap.exists) renderVisitor(snap.data());
     } catch(e) {}
   }
+}
+
+function openFriendPRs(allPRsJson, friendName) {
+  const prs = JSON.parse(allPRsJson);
+  const body = document.getElementById('svBody');
+  if (!body) return;
+
+  // group by date descending (same logic as PR tab recent mode)
+  const groups = new Map();
+  prs.forEach(pr => {
+    const day = (pr.day||'').slice(0,10);
+    const lbl = day ? parseLocalDate(day).toLocaleDateString('en',{weekday:'long',month:'long',day:'numeric',year:'numeric'}) : 'Unknown';
+    if (!groups.has(lbl)) groups.set(lbl,[]);
+    groups.get(lbl).push(pr);
+  });
+
+  let html = `<div style="padding:16px 20px 8px;display:flex;align-items:center;gap:10px">
+    <button onclick="history.back()" style="width:30px;height:30px;border-radius:50%;background:var(--card2);border:1.5px solid var(--bdr);color:var(--t2);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:900;line-height:1">${friendName}'s PRs</div>
+  </div><div style="padding:0 0 32px">`;
+
+  groups.forEach((dayPRs, lbl) => {
+    html += `<div style="padding:0 20px 6px;margin-top:16px;font-size:11px;letter-spacing:.6px;text-transform:uppercase;color:var(--t3)">${lbl}</div>
+    <div class="card" style="margin:0 16px 8px;overflow:hidden">`;
+    dayPRs.forEach(pr => {
+      const badge = pr.tierId ? `<img src="${RANK_ICONS[pr.tierId]}" style="width:28px;height:28px;image-rendering:pixelated;filter:drop-shadow(0 0 4px ${TIER_COLORS[pr.tierId]}99)">` : '';
+      const val = pr.cardio ? '' : `<span class="ex-w">${fmtWeight(pr.weight??0,pr.name)} × ${pr.reps}</span>`;
+      html += `<div class="ex-row divr">
+        <div class="ex-left" style="display:flex;align-items:center;gap:10px">${badge}<div class="ex-name">${pr.name}</div></div>
+        <div class="ex-nums">${val}</div>
+      </div>`;
+    });
+    html += `</div>`;
+  });
+
+  html += `</div>`;
+  body.innerHTML = html;
+  history.pushState({ svPRs: true }, '');
 }
 
 function closeVisitorProfile() {
@@ -1889,10 +1937,9 @@ function renderProfileTab(){
   const p=db.profile;
   const entries=Object.entries(db.prs||{});
   if(!entries.length){bp.innerHTML='';return;}
-  if(p?.weight) entries.sort((a,b)=>calcExScore(b[1],p,b[0])-calcExScore(a[1],p,a[0]));
-  else entries.sort((a,b)=>(b[1].date||'').localeCompare(a[1].date||''));
+  entries.sort((a,b)=>(b[1].day||b[1].date||'').localeCompare(a[1].day||a[1].date||''));
   const top5=entries.slice(0,5);
-  bp.innerHTML=`<div class="card-hd" style="padding:14px 20px 8px">Best PRs</div>`;
+  bp.innerHTML=`<div class="card-hd" style="padding:14px 20px 8px">Latest PRs</div>`;
   const card=document.createElement('div');
   card.className='card';
   card.style.margin='0 16px';
@@ -1924,6 +1971,14 @@ function renderProfileTab(){
       <div class="ex-nums">${valHtml}</div>`;
     card.appendChild(row);
   });
+  if(entries.length>5){
+    const more=document.createElement('button');
+    more.className='add-row tap-scale';
+    more.style.cssText='width:100%;border-top:1px solid var(--bdr)';
+    more.innerHTML=`<span class="add-ic" style="font-size:13px">→</span>View all ${entries.length} PRs`;
+    more.addEventListener('click',()=>goScr('sp'));
+    card.appendChild(more);
+  }
   bp.appendChild(card);
 }
 
@@ -2829,17 +2884,10 @@ function renderPRs(){
 
   const sortByRecent=(a,b)=>{
     const dayDiff=(b[1].day||'').localeCompare(a[1].day||'');
-    if(dayDiff!==0) return dayDiff;
-    // same day: sort by full ISO timestamp (last logged first)
-    return (b[1].date||'').localeCompare(a[1].date||'');
+    return dayDiff!==0?dayDiff:(b[1].date||'').localeCompare(a[1].date||'');
   };
   const sortByName=(a,b)=>a[0].localeCompare(b[0]);
   const sortStrength=(a,b)=>p?.weight?calcExScore(b[1],p,b[0])-calcExScore(a[1],p,a[0]):sortByName(a,b);
-
-  const sortFn = _prSort==='recent' ? sortByRecent : _prSort==='name' ? sortByName : sortStrength;
-  weightEntries.sort(sortFn);
-  caliEntries.sort(sortFn);
-  cardioEntries.sort(_prSort==='recent' ? sortByRecent : _prSort==='name' ? sortByName : (a,b)=>a[0].localeCompare(b[0]));
 
   list.innerHTML='';
 
@@ -2857,7 +2905,6 @@ function renderPRs(){
       const bw=p?.weight||0;
       const base=isBW?(bw*bwFrac+pr.weight):pr.weight;
       const e1rm=Math.round(calcEpley(base,pr.reps,isBW?0:30));
-      const e1rmStr=isBW?`BW + ${Math.max(0,e1rm-Math.round(bw*bwFrac))} kg`:`~${e1rm} kg`;
       valueHtml=`<span class="ex-w">${fmtWeight(pr.weight,name)} × ${pr.reps}</span>`;
       if(p?.weight){
         const{tier,div}=scoreToTierDiv(calcExScore(pr,p,name));
@@ -2880,23 +2927,55 @@ function renderPRs(){
     return row;
   }
 
-  function appendSection(label, sectionEntries){
+  function appendSection(label,sectionEntries,subtle=false){
     if(!sectionEntries.length) return;
     const hd=document.createElement('div');
     hd.className='card-hd';
-    hd.style.cssText='padding:0 20px 8px;margin-top:24px';
+    hd.style.cssText=subtle
+      ?'padding:0 20px 6px;margin-top:20px;font-size:11px;letter-spacing:.6px;text-transform:uppercase;color:var(--t3)'
+      :'padding:0 20px 8px;margin-top:24px';
     hd.textContent=label;
     list.appendChild(hd);
     const wrap=document.createElement('div');
     wrap.className='card';
-    wrap.style.cssText='margin-bottom:8px;';
+    wrap.style.marginBottom='8px';
     sectionEntries.forEach(([name,pr])=>wrap.appendChild(makePRRow(name,pr)));
     list.appendChild(wrap);
   }
 
-  appendSection('Weight', weightEntries);
-  appendSection('Calisthenics', caliEntries);
-  appendSection('Cardio', cardioEntries);
+  if(_prSort==='recent'){
+    const sorted=[...entries].sort(sortByRecent);
+    const groups=new Map();
+    sorted.forEach(e=>{
+      const day=(e[1].day||e[1].date||'').slice(0,10);
+      let lbl;
+      if(day){const d=parseLocalDate(day);lbl=d.toLocaleDateString('en',{weekday:'long',month:'long',day:'numeric',year:'numeric'});}
+      else lbl='Unknown';
+      if(!groups.has(lbl)) groups.set(lbl,[]);
+      groups.get(lbl).push(e);
+    });
+    groups.forEach((grp,lbl)=>appendSection(lbl,grp,true));
+  } else if(_prSort==='best'){
+    const sorted=[...entries].sort(sortStrength);
+    const groups=new Map();
+    RANK_TIERS.slice().reverse().forEach(t=>groups.set(t.label,[]));
+    sorted.forEach(e=>{
+      const [name,pr]=e;
+      if(pr._cardio||!p?.weight){groups.get(RANK_TIERS[0].label).push(e);return;}
+      const{tier}=scoreToTierDiv(calcExScore(pr,p,name));
+      groups.get(tier.label).push(e);
+    });
+    groups.forEach((grp,lbl)=>appendSection(lbl,grp,true));
+  } else {
+    const sorted=[...entries].sort(sortByName);
+    const groups=new Map();
+    sorted.forEach(e=>{
+      const lbl=(e[0][0]||'#').toUpperCase();
+      if(!groups.has(lbl)) groups.set(lbl,[]);
+      groups.get(lbl).push(e);
+    });
+    groups.forEach((grp,lbl)=>appendSection(lbl,grp,true));
+  }
 }
 
 /* ── EXERCISE MODAL ── */
