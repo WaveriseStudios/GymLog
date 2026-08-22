@@ -776,8 +776,23 @@ input[type=number]{-moz-appearance:textfield;}
   </div>
 </div>
 
-<!-- QR scanner input (hidden) -->
-<input type="file" id="qrScanInput" accept="image/*" capture="environment" style="display:none">
+<!-- QR live scanner overlay -->
+<div id="qrScanOverlay" style="display:none;position:fixed;inset:0;z-index:4000;background:#000;flex-direction:column;align-items:center;justify-content:center;">
+  <video id="qrVideo" autoplay playsinline muted style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0"></video>
+  <!-- viewfinder -->
+  <div style="position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:20px;width:100%">
+    <div style="width:220px;height:220px;position:relative">
+      <div style="position:absolute;inset:0;border:3px solid rgba(255,255,255,.15);border-radius:16px"></div>
+      <!-- corner marks -->
+      <div style="position:absolute;top:0;left:0;width:32px;height:32px;border-top:3px solid var(--acc);border-left:3px solid var(--acc);border-radius:8px 0 0 0"></div>
+      <div style="position:absolute;top:0;right:0;width:32px;height:32px;border-top:3px solid var(--acc);border-right:3px solid var(--acc);border-radius:0 8px 0 0"></div>
+      <div style="position:absolute;bottom:0;left:0;width:32px;height:32px;border-bottom:3px solid var(--acc);border-left:3px solid var(--acc);border-radius:0 0 0 8px"></div>
+      <div style="position:absolute;bottom:0;right:0;width:32px;height:32px;border-bottom:3px solid var(--acc);border-right:3px solid var(--acc);border-radius:0 0 8px 0"></div>
+    </div>
+    <div style="color:rgba(255,255,255,.7);font-size:13px;font-weight:600;letter-spacing:.5px">Point at a friend's QR code</div>
+    <button onclick="closeQrScanner()" style="background:rgba(255,255,255,.15);border:none;border-radius:20px;padding:10px 28px;color:#fff;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;backdrop-filter:blur(8px)">Cancel</button>
+  </div>
+</div>
 
 <div class="overlay" id="profileOverlay">
   <div class="sheet">
@@ -1135,7 +1150,7 @@ function renderFriendsSheet() {
           style="flex:1;background:var(--bg2);border:1.5px solid var(--bdr);border-radius:14px;padding:11px 14px;font-size:18px;font-weight:900;letter-spacing:4px;color:var(--text);font-family:'Barlow Condensed',sans-serif;outline:none;text-transform:uppercase">
         <button class="prf-btn tap-scale" onclick="submitAddFriend()" style="flex-shrink:0;padding:11px 18px;font-size:14px;font-weight:700;border-radius:14px;background:var(--acc);color:#fff;border:none">Add</button>
       </div>
-      <button class="tap-scale" onclick="document.getElementById('qrScanInput').click()"
+      <button class="tap-scale" onclick="openQrScanner()"
         style="width:100%;display:flex;align-items:center;justify-content:center;gap:10px;background:var(--bg2);border:1.5px solid var(--bdr);border-radius:14px;padding:13px;font-size:14px;font-weight:700;font-family:inherit;color:var(--text);cursor:pointer">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
           <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/>
@@ -1146,38 +1161,53 @@ function renderFriendsSheet() {
     </div>`;
 }
 
-// handle QR scan image via jsQR
-document.getElementById('qrScanInput').addEventListener('change', e => {
-  const file = e.target.files[0];
-  e.target.value = '';
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = ev => {
-    const img = new Image();
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      canvas.width = img.width;
-      canvas.height = img.height;
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(img, 0, 0);
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const result = jsQR(imageData.data, imageData.width, imageData.height);
-      if (!result) { showToast('No QR code found — try again'); return; }
+// ── QR live scanner ──
+let _qrStream = null, _qrRaf = null;
+
+function openQrScanner() {
+  const overlay = document.getElementById('qrScanOverlay');
+  const video = document.getElementById('qrVideo');
+  overlay.style.display = 'flex';
+  navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+    .then(stream => {
+      _qrStream = stream;
+      video.srcObject = stream;
+      video.play();
+      _scanFrame(video);
+    })
+    .catch(() => showToast('Camera access denied'));
+}
+
+function closeQrScanner() {
+  cancelAnimationFrame(_qrRaf);
+  if (_qrStream) { _qrStream.getTracks().forEach(t => t.stop()); _qrStream = null; }
+  document.getElementById('qrScanOverlay').style.display = 'none';
+}
+
+function _scanFrame(video) {
+  if (!_qrStream) return;
+  if (video.readyState === video.HAVE_ENOUGH_DATA) {
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video, 0, 0);
+    const imageData = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height);
+    const result = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'dontInvert' });
+    if (result) {
       const raw = result.data.trim().toLowerCase();
-      if (raw.length !== 6) { showToast('Invalid GymLog QR code'); return; }
-      const input = document.getElementById('friendCodeInput');
-      if (input) { input.value = raw.toUpperCase(); submitAddFriend(); }
-      else {
+      if (raw.length === 6) {
+        closeQrScanner();
+        const input = document.getElementById('friendCodeInput');
+        if (input) { input.value = raw.toUpperCase(); submitAddFriend(); return; }
         document.getElementById('friendsOverlay').classList.add('open');
         renderFriendsSheet();
         setTimeout(() => { const inp = document.getElementById('friendCodeInput'); if(inp){inp.value=raw.toUpperCase();submitAddFriend();} }, 200);
+        return;
       }
-    };
-    img.onerror = () => showToast('Could not read image');
-    img.src = ev.target.result;
-  };
-  reader.readAsDataURL(file);
-});
+    }
+  }
+  _qrRaf = requestAnimationFrame(() => _scanFrame(video));
+}
 
 function copyFriendCode() {
   const code = (db.friendCode || '').toUpperCase();
