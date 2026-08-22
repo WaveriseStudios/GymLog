@@ -572,11 +572,8 @@ input[type=number]{-moz-appearance:textfield;}
 
   <!-- FRIENDS SCREEN -->
   <div class="scr" id="sf">
-    <div class="scr-hd" style="display:flex;align-items:center;justify-content:space-between;padding-right:16px">
+    <div class="scr-hd">
       <h1>Friends</h1>
-      <button onclick="openFriends()" style="width:36px;height:36px;border-radius:50%;background:var(--card);border:1px solid var(--bdr);display:flex;align-items:center;justify-content:center;cursor:pointer" class="tap-scale">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-      </button>
     </div>
     <div class="sb" id="friendsTabList" style="padding:8px 14px 32px"></div>
   </div>
@@ -1317,42 +1314,55 @@ function renderFriendsTab() {
   const el = document.getElementById('friendsTabList');
   if (!el) return;
   const friends = db.friends || [];
+  // fixed add button at bottom (above nav)
+  let fixedBtn = document.getElementById('friendsAddFixedBtn');
+  if (!fixedBtn) {
+    fixedBtn = document.createElement('button');
+    fixedBtn.id = 'friendsAddFixedBtn';
+    fixedBtn.className = 'add-row tap-scale';
+    fixedBtn.style.cssText = 'position:fixed;bottom:calc(env(safe-area-inset-bottom) + 80px);left:14px;right:14px;width:auto;background:var(--card);border:1px solid var(--bdr);border-radius:14px;z-index:70;';
+    fixedBtn.innerHTML = '<span class="add-ic">+</span>Add friend';
+    fixedBtn.onclick = openFriends;
+    document.getElementById('app').appendChild(fixedBtn);
+  }
+  fixedBtn.style.display = document.querySelector('.scr.on')?.id === 'sf' ? 'flex' : 'none';
+
   if (!_user) {
     el.innerHTML = `<div style="text-align:center;color:var(--t3);font-size:13px;padding:60px 0">Sign in to add friends</div>`;
     return;
   }
   if (friends.length === 0) {
-    el.innerHTML = `<div style="text-align:center;padding:60px 0">
-      <div style="font-size:13px;color:var(--t3);margin-bottom:12px">No friends yet</div>
-      <button onclick="openFriends()" class="tap-scale" style="background:var(--acc);color:#fff;border:none;border-radius:20px;padding:10px 22px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">Add a friend</button>
-    </div>`;
+    el.innerHTML = `<div style="text-align:center;color:var(--t3);font-size:13px;padding:60px 0">No friends yet — add your first one!</div>`;
     return;
   }
 
   function buildCard(f) {
     const initials = (f.name || '?')[0].toUpperCase();
     const avatarHtml = f.avatar
-      ? `<img src="${f.avatar}" style="width:52px;height:52px;border-radius:50%;object-fit:cover;flex-shrink:0">`
-      : `<div style="width:52px;height:52px;border-radius:50%;background:var(--acc2);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:900;color:var(--acc);flex-shrink:0">${initials}</div>`;
+      ? `<img src="${f.avatar}" style="width:46px;height:46px;border-radius:50%;object-fit:cover;flex-shrink:0">`
+      : `<div style="width:46px;height:46px;border-radius:50%;background:var(--acc2);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:900;color:var(--acc);flex-shrink:0">${initials}</div>`;
     const safeName = (f.name||'Friend').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
     const safeCode = (f.code||'').replace(/'/g,"\\'");
     const safeAvatar = (f.avatar||'').replace(/'/g,"\\'").replace(/"/g,'&quot;');
     const sinceStr = f.since ? new Date(f.since).toLocaleDateString('en',{month:'short',day:'numeric',year:'numeric'}) : null;
     const subline = sinceStr ? `Friends since ${sinceStr}` : '';
-    return `<div onclick="openVisitorProfile('${f.uid}','${safeName}','${safeCode}','${safeAvatar}')" class="tap-scale" style="display:flex;align-items:center;gap:14px;background:var(--card);border:1px solid var(--bdr);border-radius:14px;padding:14px;margin-bottom:10px;cursor:pointer">
+    return `<div onclick="openVisitorProfile('${f.uid}','${safeName}','${safeCode}','${safeAvatar}')" class="lw-row tap-scale" style="cursor:pointer">
       ${avatarHtml}
-      <div style="flex:1;min-width:0">
-        <div style="font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:900;color:var(--text);line-height:1">${f.name||'Friend'}</div>
-        ${subline ? `<div style="font-size:11px;font-weight:600;color:var(--t3);margin-top:3px">${subline}</div>` : ''}
+      <div class="lw-info" style="flex:1;min-width:0;margin-left:12px">
+        <div class="lw-name">${f.name||'Friend'}</div>
+        ${subline ? `<div class="lw-meta">${subline}</div>` : ''}
       </div>
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke-width="2" style="stroke:var(--t3);flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg>
     </div>`;
   }
 
-  // render immediately from cache
-  el.innerHTML = friends.map(buildCard).join('');
+  function renderList() {
+    el.innerHTML = `<div class="card" style="margin-bottom:80px">${friends.map(buildCard).join('')}</div>`;
+  }
 
-  // refresh friend data in background, update cache + re-render if anything changed
+  renderList();
+
+  // refresh friend data in background
   friends.forEach(f => {
     _profilesCol().doc(f.uid).get().then(snap => {
       if (!snap.exists) return;
@@ -1362,7 +1372,7 @@ function renderFriendsTab() {
       let changed = false;
       if (d.name && d.name !== entry.name) { entry.name = d.name; changed = true; }
       if (d.avatar !== undefined && d.avatar !== entry.avatar) { entry.avatar = d.avatar; changed = true; }
-      if (changed) { persist(); el.innerHTML = (db.friends||[]).map(buildCard).join(''); }
+      if (changed) { persist(); renderList(); }
     }).catch(() => {});
   });
 }
@@ -1709,6 +1719,8 @@ function goScr(t, dir){
   if(t==='sw') renderWeek();
   if(t==='sp') renderPRs();
   if(t==='sf'){ renderFriendsTab(); if(_user) processFriendRequests(); }
+  const _fab = document.getElementById('friendsAddFixedBtn');
+  if(_fab) _fab.style.display = t==='sf' ? 'flex' : 'none';
   if(t==='spr') renderProfileTab();
   sessionStorage.setItem('gymlog_scr',t);
   // push a history entry so back button returns to previous tab, not closes app
@@ -2479,7 +2491,7 @@ function renderWeekDay(dir){
         ?`${fmtWeight(merged[0].weight,g.name)} × ${merged[0].reps} · ${merged[0].sets} set${merged[0].sets!==1?'s':''}`
         :merged.map(m=>`${fmtWeight(m.weight,g.name)} × ${m.reps} × ${m.sets}`).join(' · ');
       wrap.innerHTML=`<div class="lw-info"><div class="lw-name">${g.name}${prTag}</div><div class="lw-meta">${metaStr}</div></div>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>`;
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke-width="2" style="stroke:var(--t3);flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg>`;
       wrap.addEventListener('click',()=>openExPicker(dateStr,g));
       card.appendChild(wrap);
     }
