@@ -1639,6 +1639,7 @@ function buildProfileHero(o) {
 async function openVisitorProfile(uid, name, code, avatar, heroBg) {
   const body = document.getElementById('svBody');
   if (!body) return;
+  body.style.padding = '';
   _svPrevTab = document.querySelector('.scr.on')?.id || 'sf';
 
   function renderVisitor(p) {
@@ -1676,45 +1677,104 @@ async function openVisitorProfile(uid, name, code, avatar, heroBg) {
 }
 
 let _friendPRsCache = null;
+let _friendPRSort = 'recent';
+
 function openFriendPRs() {
+  if (!_friendPRsCache) return;
+  _friendPRSort = 'recent';
+  renderFriendPRs();
+  history.pushState({ svPRs: true }, '');
+}
+
+function renderFriendPRs() {
   if (!_friendPRsCache) return;
   const { prs, name: friendName } = _friendPRsCache;
   const body = document.getElementById('svBody');
   if (!body) return;
 
-  // group by date descending (same logic as PR tab recent mode)
-  const groups = new Map();
-  prs.forEach(pr => {
-    const day = (pr.day||'').slice(0,10);
-    const lbl = day ? parseLocalDate(day).toLocaleDateString('en',{weekday:'long',month:'long',day:'numeric',year:'numeric'}) : 'Unknown';
-    if (!groups.has(lbl)) groups.set(lbl,[]);
-    groups.get(lbl).push(pr);
-  });
+  // sort options mirroring main PR tab
+  const sortOpts = [{id:'recent',label:'Recent'},{id:'best',label:'Best'},{id:'name',label:'A – Z'}];
+  const sortBar = sortOpts.map(o => {
+    const active = o.id === _friendPRSort;
+    return `<button onclick="_friendPRSort='${o.id}';renderFriendPRs()" style="flex-shrink:0;border:1.5px solid ${active?'var(--acc)':'var(--bdr)'};border-radius:20px;padding:5px 13px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;background:${active?'var(--acc2)':'var(--card)'};color:${active?'var(--acc)':'var(--t2)'};">${o.label}</button>`;
+  }).join('');
 
-  let html = `<div style="padding:16px 20px 8px;display:flex;align-items:center;gap:10px">
-    <button onclick="history.back()" style="width:30px;height:30px;border-radius:50%;background:var(--card2);border:1.5px solid var(--bdr);color:var(--t2);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
-    </button>
-    <div style="font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:900;line-height:1">${friendName}'s PRs</div>
-  </div><div style="padding:0 0 32px">`;
+  // build header (non-scrolling), then sections go directly into svBody
+  body.style.padding = '0';
+  body.innerHTML = `
+    <div class="pr-hd"><h1>${friendName}</h1><span class="pr-ct">${prs.length} PRs</span></div>
+    <div style="display:flex;align-items:center;gap:8px;padding:0 22px 10px">
+      <span style="font-size:12px;font-weight:600;color:var(--t3);white-space:nowrap;flex-shrink:0">Filter by:</span>
+      <div style="display:flex;gap:6px">${sortBar}</div>
+    </div>
+    <div id="friendPRList" style="padding:0 18px 20px"></div>`;
 
-  groups.forEach((dayPRs, lbl) => {
-    html += `<div style="padding:0 20px 6px;margin-top:16px;font-size:11px;letter-spacing:.6px;text-transform:uppercase;color:var(--t3)">${lbl}</div>
-    <div class="card" style="margin:0 16px 8px;overflow:hidden">`;
-    dayPRs.forEach(pr => {
-      const badge = pr.tierId ? `<img src="${RANK_ICONS[pr.tierId]}" style="width:28px;height:28px;image-rendering:pixelated;filter:drop-shadow(0 0 4px ${TIER_COLORS[pr.tierId]}99)">` : '';
-      const val = pr.cardio ? '' : `<span class="ex-w">${fmtWeight(pr.weight??0,pr.name)} × ${pr.reps}</span>`;
-      html += `<div class="ex-row divr">
-        <div class="ex-left" style="display:flex;align-items:center;gap:10px">${badge}<div class="ex-name">${pr.name}</div></div>
-        <div class="ex-nums">${val}</div>
-      </div>`;
+  const list = document.getElementById('friendPRList');
+
+  function makeRow(pr) {
+    const badge = pr.tierId ? `<img src="${RANK_ICONS[pr.tierId]}" style="width:28px;height:28px;image-rendering:pixelated;filter:drop-shadow(0 0 4px ${TIER_COLORS[pr.tierId]}99)">` : '';
+    const ago = timeAgo(pr.day);
+    const val = pr.cardio ? '' : `<span class="ex-w">${fmtWeight(pr.weight??0,pr.name)} × ${pr.reps}</span>`;
+    const row = document.createElement('div');
+    row.className = 'ex-row divr';
+    row.innerHTML = `
+      <div class="ex-left" style="display:flex;align-items:center;gap:10px">
+        ${badge}
+        <div>
+          <div class="ex-name">${pr.name}</div>
+          ${ago?`<div style="font-size:11px;color:var(--t3);margin-top:2px">${ago}</div>`:''}
+        </div>
+      </div>
+      <div class="ex-nums">${val}</div>`;
+    return row;
+  }
+
+  function appendSection(label, items) {
+    if (!items.length) return;
+    const hd = document.createElement('div');
+    hd.className = 'card-hd';
+    hd.style.cssText = 'padding:0 20px 6px;margin-top:20px;font-size:11px;letter-spacing:.6px;text-transform:uppercase;color:var(--t3)';
+    hd.textContent = label;
+    list.appendChild(hd);
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.style.marginBottom = '8px';
+    items.forEach(pr => card.appendChild(makeRow(pr)));
+    list.appendChild(card);
+  }
+
+  if (_friendPRSort === 'recent') {
+    const sorted = [...prs].sort((a,b) => (b.day||'').localeCompare(a.day||''));
+    const groups = new Map();
+    sorted.forEach(pr => {
+      const day = (pr.day||'').slice(0,10);
+      const lbl = day ? parseLocalDate(day).toLocaleDateString('en',{weekday:'long',month:'long',day:'numeric',year:'numeric'}) : 'Unknown';
+      if (!groups.has(lbl)) groups.set(lbl,[]);
+      groups.get(lbl).push(pr);
     });
-    html += `</div>`;
-  });
-
-  html += `</div>`;
-  body.innerHTML = html;
-  history.pushState({ svPRs: true }, '');
+    groups.forEach((items, lbl) => appendSection(lbl, items));
+  } else if (_friendPRSort === 'best') {
+    const sorted = [...prs].sort((a,b) => {
+      const ai = RANK_TIERS.findIndex(t=>t.id===a.tierId), bi = RANK_TIERS.findIndex(t=>t.id===b.tierId);
+      return bi - ai;
+    });
+    const groups = new Map();
+    RANK_TIERS.slice().reverse().forEach(t => groups.set(t.label,[]));
+    sorted.forEach(pr => {
+      const t = RANK_TIERS.find(t=>t.id===pr.tierId);
+      groups.get(t?.label || RANK_TIERS[0].label).push(pr);
+    });
+    groups.forEach((items,lbl) => appendSection(lbl, items));
+  } else {
+    const sorted = [...prs].sort((a,b) => a.name.localeCompare(b.name));
+    const groups = new Map();
+    sorted.forEach(pr => {
+      const lbl = (pr.name[0]||'#').toUpperCase();
+      if (!groups.has(lbl)) groups.set(lbl,[]);
+      groups.get(lbl).push(pr);
+    });
+    groups.forEach((items,lbl) => appendSection(lbl, items));
+  }
 }
 
 function closeVisitorProfile() {
