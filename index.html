@@ -551,6 +551,7 @@ input[type=number]{-moz-appearance:textfield;}
   <!-- PR -->
   <div class="scr" id="sp">
     <div class="pr-hd"><h1>Records</h1><span class="pr-ct" id="prCount"></span></div>
+    <div style="display:flex;gap:6px;padding:0 14px 10px;overflow-x:auto;scrollbar-width:none" id="prSortBar"></div>
     <div class="sb" id="prList"></div>
   </div>
 
@@ -1001,13 +1002,21 @@ async function loadFromFirestore() {
   try {
     const snap = await _userDoc().get();
     if (snap.exists) {
-      // cloud data exists — it's the source of truth, overwrite local completely
+      // Case: returning user or account switch — cloud is authoritative, fully replace local
       const cloud = snap.data();
-      Object.assign(db, cloud);
+      Object.keys(db).forEach(k => delete db[k]);
+      Object.assign(db, defDB(), cloud);
       localStorage.setItem(STORE, JSON.stringify(db));
     } else {
-      // no cloud data yet — this is a first sign-in, upload whatever is local
-      await _userDoc().set(db);
+      // Case: no cloud data for this account yet (first sign-in)
+      const hasLocalData = db.history?.length > 0 || Object.keys(db.prs||{}).length > 0;
+      if (hasLocalData) {
+        // Case 1: had local guest data → upload it all to cloud
+        await _userDoc().set(db);
+      } else {
+        // Case 3: truly fresh — just seed defaults to cloud
+        await _userDoc().set(defDB());
+      }
     }
   } catch (e) { console.warn('Firestore load failed', e); }
 }
@@ -1876,6 +1885,10 @@ function goScr(t, dir){
   else if(dir===-1) { exitCls='scr-xr'; enterCls='scr-el'; }
   else              { exitCls='scr-xf'; enterCls='scr-ef'; }
 
+  // reset scroll on the incoming screen
+  const nextSb = next.querySelector('.sb');
+  if(nextSb) nextSb.scrollTop = 0; else next.scrollTop = 0;
+
   // show next immediately, animate both simultaneously
   next.classList.add('on', enterCls);
   cur.classList.add(exitCls);
@@ -2715,11 +2728,27 @@ function prTrend(name){
   if(delta<-0.02)return'<span style="color:#e06060;font-size:13px;font-weight:800">↓</span>';
   return'<span style="color:var(--t3);font-size:13px;font-weight:800">→</span>';
 }
+let _prSort = 'recent';
+const _prSortOpts = [
+  { id:'recent', label:'Recent' },
+  { id:'best',   label:'Best'   },
+  { id:'name',   label:'A – Z'  },
+];
+
 function renderPRs(){
   const list=document.getElementById('prList');
   const prs=db.prs||{};
   const p=db.profile;
   const entries=Object.entries(prs);
+
+  // sort bar
+  const bar=document.getElementById('prSortBar');
+  if(bar){
+    bar.innerHTML=_prSortOpts.map(o=>{
+      const active=o.id===_prSort;
+      return `<button onclick="_prSort='${o.id}';renderPRs()" style="flex-shrink:0;border:1.5px solid ${active?'var(--acc)':'var(--bdr)'};border-radius:20px;padding:5px 13px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;background:${active?'var(--acc2)':'var(--card)'};color:${active?'var(--acc)':'var(--t2)'};">${o.label}</button>`;
+    }).join('');
+  }
 
   const ct=document.getElementById('prCount');
   if(ct) ct.textContent=entries.length?`${entries.length} PR${entries.length!==1?'s':''}` :'';
@@ -2733,10 +2762,14 @@ function renderPRs(){
   const caliEntries=entries.filter(([n,pr])=>!pr._cardio&&BODYWEIGHT_EX.has(n));
   const cardioEntries=entries.filter(([,pr])=>pr._cardio);
 
-  const sortStrength=(a,b)=>p?.weight?calcExScore(b[1],p,b[0])-calcExScore(a[1],p,a[0]):a[0].localeCompare(b[0]);
-  weightEntries.sort(sortStrength);
-  caliEntries.sort(sortStrength);
-  cardioEntries.sort((a,b)=>a[0].localeCompare(b[0]));
+  const sortByRecent=(a,b)=>(b[1].day||b[1].date||'').localeCompare(a[1].day||a[1].date||'');
+  const sortByName=(a,b)=>a[0].localeCompare(b[0]);
+  const sortStrength=(a,b)=>p?.weight?calcExScore(b[1],p,b[0])-calcExScore(a[1],p,a[0]):sortByName(a,b);
+
+  const sortFn = _prSort==='recent' ? sortByRecent : _prSort==='name' ? sortByName : sortStrength;
+  weightEntries.sort(sortFn);
+  caliEntries.sort(sortFn);
+  cardioEntries.sort(_prSort==='recent' ? sortByRecent : _prSort==='name' ? sortByName : (a,b)=>a[0].localeCompare(b[0]));
 
   list.innerHTML='';
 
