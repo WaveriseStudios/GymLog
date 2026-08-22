@@ -1602,8 +1602,9 @@ function buildProfileHero(o) {
       </div>`;
     }).join('');
     const totalPRs = o.prsCount ?? allPRs.length;
+    _friendPRsCache = { prs: allPRs, name: o.name || 'Friend' };
     const viewAllBtn = totalPRs > 5
-      ? `<button class="add-row tap-scale" style="width:100%;border-top:1px solid var(--bdr)" onclick="openFriendPRs(${JSON.stringify(JSON.stringify(allPRs))},${JSON.stringify(o.name||'Friend')})"><span class="add-ic" style="font-size:13px">→</span>View all ${totalPRs} PRs</button>`
+      ? `<button class="add-row tap-scale" style="width:100%;border-top:1px solid var(--bdr)" onclick="openFriendPRs()"><span class="add-ic" style="font-size:13px">→</span>View all ${totalPRs} PRs</button>`
       : '';
     bestPRsHtml = `<div class="card-hd" style="padding:0 20px 8px">Latest PRs</div><div class="card" style="margin:0 16px;overflow:hidden">${rows}${viewAllBtn}</div>`;
   }
@@ -1674,8 +1675,10 @@ async function openVisitorProfile(uid, name, code, avatar, heroBg) {
   }
 }
 
-function openFriendPRs(allPRsJson, friendName) {
-  const prs = JSON.parse(allPRsJson);
+let _friendPRsCache = null;
+function openFriendPRs() {
+  if (!_friendPRsCache) return;
+  const { prs, name: friendName } = _friendPRsCache;
   const body = document.getElementById('svBody');
   if (!body) return;
 
