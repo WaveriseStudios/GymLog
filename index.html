@@ -2,9 +2,10 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1A1A1A" id="metaThemeColor">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="GymLog">
 <meta name="theme-color" content="#e0e2db">
 <link rel="manifest" href="manifest.json">
@@ -66,7 +67,7 @@ body{
   -webkit-text-size-adjust:100%;
 }
 
-#app{display:flex;flex-direction:column;height:100%;overflow:hidden;position:relative;}
+#app{display:flex;flex-direction:column;height:100%;overflow:hidden;position:relative;padding-top:env(safe-area-inset-top);}
 .scr{display:none;flex-direction:column;flex:1;min-height:0;overflow:hidden;}
 .scr.on{display:flex;}
 .sb{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:none;}
@@ -3672,6 +3673,8 @@ const THEMES = {
 function applyTheme(t){
   const th = THEMES[t] || THEMES.carbon;
   const r = document.documentElement.style;
+  const mc = document.getElementById('metaThemeColor');
+  if (mc) mc.content = th.bg;
   r.setProperty('--bg',    th.bg);
   r.setProperty('--bg2',   th.bg2);
   r.setProperty('--card',  th.card);
