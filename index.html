@@ -1035,13 +1035,26 @@ _auth.getRedirectResult().then(result => {
   if (e.code) showToast('Sign in error: ' + e.code);
 });
 
+let _requestsUnsub = null;
+
 _auth.onAuthStateChanged(async user => {
   _user = user;
+
+  // tear down any previous listener
+  if (_requestsUnsub) { _requestsUnsub(); _requestsUnsub = null; }
+
   if (user) {
     await loadFromFirestore();
     migrateDB();
     await ensureFriendCode();
     syncPublicProfile();
+    processFriendRequests();
+
+    // real-time listener — fires instantly whenever a new request arrives
+    _requestsUnsub = _requestsCol(user.uid).onSnapshot(snap => {
+      if (!snap.empty) processFriendRequests();
+    });
+
     renderProfileTab();
     renderRankCard();
     renderPRs();
@@ -1695,7 +1708,7 @@ function goScr(t, dir){
   if(t==='sh') renderTodaySession();
   if(t==='sw') renderWeek();
   if(t==='sp') renderPRs();
-  if(t==='sf') renderFriendsTab();
+  if(t==='sf'){ renderFriendsTab(); if(_user) processFriendRequests(); }
   if(t==='spr') renderProfileTab();
   sessionStorage.setItem('gymlog_scr',t);
   // push a history entry so back button returns to previous tab, not closes app
