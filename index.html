@@ -1037,6 +1037,7 @@ async function signOutFirebase() {
   showToast('Signed out — data cleared');
   renderHomeBar();
   renderProfileTab();
+  if (document.getElementById('profileOverlay')?.classList.contains('open')) openProfile();
   renderTodaySession();
   renderWeek();
   renderRankCard();
@@ -1079,10 +1080,12 @@ _auth.onAuthStateChanged(async user => {
     renderBestPRs();
     renderTodaySession();
     renderFriendsTab();
+    if (document.getElementById('profileOverlay')?.classList.contains('open')) openProfile();
     showToast('✓ Signed in as ' + (user.displayName || user.email).split(' ')[0]);
   } else {
     renderProfileTab();
     renderFriendsTab();
+    if (document.getElementById('profileOverlay')?.classList.contains('open')) openProfile();
   }
 });
 
