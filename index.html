@@ -1379,23 +1379,39 @@ function renderFriendsTab() {
   }
 
   function buildCard(f) {
+    const cached = _friendProfileCache[f.uid] || {};
+    const heroBg = cached.heroBg || null;
+    const avatar = cached.avatar || f.avatar || null;
     const initials = (f.name || '?')[0].toUpperCase();
-    const avHtml = f.avatar
-      ? `<img src="${f.avatar}" style="width:38px;height:38px;border-radius:50%;object-fit:cover;flex-shrink:0">`
-      : `<div style="width:38px;height:38px;border-radius:50%;background:var(--acc2);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:900;color:var(--acc);flex-shrink:0">${initials}</div>`;
+    const avHtml = avatar
+      ? `<img src="${avatar}" style="width:42px;height:42px;border-radius:50%;object-fit:cover;flex-shrink:0;border:2px solid rgba(255,255,255,.35)">`
+      : `<div style="width:42px;height:42px;border-radius:50%;background:var(--acc2);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:900;color:var(--acc);flex-shrink:0">${initials}</div>`;
     const safeName   = (f.name||'Friend').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
     const safeCode   = (f.code||'').replace(/'/g,"\\'");
-    const safeAvatar = (f.avatar||'').replace(/'/g,"\\'").replace(/"/g,'&quot;');
-    const igIcon = f.instagram ? `<div style="display:flex;align-items:center;gap:3px;color:var(--t3);font-size:11px;font-weight:600"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke="#E1306C"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r=".5" fill="#E1306C" stroke="none"/></svg>@${f.instagram}</div>` : '';
-    const ttIcon = f.tiktok   ? `<div style="display:flex;align-items:center;gap:3px;color:var(--t3);font-size:11px;font-weight:600"><svg width="11" height="11" viewBox="0 0 24 24" fill="#EE1D52"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.19 8.19 0 0 0 4.78 1.52V6.76a4.85 4.85 0 0 1-1.01-.07z"/></svg>@${f.tiktok}</div>` : '';
+    const safeAvatar = (avatar||'').replace(/"/g,'&quot;');
+    const safeHeroBg = (heroBg||'').replace(/"/g,'&quot;');
+    const bgStyle = heroBg
+      ? `background-image:url("${safeHeroBg}");background-size:cover;background-position:center;`
+      : avatar
+        ? `background-image:url("${safeAvatar}");background-size:cover;background-position:center;filter:blur(0px);`
+        : '';
+    const hasImg = heroBg || avatar;
+    const overlay = hasImg ? `<div style="position:absolute;inset:0;background:linear-gradient(90deg,rgba(0,0,0,.55) 0%,rgba(0,0,0,.25) 100%);border-radius:inherit"></div>` : '';
+    const textColor = hasImg ? '#fff' : 'var(--text)';
+    const subColor  = hasImg ? 'rgba(255,255,255,.65)' : 'var(--t3)';
+    const igIcon = f.instagram ? `<div style="display:flex;align-items:center;gap:3px;font-size:11px;font-weight:600;color:${subColor}"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke="#E1306C"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r=".5" fill="#E1306C" stroke="none"/></svg>@${f.instagram}</div>` : '';
+    const ttIcon = f.tiktok   ? `<div style="display:flex;align-items:center;gap:3px;font-size:11px;font-weight:600;color:${subColor}"><svg width="11" height="11" viewBox="0 0 24 24" fill="#EE1D52"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.19 8.19 0 0 0 4.78 1.52V6.76a4.85 4.85 0 0 1-1.01-.07z"/></svg>@${f.tiktok}</div>` : '';
     const socials = (igIcon || ttIcon) ? `<div style="display:flex;gap:8px;margin-top:3px">${igIcon}${ttIcon}</div>` : '';
-    return `<div data-friend-uid="${f.uid}" data-friend-name="${safeName}" data-friend-code="${safeCode}" data-friend-avatar="${safeAvatar}" class="lw-row tap-scale friend-card-row" style="cursor:pointer;border-top:1px solid var(--bdr)">
-      ${avHtml}
-      <div style="flex:1;min-width:0;margin-left:10px">
-        <div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:900;color:var(--text);line-height:1.1">${f.name||'Friend'}</div>
-        ${socials}
+    return `<div data-friend-uid="${f.uid}" data-friend-name="${safeName}" data-friend-code="${safeCode}" data-friend-avatar="${safeAvatar}" data-friend-hero="${safeHeroBg}" class="lw-row tap-scale friend-card-row" style="cursor:pointer;border-top:1px solid var(--bdr);position:relative;overflow:hidden;${bgStyle}">
+      ${overlay}
+      <div style="position:relative;display:flex;align-items:center;width:100%">
+        ${avHtml}
+        <div style="flex:1;min-width:0;margin-left:10px">
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:900;color:${textColor};line-height:1.1">${f.name||'Friend'}</div>
+          ${socials}
+        </div>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke-width="2" style="stroke:${hasImg ? 'rgba(255,255,255,.6)' : 'var(--t3)'};flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg>
       </div>
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke-width="2" style="stroke:var(--t3);flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg>
     </div>`;
   }
 
@@ -1432,7 +1448,7 @@ function renderFriendsTab() {
         }, 500);
       };
       const cancel = () => clearTimeout(pressTimer);
-      const tap = () => { if (!didLong) openVisitorProfile(row.dataset.friendUid, row.dataset.friendName, row.dataset.friendCode, row.dataset.friendAvatar); };
+      const tap = () => { if (!didLong) openVisitorProfile(row.dataset.friendUid, row.dataset.friendName, row.dataset.friendCode, row.dataset.friendAvatar, row.dataset.friendHero); };
       row.addEventListener('pointerdown', start);
       row.addEventListener('pointerup', cancel);
       row.addEventListener('pointercancel', cancel);
@@ -1491,6 +1507,24 @@ function syncPublicProfile() {
 }
 
 let _svPrevTab = 'sf';
+let _friendProfileCache = {}; // uid → { heroBg, avatar } — session only
+
+async function refreshFriendProfiles() {
+  if (!_user) return;
+  const friends = db.friends || [];
+  if (!friends.length) return;
+  try {
+    await Promise.all(friends.map(async f => {
+      if (_friendProfileCache[f.uid]) return;
+      const snap = await _profilesCol().doc(f.uid).get();
+      if (snap.exists) {
+        const d = snap.data();
+        _friendProfileCache[f.uid] = { heroBg: d.heroBg || null, avatar: d.avatar || null };
+      }
+    }));
+    renderFriendsTab();
+  } catch(e) {}
+}
 
 // ── shared profile hero builder ─────────────────────────────────────────────
 // Used by both own profile (renderProfileTab) and visitor profile (renderVisitor).
@@ -1578,7 +1612,7 @@ function buildProfileHero(o) {
 }
 // ───────────────────────────────────────────────────────────────────────────
 
-async function openVisitorProfile(uid, name, code, avatar) {
+async function openVisitorProfile(uid, name, code, avatar, heroBg) {
   const body = document.getElementById('svBody');
   if (!body) return;
   _svPrevTab = document.querySelector('.scr.on')?.id || 'sf';
@@ -1600,7 +1634,7 @@ async function openVisitorProfile(uid, name, code, avatar) {
     body.innerHTML = html;
   }
 
-  renderVisitor({ name, avatar });
+  renderVisitor({ name, avatar, heroBg: heroBg || null });
   // slide in like a tab (from right)
   const sv = document.getElementById('sv');
   const cur = document.querySelector('.scr.on');
@@ -1886,7 +1920,7 @@ function goScr(t, dir){
   if(t==='sh') renderTodaySession();
   if(t==='sw') renderWeek();
   if(t==='sp') renderPRs();
-  if(t==='sf'){ renderFriendsTab(); if(_user) processFriendRequests(); }
+  if(t==='sf'){ renderFriendsTab(); if(_user) { processFriendRequests(); refreshFriendProfiles(); } }
   if(t==='spr') renderProfileTab();
   sessionStorage.setItem('gymlog_scr',t);
   // push a history entry so back button returns to previous tab, not closes app
