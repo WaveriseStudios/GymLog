@@ -1515,10 +1515,13 @@ async function refreshFriendProfiles() {
       if (snap.exists) {
         const d = snap.data();
         _friendProfileCache[f.uid] = { heroBg: d.heroBg || null, avatar: d.avatar || null };
+        console.log('[friends] profile fetched for', f.name, '| heroBg:', !!d.heroBg, '| avatar:', !!d.avatar);
+      } else {
+        console.warn('[friends] no profile doc for', f.name, f.uid);
       }
     }));
     renderFriendsTab();
-  } catch(e) {}
+  } catch(e) { console.warn('[friends] refreshFriendProfiles error', e); }
 }
 
 // ── shared profile hero builder ─────────────────────────────────────────────
