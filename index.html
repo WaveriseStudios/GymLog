@@ -2762,7 +2762,12 @@ function renderPRs(){
   const caliEntries=entries.filter(([n,pr])=>!pr._cardio&&BODYWEIGHT_EX.has(n));
   const cardioEntries=entries.filter(([,pr])=>pr._cardio);
 
-  const sortByRecent=(a,b)=>(b[1].day||b[1].date||'').localeCompare(a[1].day||a[1].date||'');
+  const sortByRecent=(a,b)=>{
+    const dayDiff=(b[1].day||'').localeCompare(a[1].day||'');
+    if(dayDiff!==0) return dayDiff;
+    // same day: sort by full ISO timestamp (last logged first)
+    return (b[1].date||'').localeCompare(a[1].date||'');
+  };
   const sortByName=(a,b)=>a[0].localeCompare(b[0]);
   const sortStrength=(a,b)=>p?.weight?calcExScore(b[1],p,b[0])-calcExScore(a[1],p,a[0]):sortByName(a,b);
 
