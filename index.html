@@ -3572,6 +3572,7 @@ document.getElementById('profAvatarInput').addEventListener('change',e=>{
       persist();
       renderProfAvatar();
       renderProfileTab();
+      syncPublicProfile();
     };
     img.src=ev.target.result;
   };
@@ -3598,6 +3599,7 @@ document.getElementById('profBgInput').addEventListener('change',e=>{
       db.profile.heroBg=canvas.toDataURL('image/jpeg',0.75);
       persist();
       renderProfileTab();
+      syncPublicProfile();
       showToast('Background updated');
     };
     img.src=ev.target.result;
