@@ -13,6 +13,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Syne:wght@500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -1145,28 +1146,37 @@ function renderFriendsSheet() {
     </div>`;
 }
 
-// handle QR scan image
-document.getElementById('qrScanInput').addEventListener('change', async e => {
+// handle QR scan image via jsQR
+document.getElementById('qrScanInput').addEventListener('change', e => {
   const file = e.target.files[0];
   e.target.value = '';
   if (!file) return;
-  try {
-    if (!('BarcodeDetector' in window)) { showToast('QR scanning not supported — enter code manually'); return; }
-    const detector = new BarcodeDetector({ formats: ['qr_code'] });
-    const img = await createImageBitmap(file);
-    const codes = await detector.detect(img);
-    if (!codes.length) { showToast('No QR code found'); return; }
-    const raw = codes[0].rawValue.trim().toLowerCase();
-    if (raw.length !== 6) { showToast('Invalid QR code'); return; }
-    const input = document.getElementById('friendCodeInput');
-    if (input) { input.value = raw.toUpperCase(); submitAddFriend(); }
-    else {
-      // sheet not open — open it first then fill
-      document.getElementById('friendsOverlay').classList.add('open');
-      renderFriendsSheet();
-      setTimeout(() => { const inp = document.getElementById('friendCodeInput'); if(inp){inp.value=raw.toUpperCase();submitAddFriend();} }, 200);
-    }
-  } catch(err) { showToast('Could not read QR code'); console.warn(err); }
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const result = jsQR(imageData.data, imageData.width, imageData.height);
+      if (!result) { showToast('No QR code found — try again'); return; }
+      const raw = result.data.trim().toLowerCase();
+      if (raw.length !== 6) { showToast('Invalid GymLog QR code'); return; }
+      const input = document.getElementById('friendCodeInput');
+      if (input) { input.value = raw.toUpperCase(); submitAddFriend(); }
+      else {
+        document.getElementById('friendsOverlay').classList.add('open');
+        renderFriendsSheet();
+        setTimeout(() => { const inp = document.getElementById('friendCodeInput'); if(inp){inp.value=raw.toUpperCase();submitAddFriend();} }, 200);
+      }
+    };
+    img.onerror = () => showToast('Could not read image');
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
 });
 
 function copyFriendCode() {
