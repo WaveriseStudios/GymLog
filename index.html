@@ -190,6 +190,7 @@ body{
 
 #sw .sb{padding:0 18px 20px;}
 .wsec{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--t3);margin-bottom:10px;}
+@keyframes spin{to{transform:rotate(360deg)}}
 @keyframes slideInFromLeft{from{transform:translateX(-28px);opacity:0}to{transform:translateX(0);opacity:1}}
 @keyframes slideInFromRight{from{transform:translateX(28px);opacity:0}to{transform:translateX(0);opacity:1}}
 .slide-prev{animation:slideInFromLeft .22s ease;}
@@ -524,6 +525,9 @@ input[type=number]{-moz-appearance:textfield;}
 
 <input type="file" id="profAvatarInput" accept="image/*" style="display:none">
 <input type="file" id="profBgInput" accept="image/*" style="display:none">
+<div id="authLoader" style="position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;align-items:center;justify-content:center;transition:opacity .25s">
+  <div style="width:32px;height:32px;border:3px solid var(--bdr);border-top-color:var(--acc);border-radius:50%;animation:spin .7s linear infinite"></div>
+</div>
 <div id="app">
 
   <!-- HOME -->
@@ -1010,7 +1014,7 @@ function debouncedFirestoreSave() {
 
 async function saveToFirestore() {
   if (!_user) return;
-  try { await _userDoc().set(db, { merge: true }); }
+  try { await _userDoc().set(db); }
   catch (e) { console.warn('Firestore save failed', e); }
 }
 
@@ -1079,6 +1083,13 @@ _auth.getRedirectResult().then(result => {
 });
 
 let _requestsUnsub = null;
+const _UID_KEY = 'gymlog_uid';
+function _hideAuthLoader(){
+  const el=document.getElementById('authLoader');
+  if(!el)return;
+  el.style.opacity='0';
+  setTimeout(()=>el.remove(),260);
+}
 
 _auth.onAuthStateChanged(async user => {
   _user = user;
@@ -1087,8 +1098,10 @@ _auth.onAuthStateChanged(async user => {
   if (_requestsUnsub) { _requestsUnsub(); _requestsUnsub = null; }
 
   if (user) {
+    localStorage.setItem(_UID_KEY, user.uid);
     await loadFromFirestore();
     migrateDB();
+    _hideAuthLoader();
     await ensureFriendCode();
     syncPublicProfile();
     processFriendRequests();
@@ -1107,6 +1120,8 @@ _auth.onAuthStateChanged(async user => {
     if (document.getElementById('profileOverlay')?.classList.contains('open')) openProfile();
     showToast('✓ Signed in as ' + (user.displayName || user.email).split(' ')[0]);
   } else {
+    localStorage.removeItem(_UID_KEY);
+    _hideAuthLoader();
     renderProfileTab();
     renderFriendsTab();
     if (document.getElementById('profileOverlay')?.classList.contains('open')) openProfile();
@@ -3255,34 +3270,33 @@ function closeExModal(){
   exDay=null;exId=null;exName='';
 }
 
+function _makePill(n){
+  const p=document.createElement('div');
+  p.className='pill'+(n===exName?' active':'');
+  p.textContent=n;
+  p.addEventListener('click',()=>selectEx(n));
+  p.addEventListener('touchstart',()=>p.classList.add('pressing'),{passive:true});
+  p.addEventListener('touchend',()=>setTimeout(()=>p.classList.remove('pressing'),150),{passive:true});
+  p.addEventListener('touchcancel',()=>p.classList.remove('pressing'),{passive:true});
+  return p;
+}
 function buildPicker(q){
   const wrap=document.getElementById('exPickerList');
   wrap.innerHTML='';
   if(q){
-    const all=Object.values(EX_DB).flat().filter(n=>n.toLowerCase().includes(q.toLowerCase()));
+    const words=q.toLowerCase().split(/\s+/).filter(Boolean);
+    const all=Object.values(EX_DB).flat()
+      .filter(n=>{const nl=n.toLowerCase();return words.every(w=>nl.includes(w));})
+      .sort((a,b)=>a.localeCompare(b));
     const pills=document.createElement('div'); pills.className='pills';
-    all.slice(0,20).forEach(n=>{
-      const p=document.createElement('div');
-      p.className='pill'+(n===exName?' active':'');
-      p.textContent=n;
-      p.addEventListener('click',()=>selectEx(n));
-      pills.appendChild(p);
-    });
+    all.slice(0,30).forEach(n=>pills.appendChild(_makePill(n)));
     if(!all.length){const m=document.createElement('div');m.style.cssText='font-size:13px;color:var(--t3);padding:6px 0 10px';m.textContent='No match — save below to use as custom.';wrap.appendChild(m);}
     else wrap.appendChild(pills);
   }else{
     Object.entries(EX_DB).forEach(([cat,exs])=>{
       const lbl=document.createElement('div'); lbl.className='cat-lbl'; lbl.textContent=cat; wrap.appendChild(lbl);
       const pills=document.createElement('div'); pills.className='pills';
-      exs.forEach(n=>{
-        const p=document.createElement('div');
-        p.className='pill'+(n===exName?' active':'');
-        p.textContent=n; p.addEventListener('click',()=>selectEx(n));
-        p.addEventListener('touchstart',()=>p.classList.add('pressing'),{passive:true});
-        p.addEventListener('touchend',()=>setTimeout(()=>p.classList.remove('pressing'),150),{passive:true});
-        p.addEventListener('touchcancel',()=>p.classList.remove('pressing'),{passive:true});
-        pills.appendChild(p);
-      });
+      [...exs].sort((a,b)=>a.localeCompare(b)).forEach(n=>pills.appendChild(_makePill(n)));
       wrap.appendChild(pills);
     });
   }
