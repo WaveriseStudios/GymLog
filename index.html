@@ -1495,18 +1495,12 @@ function buildProfileHero(o) {
   // socials section (below stat strip)
   const _igSvgCard = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke="#E1306C"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r=".8" fill="#E1306C" stroke="none"/></svg>`;
   const _ttSvgCard = `<svg width="14" height="14" viewBox="0 0 24 24"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.19 8.19 0 0 0 4.78 1.52V6.76a4.85 4.85 0 0 1-1.01-.07z" fill="var(--text)"/></svg>`;
-  const _socialChip = (href, icon, platform, handle) => `<a href="${href}" target="_blank" rel="noopener" class="tap-scale" style="text-decoration:none;display:flex;align-items:center;gap:8px;background:var(--card2);border:1px solid var(--bdr);border-radius:12px;padding:10px 14px;flex:1;min-width:0">
-    ${icon}
-    <div style="min-width:0">
-      <div style="font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--t3);line-height:1">${platform}</div>
-      <div style="font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:800;color:var(--text);line-height:1.2;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">@${handle}</div>
-    </div>
-  </a>`;
+  const _socialChip = (href, icon, platform) => `<a href="${href}" target="_blank" rel="noopener" class="prf-btn tap-scale" style="text-decoration:none;flex:1;justify-content:center;gap:7px">${icon}${platform}</a>`;
   let socialsHtml = '';
   if (o.instagram || o.tiktok) {
     const chips = [
-      o.instagram ? _socialChip(`https://instagram.com/${o.instagram}`, _igSvgCard, 'Insta', o.instagram) : '',
-      o.tiktok    ? _socialChip(`https://tiktok.com/@${o.tiktok}`,       _ttSvgCard, 'TikTok', o.tiktok)  : '',
+      o.instagram ? _socialChip(`https://instagram.com/${o.instagram}`, _igSvgCard, 'Insta')  : '',
+      o.tiktok    ? _socialChip(`https://tiktok.com/@${o.tiktok}`,       _ttSvgCard, 'TikTok') : '',
     ].join('');
     socialsHtml = `<div class="card-hd" style="padding:0 20px 8px">Socials</div><div style="margin:0 16px;display:flex;gap:10px">${chips}</div>`;
   }
@@ -1808,8 +1802,8 @@ function renderProfileTab(){
     if(ig||tt){
       const _igSvg=`<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke="#E1306C"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r=".8" fill="#E1306C" stroke="none"/></svg>`;
       const _ttSvg=`<svg width="14" height="14" viewBox="0 0 24 24"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.19 8.19 0 0 0 4.78 1.52V6.76a4.85 4.85 0 0 1-1.01-.07z" fill="var(--text)"/></svg>`;
-      const chip=(href,icon,platform,handle)=>`<a href="${href}" target="_blank" rel="noopener" class="tap-scale" style="text-decoration:none;display:flex;align-items:center;gap:8px;background:var(--card2);border:1px solid var(--bdr);border-radius:12px;padding:10px 14px;flex:1;min-width:0">${icon}<div style="min-width:0"><div style="font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--t3);line-height:1">${platform}</div><div style="font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:800;color:var(--text);line-height:1.2;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">@${handle}</div></div></a>`;
-      const chips=[ig?chip(`https://instagram.com/${ig}`,_igSvg,'Insta',ig):'',tt?chip(`https://tiktok.com/@${tt}`,_ttSvg,'TikTok',tt):''].join('');
+      const chip=(href,icon,platform)=>`<a href="${href}" target="_blank" rel="noopener" class="prf-btn tap-scale" style="text-decoration:none;flex:1;justify-content:center;gap:7px">${icon}${platform}</a>`;
+      const chips=[ig?chip(`https://instagram.com/${ig}`,_igSvg,'Insta'):'',tt?chip(`https://tiktok.com/@${tt}`,_ttSvg,'TikTok'):''].join('');
       socialsEl.innerHTML=`<div class="card-hd" style="padding:14px 20px 8px">Socials</div><div style="margin:0 16px;display:flex;gap:10px">${chips}</div>`;
     } else {
       socialsEl.innerHTML='';
