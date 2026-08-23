@@ -651,14 +651,16 @@ function buildProfileHero(o) {
     const show = allPRs.slice(0,5);
     const rows = show.map(pr => {
       const badge = pr.tierId ? `<img src="${RANK_ICONS[pr.tierId]}" style="width:20px;height:20px;flex-shrink:0;display:block;image-rendering:pixelated;filter:drop-shadow(0 0 3px ${TIER_COLORS[pr.tierId]}99)">` : '';
+      const perArm = isDumbbell(pr.name);
       const val = pr.cardio ? '' : `<span class="ex-w">${fmtWeight(pr.weight??0,pr.name)} × ${pr.reps}</span>`;
       const dateStr = pr.day ? new Date(pr.day).toLocaleDateString('en',{month:'short',day:'numeric'}) : '';
+      const sub = [dateStr, perArm?'per arm':''].filter(Boolean).join(' · ');
       return `<div class="ex-row divr">
         <div class="ex-left" style="display:flex;align-items:center;gap:10px">
           ${badge}
           <div>
-            <div class="ex-name">${pr.name}</div>
-            ${dateStr?`<div style="color:var(--t3);font-size:11px;font-weight:600;margin-top:2px">${dateStr}</div>`:''}
+            <div class="ex-name">${fmtExName(pr.name)}</div>
+            ${sub?`<div style="color:var(--t3);font-size:11px;font-weight:600;margin-top:2px">${sub}</div>`:''}
           </div>
         </div>
         <div class="ex-nums">${val}</div>
@@ -786,15 +788,17 @@ function renderFriendPRs() {
   function makeRow(pr) {
     const badge = pr.tierId ? `<img src="${RANK_ICONS[pr.tierId]}" style="width:20px;height:20px;flex-shrink:0;display:block;image-rendering:pixelated;filter:drop-shadow(0 0 3px ${TIER_COLORS[pr.tierId]}99)">` : '';
     const ago = timeAgo(pr.day);
+    const perArm = isDumbbell(pr.name);
     const val = pr.cardio ? '' : `<span class="ex-w">${fmtWeight(pr.weight??0,pr.name)} × ${pr.reps}</span>`;
+    const sub = [ago, perArm?'per arm':''].filter(Boolean).join(' · ');
     const row = document.createElement('div');
     row.className = 'ex-row divr';
     row.innerHTML = `
       <div class="ex-left" style="display:flex;align-items:center;gap:10px">
         ${badge}
         <div>
-          <div class="ex-name">${pr.name}</div>
-          ${ago?`<div style="font-size:11px;color:var(--t3);margin-top:2px">${ago}</div>`:''}
+          <div class="ex-name">${fmtExName(pr.name)}</div>
+          ${sub?`<div style="font-size:11px;color:var(--t3);margin-top:2px">${sub}</div>`:''}
         </div>
       </div>
       <div class="ex-nums">${val}</div>`;
@@ -1099,7 +1103,7 @@ function renderProfileTab(){
       <div class="ex-left" style="display:flex;align-items:center;gap:10px">
         ${badgeHtml}
         <div>
-          <div class="ex-name">${exName}</div>
+          <div class="ex-name">${fmtExName(exName)}</div>
           ${dateStr?`<div style="color:var(--t3);font-size:11px;font-weight:600;margin-top:2px">${dateStr}</div>`:''}
         </div>
       </div>
@@ -1331,7 +1335,7 @@ const EX_COEFF = {
   'Rear Delt Fly':0.38,'Rear Delt Cable Fly':0.38,'Reverse Pec Deck':0.50,
   'Front Raise':0.36,'Arnold Press':0.55,
   // Arms
-  'Barbell Curl':0.42,'Dumbbell Curl':0.38,'Hammer Curl':0.38,'Preacher Curl':0.40,
+  'Barbell Curl':0.42,'Dumbbell Biceps Curl':0.38,'Hammer Curl':0.38,'Preacher Curl':0.40,'Dumbbell Preacher Curl':0.38,
   'Leon Curl':0.38,'Tricep Pushdown':0.46,'Skull Crusher':0.50,
   'Overhead Tricep Extension':0.44,'Leon Pushdowns':0.46,'Rope Pushdown':0.46,
   // Core
@@ -1341,6 +1345,14 @@ const EX_COEFF = {
 };
 const BODYWEIGHT_EX = new Set(['Pull-up','Chin-up','Dips','Push-up','Hanging Leg Raise','Leg Raise','Toes to Bar','Dragon Flag','Plank','Crunch','Sit-up','Muscle Up']);
 const CARDIO_EX = new Set(['Running','Cycling','Rowing','Jump Rope','Swimming']);
+const PER_ARM_EX = new Set([
+  'Dumbbell Bench Press','Dumbbell Incline Press','Dumbbell Fly',
+  'Dumbbell Biceps Curl','Hammer Curl','Dumbbell Preacher Curl','Leon Curl',
+  'Dumbbell Shoulder Press','Rear Delt Fly','Front Raise','Arnold Press',
+  'Dumbbell Row','Overhead Tricep Extension',
+]);
+function isDumbbell(name){return PER_ARM_EX.has(name);}
+function fmtExName(name){return name.replace('Dumbbell ','DB ');}
 const BW_FRACTION   = {'Push-up':0.65,'Plank':0.65,'Hanging Leg Raise':0.35,'Leg Raise':0.35,'Toes to Bar':0.35,'Dragon Flag':0.80,'Crunch':0.15,'Sit-up':0.20};
 
 function calcLBM(weight,height,gender){
@@ -1364,7 +1376,7 @@ function calcExScore(pr,profile,name){
   if(BODYWEIGHT_EX.has(name)){
     const f=BW_FRACTION[name]??1;
     base=(profile.weight||0)*f+(pr.weight||0);cap=0;
-  }else{base=pr.weight||0;cap=30;}
+  }else{base=(pr.weight||0)*(isDumbbell(name)?2:1);cap=30;}
   const setsBonus=1+0.08*Math.log(Math.max(pr.sets||1,1));
   return(calcEpley(base,pr.reps,cap)/(Math.pow(Math.max(lbm,20),0.667)*coeff))*calcAgeMult(profile.age)*setsBonus;
 }
@@ -1401,17 +1413,18 @@ function recomputePR(name, onlyIfBetter=false){
   }
   const bw=db.profile?.weight||0;
   const isBW=BODYWEIGHT_EX.has(name);
+  const isDB=isDumbbell(name);
   const bwFrac=BW_FRACTION[name]??1;
   const cap=isBW?0:30;
   const best=db.history.filter(h=>h.name===name&&(h.reps||0)>0).reduce((acc,h)=>{
-    const base=isBW?bw*bwFrac+h.weight:h.weight;
+    const base=isBW?bw*bwFrac+h.weight:(isDB?h.weight*2:h.weight);
     const rm=calcEpley(base,h.reps,cap);
     return rm>acc.rm?{rm,h}:acc;
   },{rm:-1,h:null});
   if(!best.h){delete db.prs[name];return;}
   if(onlyIfBetter&&db.prs[name]){
     const cur=db.prs[name];
-    const curBase=isBW?bw*bwFrac+cur.weight:cur.weight;
+    const curBase=isBW?bw*bwFrac+cur.weight:(isDB?cur.weight*2:cur.weight);
     const curRm=calcEpley(curBase,cur.reps,cap);
     if(best.rm<=curRm) return;
   }
@@ -1469,7 +1482,7 @@ const EX_MUSCLE={
   'Overhead Press':'Shoulders','Dumbbell Shoulder Press':'Shoulders','Lateral Raise':'Shoulders',
   'Cable Lateral Raise':'Shoulders','Rear Delt Fly':'Shoulders','Rear Delt Cable Fly':'Shoulders','Reverse Pec Deck':'Shoulders','Front Raise':'Shoulders',
   'Arnold Press':'Shoulders','Shrugs':'Shoulders',
-  'Barbell Curl':'Arms','Dumbbell Curl':'Arms','Hammer Curl':'Arms','Preacher Curl':'Arms',
+  'Barbell Curl':'Arms','Dumbbell Biceps Curl':'Arms','Hammer Curl':'Arms','Preacher Curl':'Arms','Dumbbell Preacher Curl':'Arms',
   'Leon Curl':'Arms','Tricep Pushdown':'Arms','Skull Crusher':'Arms',
   'Overhead Tricep Extension':'Arms','Leon Pushdowns':'Arms','Rope Pushdown':'Arms',
   'Ab Wheel':'Core','Hanging Leg Raise':'Core','Crunch':'Core','Sit-up':'Core','Russian Twist':'Core',
@@ -1577,7 +1590,7 @@ const EX_DB = {
   'Back':      ['Deadlift','Pull-up','Chin-up','Barbell Row','Lat Pulldown','Seated Row','T-Bar Row','Cable Row','Face Pull','Straight Arm Pulldown'],
   'Legs':      ['Squat','Front Squat','Leg Press','Romanian Deadlift','Bulgarian Split Squat','Leg Extension','Leg Curl','Hip Thrust','Calf Raise','Hack Squat','Walking Lunges'],
   'Shoulders': ['Overhead Press','Dumbbell Shoulder Press','Lateral Raise','Cable Lateral Raise','Rear Delt Fly','Rear Delt Cable Fly','Reverse Pec Deck','Front Raise','Arnold Press','Shrugs'],
-  'Arms':      ['Barbell Curl','Dumbbell Curl','Hammer Curl','Preacher Curl','Leon Curl','Tricep Pushdown','Skull Crusher','Overhead Tricep Extension','Leon Pushdowns','Rope Pushdown'],
+  'Arms':      ['Barbell Curl','Dumbbell Biceps Curl','Hammer Curl','Preacher Curl','Dumbbell Preacher Curl','Leon Curl','Tricep Pushdown','Skull Crusher','Overhead Tricep Extension','Leon Pushdowns','Rope Pushdown'],
   'Core':      ['Plank','Ab Wheel','Hanging Leg Raise','Crunch','Sit-up','Russian Twist','Cable Crunch','Dragon Flag','Leg Raise','Toes to Bar'],
   'Calisthenics': ['Muscle Up','Pull-up','Chin-up','Dips','Push-up','Handstand Push-up','L-Sit','Front Lever','Back Lever'],
   'Cardio':    ['Running','Cycling','Rowing','Jump Rope','Swimming'],
@@ -1634,7 +1647,7 @@ function renderBestPRs(){
     row.className='ex-row divr';
     row.innerHTML=`
       <div class="ex-left">
-        <div class="ex-name">${name}</div>
+        <div class="ex-name">${fmtExName(name)}</div>
         ${badgeHtml}
       </div>
       <div class="ex-nums">
@@ -1725,7 +1738,7 @@ function renderTodaySession(){
       const metaStr=g.cardio?fmtCardio(g.best):fmtSets(name,g);
       return `<div class="lw-row" style="cursor:pointer" onclick="openExModal('${today}','${name}')">
         <div class="lw-info">
-          <div class="lw-name">${name}${prTag}</div>
+          <div class="lw-name">${fmtExName(name)}${prTag}</div>
           <div class="lw-meta">${metaStr}</div>
         </div>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color:var(--acc);flex-shrink:0"><polyline points="20 6 9 17 4 12"/></svg>
@@ -1751,7 +1764,7 @@ function renderTodaySession(){
       const metaStr2=g.cardio?fmtCardio(g.best):fmtSets(name,g);
       return `<div class="lw-row" style="cursor:pointer" onclick="openExModal('${today}','${name}')">
         <div class="lw-info">
-          <div class="lw-name" style="color:var(--t2)">${name}${prTag2}</div>
+          <div class="lw-name" style="color:var(--t2)">${fmtExName(name)}${prTag2}</div>
           <div class="lw-meta">${metaStr2}</div>
         </div>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color:var(--acc);flex-shrink:0"><polyline points="20 6 9 17 4 12"/></svg>
@@ -1762,7 +1775,7 @@ function renderTodaySession(){
       const refMeta=isCardio(name)?fmtCardio(ref):`${fmtWeight(ref.weight,name)} × ${ref.reps} · ${ref.sets} sets`;
       return `<div class="lw-row" style="cursor:pointer;opacity:.6" onclick="openExModal('${today}',null,'${name}')">
         <div class="lw-info">
-          <div class="lw-name">${name}</div>
+          <div class="lw-name">${fmtExName(name)}</div>
           <div class="lw-meta">${refMeta}</div>
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color:var(--t3);flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg>
@@ -1841,8 +1854,8 @@ function renderWeekDay(dir){
       else isPR=pr.weight===ex.weight&&pr.reps===ex.reps;
     }
     const prTagW=isPR?`<span class="pr-tag">PR</span>`:'';
-    const weekMeta=isCardio(ex.name)?fmtCardio(ex):`${fmtWeight(ex.weight,ex.name)} × ${ex.reps} · ${ex.sets} sets`;
-    wrap.innerHTML=`<div class="lw-info"><div class="lw-name">${ex.name}${prTagW}</div><div class="lw-meta">${weekMeta}</div></div>`;
+    const weekMeta=isCardio(ex.name)?fmtCardio(ex):`${fmtWeight(ex.weight,ex.name)} × ${ex.reps} · ${ex.sets} sets${isDumbbell(ex.name)?' · per arm':''}`;
+    wrap.innerHTML=`<div class="lw-info"><div class="lw-name">${fmtExName(ex.name)}${prTagW}</div><div class="lw-meta">${weekMeta}</div></div>`;
     if(editable){
       let holdTimer=null, holding=false;
       const startHold=()=>{
@@ -1911,10 +1924,11 @@ function renderWeekDay(dir){
         const prev=merged.find(m=>m.weight===ex.weight&&m.reps===ex.reps);
         if(prev) prev.sets+=n; else merged.push({weight:ex.weight,reps:ex.reps,sets:n,name:ex.name});
       });
-      const metaStr=merged.length===1
+      const _perArm=isDumbbell(g.name)?' · per arm':'';
+      const metaStr=(merged.length===1
         ?`${fmtWeight(merged[0].weight,g.name)} × ${merged[0].reps} · ${merged[0].sets} set${merged[0].sets!==1?'s':''}`
-        :merged.map(m=>`${fmtWeight(m.weight,g.name)} × ${m.reps} × ${m.sets}`).join(' · ');
-      wrap.innerHTML=`<div class="lw-info"><div class="lw-name">${g.name}${prTag}</div><div class="lw-meta">${metaStr}</div></div>
+        :merged.map(m=>`${fmtWeight(m.weight,g.name)} × ${m.reps} × ${m.sets}`).join(' · '))+_perArm;
+      wrap.innerHTML=`<div class="lw-info"><div class="lw-name">${fmtExName(g.name)}${prTag}</div><div class="lw-meta">${metaStr}</div></div>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke-width="2" style="stroke:var(--t3);flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg>`;
       wrap.addEventListener('click',()=>openExPicker(dateStr,g));
       card.appendChild(wrap);
@@ -1938,7 +1952,7 @@ function renderWeekDay(dir){
     lwExs.forEach(ex=>{
       const r=document.createElement('div');
       r.className='lw-row';
-      r.innerHTML=`<div class="lw-info"><div class="lw-name">${ex.name}</div><div class="lw-meta">${fmtWeight(ex.weight,ex.name)} × ${ex.reps} · ${ex.sets} sets</div></div>
+      r.innerHTML=`<div class="lw-info"><div class="lw-name">${fmtExName(ex.name)}</div><div class="lw-meta">${fmtWeight(ex.weight,ex.name)} × ${ex.reps} · ${ex.sets} sets${isDumbbell(ex.name)?' · per arm':''}</div></div>
         <button class="lw-add" title="Add to today">+</button>`;
       r.querySelector('.lw-add').addEventListener('click',()=>{
         if(!db.schedule[dateStr])db.schedule[dateStr]=[];
@@ -1990,7 +2004,7 @@ function prTrend(name){
   const bw=db.profile?.weight||0;
   const isBW=BODYWEIGHT_EX.has(name);
   const bwFrac=BW_FRACTION[name]??1;
-  const e1rmOf=h=>{const base=isBW?(bw*bwFrac+(h.weight||0)):(h.weight||0);return calcEpley(base,h.reps,isBW?0:30);};
+  const e1rmOf=h=>{const base=isBW?(bw*bwFrac+(h.weight||0)):(isDumbbell(name)?(h.weight||0)*2:(h.weight||0));return calcEpley(base,h.reps,isBW?0:30);};
   const last=e1rmOf(hist[hist.length-1]);
   const prev=e1rmOf(hist[hist.length-2]);
   const delta=(last-prev)/Math.max(prev,1);
@@ -2055,6 +2069,7 @@ function renderPRs(){
       const bw=p?.weight||0;
       const base=isBW?(bw*bwFrac+pr.weight):pr.weight;
       const e1rm=Math.round(calcEpley(base,pr.reps,isBW?0:30));
+      const perArm=isDumbbell(name);
       valueHtml=`<span class="ex-w">${fmtWeight(pr.weight,name)} × ${pr.reps}</span>`;
       if(p?.weight){
         const{tier,div}=scoreToTierDiv(calcExScore(pr,p,name));
@@ -2069,8 +2084,8 @@ function renderPRs(){
       <div class="ex-left" style="display:flex;align-items:center;gap:10px">
         ${badgeHtml}
         <div>
-          <div class="ex-name">${name}</div>
-          ${ago?`<div style="font-size:11px;color:var(--t3);margin-top:2px">${ago}</div>`:''}
+          <div class="ex-name">${fmtExName(name)}</div>
+          ${(ago||isDumbbell(name))?`<div style="font-size:11px;color:var(--t3);margin-top:2px">${ago}${isDumbbell(name)?`${ago?' · ':''}per arm`:''}</div>`:''}
         </div>
       </div>
       <div class="ex-nums" style="gap:4px">${trend}${valueHtml}</div>`;
@@ -2590,11 +2605,14 @@ function selectEx(name){
 }
 
 function updateWeightLbl(){
-  document.getElementById('weightLbl').textContent=BODYWEIGHT_EX.has(exName)?'Added Weight (0 = bodyweight only)':'Weight';
+  const isBW=BODYWEIGHT_EX.has(exName);
+  const isDB=isDumbbell(exName);
+  document.getElementById('weightLbl').textContent=isBW?'Added Weight (0 = bodyweight only)':isDB?'Weight per arm':'Weight';
 }
 function updateWeightDisp(){
   const isBW=BODYWEIGHT_EX.has(exName);
-  const hint=isBW?`<small>${exWeight===0?'bodyweight only':'kg over BW'}</small>`:`<small> kg</small>`;
+  const isDB=isDumbbell(exName);
+  const hint=isBW?`<small>${exWeight===0?'bodyweight only':'kg over BW'}</small>`:isDB?`<small> kg / arm</small>`:`<small> kg</small>`;
   document.getElementById('weightBig').innerHTML=isBW?(exWeight===0?`BW${hint}`:`+${exWeight}${hint}`):`${exWeight}${hint}`;
 }
 
