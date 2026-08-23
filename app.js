@@ -2283,7 +2283,6 @@ function openExModal(dayKey,editId,prefillName){
     document.getElementById('cardioFields').style.display='none';
   }
   buildPicker('');
-  document.querySelector('#exOverlay .sheet').scrollTop=0;
   openOverlay('exOverlay');
 }
 
@@ -2516,6 +2515,8 @@ function closeExModal(){
   document.getElementById('exOverlay').classList.remove('open');
   document.getElementById('exInputBlock').classList.remove('visible');
   document.getElementById('exBackdrop').classList.remove('visible');
+  const _sb=document.querySelector('#exOverlay .sheet-body');
+  if(_sb) _sb.scrollTop=0;
   exDay=null;exId=null;exName='';
 }
 
@@ -2532,6 +2533,8 @@ function _makePill(n){
 function buildPicker(q){
   const wrap=document.getElementById('exPickerList');
   wrap.innerHTML='';
+  const _sb=document.querySelector('#exOverlay .sheet-body');
+  if(_sb) _sb.scrollTop=0;
   if(q){
     const words=q.toLowerCase().split(/\s+/).filter(Boolean);
     const all=Object.values(EX_DB).flat()
