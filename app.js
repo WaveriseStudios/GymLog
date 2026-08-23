@@ -1325,7 +1325,7 @@ const EX_COEFF = {
   'Lat Pulldown':0.82,'Seated Row':0.75,'T-Bar Row':0.90,'Cable Row':0.75,
   'Face Pull':0.48,'Straight Arm Pulldown':0.44,
   // Legs
-  'Squat':1.50,'Front Squat':1.25,'Leg Press':1.90,'Romanian Deadlift':1.20,
+  'Squat':1.50,'Front Squat':1.25,'Sled Leg Press':1.90,'Seated Leg Press':1.43,'Romanian Deadlift':1.20,
   'Dumbbell Romanian Deadlift':1.05,'Bulgarian Split Squat':1.10,
   'Leg Extension':0.72,'Leg Curl':0.68,
   'Hip Thrust':1.55,'Calf Raise':0.82,'Hack Squat':1.40,'Walking Lunges':0.88,
@@ -1476,7 +1476,7 @@ const EX_MUSCLE={
   'Deadlift':'Back','Pull-up':'Back','Chin-up':'Back','Barbell Row':'Back',
   'Lat Pulldown':'Back','Seated Row':'Back','T-Bar Row':'Back','Cable Row':'Back',
   'Face Pull':'Back','Straight Arm Pulldown':'Back',
-  'Squat':'Legs','Front Squat':'Legs','Leg Press':'Legs','Romanian Deadlift':'Legs',
+  'Squat':'Legs','Front Squat':'Legs','Sled Leg Press':'Legs','Seated Leg Press':'Legs','Romanian Deadlift':'Legs',
   'Bulgarian Split Squat':'Legs','Leg Extension':'Legs','Leg Curl':'Legs',
   'Hip Thrust':'Legs','Calf Raise':'Legs','Hack Squat':'Legs','Walking Lunges':'Legs',
   'Overhead Press':'Shoulders','Dumbbell Shoulder Press':'Shoulders','Lateral Raise':'Shoulders',
@@ -1588,7 +1588,7 @@ document.getElementById('rankBkOverlay').addEventListener('click',e=>{if(e.targe
 const EX_DB = {
   'Chest':     ['Bench Press','Incline Bench Press','Decline Bench Press','Dumbbell Bench Press','Dumbbell Incline Press','Dumbbell Fly','Cable Fly','Pec Deck','Dips','Push-up','Seated Chest Press'],
   'Back':      ['Deadlift','Pull-up','Chin-up','Barbell Row','Lat Pulldown','Seated Row','T-Bar Row','Cable Row','Face Pull','Straight Arm Pulldown'],
-  'Legs':      ['Squat','Front Squat','Leg Press','Romanian Deadlift','Bulgarian Split Squat','Leg Extension','Leg Curl','Hip Thrust','Calf Raise','Hack Squat','Walking Lunges'],
+  'Legs':      ['Squat','Front Squat','Sled Leg Press','Seated Leg Press','Romanian Deadlift','Bulgarian Split Squat','Leg Extension','Leg Curl','Hip Thrust','Calf Raise','Hack Squat','Walking Lunges'],
   'Shoulders': ['Overhead Press','Dumbbell Shoulder Press','Lateral Raise','Cable Lateral Raise','Rear Delt Fly','Rear Delt Cable Fly','Reverse Pec Deck','Front Raise','Arnold Press','Shrugs'],
   'Arms':      ['Barbell Curl','Dumbbell Biceps Curl','Hammer Curl','Preacher Curl','Dumbbell Preacher Curl','Leon Curl','Tricep Pushdown','Skull Crusher','Overhead Tricep Extension','Leon Pushdowns','Rope Pushdown'],
   'Core':      ['Plank','Ab Wheel','Hanging Leg Raise','Crunch','Sit-up','Russian Twist','Cable Crunch','Dragon Flag','Leg Raise','Toes to Bar'],
