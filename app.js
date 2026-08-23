@@ -562,7 +562,7 @@ function syncPublicProfile() {
   const p = db.profile;
   const entries = Object.entries(db.prs||{});
   // recent PRs sorted by date desc
-  entries.sort((a,b)=>(b[1].day||b[1].date||'').localeCompare(a[1].day||a[1].date||''));
+  entries.sort((a,b)=>{const d=(b[1].day||'').localeCompare(a[1].day||'');return d!==0?d:(b[1].date||'').localeCompare(a[1].date||'');});
   const recentPRs = entries.slice(0,30).map(([name,pr])=>{
     const tier = (!pr._cardio && p?.weight) ? scoreToTierDiv(calcExScore(pr,p,name)).tier : null;
     return { name, weight:pr.weight||null, reps:pr.reps||null, day:pr.day||pr.date||null, cardio:!!pr._cardio, tierId:tier?.id||null };
