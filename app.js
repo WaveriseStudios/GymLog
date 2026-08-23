@@ -2946,16 +2946,16 @@ async function sendNotif(title, body){
 const THEME_KEY = 'gymlog_theme';
 
 const THEMES = {
-  carbon:   { bg:'#1A1A1A', bg2:'#222222', card:'#2B2B2B', card2:'#333333', bdr:'#3D3D3D', bdr2:'rgba(255,69,58,.22)',   text:'#F5F5F5', t2:'#8F8F8F', t3:'#525252', acc:'#FF453A', acc2:'rgba(255,69,58,.14)',  acc3:'rgba(255,69,58,.08)',  meta:'#1A1A1A' },
-  volt:     { bg:'#1A1B1A', bg2:'#22231F', card:'#2B2C28', card2:'#343531', bdr:'#3D3E3A', bdr2:'rgba(184,245,0,.18)',   text:'#F3F5F3', t2:'#8E968F', t3:'#525252', acc:'#B8F500', acc2:'rgba(184,245,0,.13)',  acc3:'rgba(184,245,0,.07)',  meta:'#1A1B1A' },
-  deep:     { bg:'#1A1A1C', bg2:'#22222A', card:'#2B2B31', card2:'#333338', bdr:'#3D3D44', bdr2:'rgba(59,158,255,.20)',  text:'#F4F7FA', t2:'#8994A0', t3:'#525258', acc:'#3B9EFF', acc2:'rgba(59,158,255,.14)', acc3:'rgba(59,158,255,.08)', meta:'#1A1A1C' },
-  night:    { bg:'#1B1A1C', bg2:'#232228', card:'#2C2B31', card2:'#353338', bdr:'#3E3C44', bdr2:'rgba(169,112,255,.22)', text:'#F7F4FA', t2:'#96909D', t3:'#545258', acc:'#A970FF', acc2:'rgba(169,112,255,.15)',acc3:'rgba(169,112,255,.08)',meta:'#1B1A1C' },
-  burnt:    { bg:'#1C1A1A', bg2:'#242220', card:'#2C2B28', card2:'#353330', bdr:'#3E3C39', bdr2:'rgba(255,122,69,.20)',  text:'#F7F3EF', t2:'#9A918A', t3:'#545250', acc:'#FF7A45', acc2:'rgba(255,122,69,.14)', acc3:'rgba(255,122,69,.08)', meta:'#1C1A1A' },
-  softcarb: { bg:'#F5F5F3', bg2:'#EFEFED', card:'#FFFFFF', card2:'#ECECEA', bdr:'#DEDEDC', bdr2:'rgba(255,59,48,.16)',   text:'#151515', t2:'#777777', t3:'#BEBEBE', acc:'#FF3B30', acc2:'rgba(255,59,48,.12)',  acc3:'rgba(255,59,48,.07)',  meta:'#F5F5F3' },
-  fresh:    { bg:'#F3F6F3', bg2:'#EDF0EE', card:'#FFFFFF', card2:'#E8EEE9', bdr:'#D9E0DA', bdr2:'rgba(77,124,15,.18)',   text:'#111511', t2:'#707870', t3:'#B8C2B9', acc:'#4D7C0F', acc2:'rgba(77,124,15,.12)',  acc3:'rgba(77,124,15,.07)',  meta:'#F3F6F3' },
-  ice:      { bg:'#F3F6F9', bg2:'#EDF1F6', card:'#FFFFFF', card2:'#E7EDF3', bdr:'#D8E0E8', bdr2:'rgba(22,119,210,.18)', text:'#101820', t2:'#707C87', t3:'#B8C4CC', acc:'#1677D2', acc2:'rgba(22,119,210,.12)', acc3:'rgba(22,119,210,.07)', meta:'#F3F6F9' },
-  lavender: { bg:'#F6F4F8', bg2:'#F0EDF3', card:'#FFFFFF', card2:'#ECE8F0', bdr:'#DED9E3', bdr2:'rgba(124,58,237,.18)', text:'#17131C', t2:'#77717D', t3:'#C0BAC6', acc:'#7C3AED', acc2:'rgba(124,58,237,.12)', acc3:'rgba(124,58,237,.07)', meta:'#F6F4F8' },
-  cream:    { bg:'#F7F4EF', bg2:'#F1EDE6', card:'#FFFFFF', card2:'#EDE8DF', bdr:'#DED8D0', bdr2:'rgba(217,79,43,.18)',  text:'#1B1714', t2:'#817A74', t3:'#C2BBB4', acc:'#D94F2B', acc2:'rgba(217,79,43,.12)',  acc3:'rgba(217,79,43,.07)',  meta:'#F7F4EF' },
+  carbon:   { bg:'#131210', bg2:'#1C1B19', card:'#242320', card2:'#2D2C2A', bdr:'#373530', bdr2:'rgba(168,166,160,.16)', text:'#F2F1EE', t2:'#8A8880', t3:'#4A4845', acc:'#9E9C96', acc2:'rgba(168,166,160,.12)',acc3:'rgba(168,166,160,.07)',meta:'#131210' },
+  volt:     { bg:'#1A1B1A', bg2:'#22231F', card:'#2B2C28', card2:'#343531', bdr:'#3D3E3A', bdr2:'rgba(180,218,120,.16)', text:'#F3F5F2', t2:'#8E968F', t3:'#4F524E', acc:'#B4DA78', acc2:'rgba(180,218,120,.12)',  acc3:'rgba(180,218,120,.07)',  meta:'#1A1B1A' },
+  forest:   { bg:'#161816', bg2:'#1F211F', card:'#252725', card2:'#2D2F2D', bdr:'#333533', bdr2:'rgba(122,158,154,.20)', text:'#F2F4F2', t2:'#8A9490', t3:'#4A5452', acc:'#7A9E9A', acc2:'rgba(122,158,154,.14)',acc3:'rgba(122,158,154,.08)',meta:'#161816' },
+  night:    { bg:'#1B1A1C', bg2:'#232228', card:'#2C2B31', card2:'#353338', bdr:'#3E3C44', bdr2:'rgba(196,168,232,.16)', text:'#F7F4FA', t2:'#96909D', t3:'#545258', acc:'#C4A8E8', acc2:'rgba(196,168,232,.13)',acc3:'rgba(196,168,232,.07)',meta:'#1B1A1C' },
+  burnt:    { bg:'#1C1A18', bg2:'#252220', card:'#2E2B28', card2:'#373430', bdr:'#413D39', bdr2:'rgba(232,174,138,.18)', text:'#F7F3EE', t2:'#9A9088', t3:'#565250', acc:'#E8AE8A', acc2:'rgba(232,174,138,.13)',acc3:'rgba(232,174,138,.07)',meta:'#1C1A18' },
+  softcarb: { bg:'#F3F2F0', bg2:'#ECEAE8', card:'#FAFAF8', card2:'#EDECEA', bdr:'#DCDAD7', bdr2:'rgba(100,98,92,.14)',   text:'#151412', t2:'#787670', t3:'#B4B2AC', acc:'#848280', acc2:'rgba(100,98,92,.10)',   acc3:'rgba(100,98,92,.06)',   meta:'#F3F2F0' },
+  fresh:    { bg:'#F3F6F3', bg2:'#EDF0EE', card:'#F8FAF8', card2:'#E8EEE9', bdr:'#D9E0DA', bdr2:'rgba(118,162,62,.16)',  text:'#111511', t2:'#707870', t3:'#B5C0B6', acc:'#76A23E', acc2:'rgba(118,162,62,.11)',   acc3:'rgba(118,162,62,.07)',   meta:'#F3F6F3' },
+  sage:     { bg:'#E0E2DB', bg2:'#EAEBE6', card:'#F0F1EC', card2:'#E6E8E2', bdr:'#D2D4C8', bdr2:'rgba(95,116,112,.18)',  text:'#1A1C1A', t2:'#707872', t3:'#B8BDB5', acc:'#5F7470', acc2:'rgba(95,116,112,.12)',  acc3:'rgba(95,116,112,.07)',  meta:'#E0E2DB' },
+  lavender: { bg:'#F6F4F8', bg2:'#F0EDF3', card:'#FAF8FC', card2:'#ECE8F0', bdr:'#DED9E3', bdr2:'rgba(158,120,210,.14)', text:'#17131C', t2:'#78727E', t3:'#C0BAC7', acc:'#9E78D2', acc2:'rgba(158,120,210,.11)', acc3:'rgba(158,120,210,.07)', meta:'#F6F4F8' },
+  cream:    { bg:'#F7F4EF', bg2:'#F1EDE6', card:'#FBF8F4', card2:'#EDE8DF', bdr:'#DED8CF', bdr2:'rgba(198,126,94,.15)', text:'#1B1714', t2:'#827A73', t3:'#C3BCB4', acc:'#C67E5E', acc2:'rgba(198,126,94,.11)',   acc3:'rgba(198,126,94,.07)',   meta:'#F7F4EF' },
 };
 
 function applyTheme(t, save=true){
