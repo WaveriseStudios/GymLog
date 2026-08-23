@@ -1072,7 +1072,7 @@ function renderProfileTab(){
   const p=db.profile;
   const entries=Object.entries(db.prs||{});
   if(!entries.length){bp.innerHTML='';return;}
-  entries.sort((a,b)=>(b[1].day||b[1].date||'').localeCompare(a[1].day||a[1].date||''));
+  entries.sort((a,b)=>{const d=(b[1].day||'').localeCompare(a[1].day||'');return d!==0?d:(b[1].date||'').localeCompare(a[1].date||'');});
   const top5=entries.slice(0,5);
   bp.innerHTML=`<div class="card-hd" style="padding:14px 20px 8px">Latest PRs</div>`;
   const card=document.createElement('div');
