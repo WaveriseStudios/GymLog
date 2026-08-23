@@ -1312,8 +1312,8 @@ const TIER_COLORS = {
 const EX_COEFF = {
   // Chest
   'Bench Press':1.00,'Incline Bench Press':0.88,'Decline Bench Press':1.02,
-  'Dumbbell Bench Press':0.88,'Incline Dumbbell Press':0.78,'Decline Dumbbell Press':0.90,
-  'Dumbbell Fly':0.62,'Cable Fly':0.52,'Pec Deck':0.55,
+  'Dumbbell Bench Press':0.80,'Dumbbell Incline Press':0.70,'Incline Dumbbell Press':0.70,'Decline Dumbbell Press':0.90,
+  'Dumbbell Fly':0.62,'Cable Fly':0.52,'Pec Deck':0.55,'Seated Chest Press':0.55,
   'Dips':1.50,'Push-up':1.36,
   // Back
   'Deadlift':1.75,'Pull-up':1.55,'Chin-up':1.55,
@@ -1459,7 +1459,7 @@ function renderRankCard(){
 const STEP_PERCENTILE=[2,4,6,9,12,16,20,25,30,36,42,48,54,60,65,70,74,78,81,83,85,87,89,91,92.5,94,95.5,97,97.5,98,98.5,99,99.3,99.5,99.7,99.8];
 const EX_MUSCLE={
   'Bench Press':'Chest','Incline Bench Press':'Chest','Decline Bench Press':'Chest',
-  'Dumbbell Fly':'Chest','Cable Fly':'Chest','Pec Deck':'Chest','Dips':'Chest','Push-up':'Chest',
+  'Dumbbell Bench Press':'Chest','Dumbbell Incline Press':'Chest','Dumbbell Fly':'Chest','Cable Fly':'Chest','Pec Deck':'Chest','Dips':'Chest','Push-up':'Chest','Seated Chest Press':'Chest',
   'Deadlift':'Back','Pull-up':'Back','Chin-up':'Back','Barbell Row':'Back',
   'Lat Pulldown':'Back','Seated Row':'Back','T-Bar Row':'Back','Cable Row':'Back',
   'Face Pull':'Back','Straight Arm Pulldown':'Back',
@@ -1573,7 +1573,7 @@ document.getElementById('rankBkOverlay').addEventListener('click',e=>{if(e.targe
 
 /* ── EXERCISES DATABASE ── */
 const EX_DB = {
-  'Chest':     ['Bench Press','Incline Bench Press','Decline Bench Press','Dumbbell Fly','Cable Fly','Pec Deck','Dips','Push-up'],
+  'Chest':     ['Bench Press','Incline Bench Press','Decline Bench Press','Dumbbell Bench Press','Dumbbell Incline Press','Dumbbell Fly','Cable Fly','Pec Deck','Dips','Push-up','Seated Chest Press'],
   'Back':      ['Deadlift','Pull-up','Chin-up','Barbell Row','Lat Pulldown','Seated Row','T-Bar Row','Cable Row','Face Pull','Straight Arm Pulldown'],
   'Legs':      ['Squat','Front Squat','Leg Press','Romanian Deadlift','Bulgarian Split Squat','Leg Extension','Leg Curl','Hip Thrust','Calf Raise','Hack Squat','Walking Lunges'],
   'Shoulders': ['Overhead Press','Dumbbell Shoulder Press','Lateral Raise','Cable Lateral Raise','Rear Delt Fly','Rear Delt Cable Fly','Reverse Pec Deck','Front Raise','Arnold Press','Shrugs'],
