@@ -1337,7 +1337,7 @@ const EX_COEFF = {
   // Arms
   'Barbell Curl':0.42,'Dumbbell Biceps Curl':0.38,'Hammer Curl':0.38,'Preacher Curl':0.40,'Dumbbell Preacher Curl':0.38,
   'Leon Curl':0.38,'Tricep Pushdown':0.46,'Skull Crusher':0.50,
-  'Overhead Tricep Extension':0.44,'Leon Pushdowns':0.46,'Rope Pushdown':0.46,
+  'Overhead Tricep Extension':0.44,'Leon Pushdowns':0.35,'Rope Pushdown':0.46,
   // Core
   'Ab Wheel':0.32,'Hanging Leg Raise':0.30,'Crunch':0.22,'Russian Twist':0.26,
   'Cable Crunch':0.42,'Dragon Flag':0.35,'Leg Raise':0.30,
