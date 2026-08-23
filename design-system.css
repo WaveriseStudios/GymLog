@@ -1,0 +1,250 @@
+/* ═══════════════════════════════════════════════════════════════
+   GymLog Design System
+   Reusable tokens and components. Import before app.css.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── FONTS ── */
+@font-face{font-family:'AoyagiSoseki';src:url('AoyagiSosekiFont2.otf') format('opentype');font-weight:normal;font-style:normal;}
+
+/* ── RESET ── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+*{-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;}
+input,textarea{user-select:text;-webkit-user-select:text;}
+button{cursor:pointer;font-family:inherit;border:none;background:transparent;}
+
+/* ── TAP FEEDBACK ── */
+.tap-scale{transition:transform .12s ease,opacity .12s ease;touch-action:manipulation;}
+.tap-scale:active{transform:scale(.93);opacity:.75;}
+.tap-scale.pressing{transform:scale(.93);opacity:.75;}
+
+/* ── COLOR TOKENS ──
+   Default theme (Linen). Swap all values here to create a new theme.
+   --bg / --bg2     page backgrounds
+   --card / --card2 surface elevations
+   --bdr / --bdr2   borders (solid / translucent)
+   --text / --t2 / --t3  text hierarchy
+   --acc / --acc2 / --acc3  accent (teal) and tints
+   --tc* thru --tb*  rank-tier color slots
+────────────────────────────────────────────────────────────── */
+:root{
+  --linen:  #e0e2db;
+  --dust:   #d2d4c8;
+  --ash:    #b8bdb5;
+  --steel:  #889696;
+  --teal:   #5f7470;
+
+  --bg:     #e0e2db;
+  --bg2:    #eaebe6;
+  --card:   #f0f1ec;
+  --card2:  #e6e8e2;
+  --bdr:    #d2d4c8;
+  --bdr2:   rgba(95,116,112,.18);
+  --text:   #1c2422;
+  --t2:     #889696;
+  --t3:     #b8bdb5;
+  --acc:    #5f7470;
+  --acc2:   rgba(95,116,112,.1);
+  --acc3:   rgba(95,116,112,.06);
+
+  /* rank tier color slots (overridden per-theme if needed) */
+  --tc:  #5f7470; --tc2: rgba(95,116,112,.1);
+  --te:  #6a8080; --te2: rgba(106,128,128,.1);
+  --tm:  #8a7248; --tm2: rgba(138,114,72,.1);
+  --ta:  #9a6850; --ta2: rgba(154,104,80,.1);
+  --tb:  #888;    --tb2: rgba(136,136,136,.1);
+}
+
+/* ── BASE LAYOUT ── */
+html{height:100%;overflow:hidden;}
+body{
+  height:100%;
+  overflow:hidden;
+  overscroll-behavior-y:none;
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Syne',sans-serif;
+  -webkit-font-smoothing:antialiased;
+  -webkit-text-size-adjust:100%;
+}
+#app{display:flex;flex-direction:column;height:100%;overflow:hidden;position:relative;}
+.scr{display:none;flex-direction:column;flex:1;min-height:0;overflow:hidden;}
+.scr.on{display:flex;}
+.sb{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:none;}
+.sb::-webkit-scrollbar{display:none;}
+
+/* ── NAVIGATION BAR ──
+   .nav  bottom tab bar container
+   .nb   individual tab button
+   .nb.on  active state
+────────────────────────────────────────────────────────────── */
+.nav{
+  flex-shrink:0;
+  background:color-mix(in srgb, var(--bg) 97%, transparent);
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+  border-top:1px solid var(--bdr);
+  padding:10px 16px 10px 16px;
+  display:flex;
+  z-index:80;
+}
+.nb{
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;
+  padding:8px 4px;border-radius:12px;
+  color:var(--t2);font-size:10.5px;font-weight:700;letter-spacing:.3px;
+  transition:background .15s,color .15s;
+}
+.nb svg{width:20px;height:20px;}
+.nb.on{color:var(--acc);background:var(--acc2);}
+
+/* ── CARD ──
+   .card         rounded surface with border
+   .card-hd      uppercase section label above a card group
+   .lbl          standalone uppercase label (same style)
+   .divr         row divider; .divr:last-child removes bottom border
+────────────────────────────────────────────────────────────── */
+.card{background:var(--card);border:1px solid var(--bdr);border-radius:14px;overflow:hidden;transform:translateZ(0);}
+.card-hd{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--t3);margin-bottom:6px;}
+.lbl{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--t3);}
+.divr{border-bottom:1px solid var(--bdr);}
+.divr:last-child{border-bottom:none;}
+
+/* ── EXERCISE ROW ──
+   .ex-row       flex row with leading info and trailing numbers
+   .ex-left      takes remaining width; truncates if needed
+   .ex-name      primary label
+   .ex-nums      right side: weight×reps, trend arrow, badges
+   .ex-w         large condensed weight value
+   .ex-s         small chip (sets count, etc.)
+────────────────────────────────────────────────────────────── */
+.ex-row{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;gap:8px;}
+.ex-left{flex:1;min-width:0;}
+.ex-name{font-size:14px;font-weight:700;margin-bottom:3px;}
+.ex-nums{display:flex;align-items:center;gap:7px;flex-shrink:0;}
+.ex-w{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:900;letter-spacing:.5px;color:var(--text);}
+.ex-s{font-size:10.5px;font-weight:700;background:var(--card2);color:var(--t2);padding:3px 7px;border-radius:6px;letter-spacing:.5px;}
+
+/* ── SQUARE CARD ──
+   .sq-card-grid  2-column grid wrapper
+   .sq-card       square media card with hero bg + centered content overlay
+                  Used for friend tiles, media grids, etc.
+────────────────────────────────────────────────────────────── */
+.sq-card-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
+.sq-card{position:relative;overflow:hidden;border-radius:14px;aspect-ratio:1;background:var(--card);border:1px solid var(--bdr);}
+
+/* ── ADD ROW ──
+   .add-row  dashed/ghost row for "add exercise" actions
+   .add-ic   circular accent icon on the left
+────────────────────────────────────────────────────────────── */
+.add-row{display:flex;align-items:center;gap:9px;padding:11px 14px;color:var(--t2);font-size:13px;font-weight:600;width:100%;}
+.add-ic{width:22px;height:22px;border-radius:50%;background:var(--acc2);color:var(--acc);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;line-height:1;}
+
+/* ── BADGE ──
+   .bdg  base badge pill
+   variant classes: .b-c (common) .b-e .b-m .b-a .b-b
+────────────────────────────────────────────────────────────── */
+.bdg{font-size:10px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;padding:3px 8px;border-radius:100px;white-space:nowrap;}
+.b-c{background:var(--tc2);color:var(--tc);border:1px solid rgba(95,116,112,.2);}
+.b-e{background:var(--te2);color:var(--te);border:1px solid rgba(106,128,128,.2);}
+.b-m{background:var(--tm2);color:var(--tm);border:1px solid rgba(138,114,72,.2);}
+.b-a{background:var(--ta2);color:var(--ta);border:1px solid rgba(154,104,80,.2);}
+.b-b{background:var(--tb2);color:var(--tb);border:1px solid rgba(136,136,136,.2);}
+
+/* ── BOTTOM SHEET / MODAL ──
+   .overlay          fixed backdrop + flex container (align-items:flex-end)
+   .overlay.open     visible state
+   .sheet            sliding panel inside overlay
+   .sheet-pull       grab handle
+   .sheet-hdr        header row with title + close button
+   .sheet-title      title typography
+   .sheet-x          close button (circle)
+   .sheet-body       scrollable content padding
+────────────────────────────────────────────────────────────── */
+.overlay{position:fixed;inset:0;background:rgba(28,36,34,.6);z-index:200;display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:opacity .22s;}
+.overlay.open{opacity:1;pointer-events:auto;}
+.sheet{width:100%;max-height:90dvh;max-height:90vh;background:var(--bg2);border-radius:22px 22px 0 0;display:flex;flex-direction:column;transform:translateY(100%);transition:transform .28s cubic-bezier(.32,.72,0,1);}
+.sheet::-webkit-scrollbar{display:none;}
+.overlay.open .sheet{transform:translateY(0);}
+.sheet-pull{display:none;}
+.sheet-hdr{display:flex;align-items:center;justify-content:space-between;padding:14px 18px 10px;flex-shrink:0;background:var(--bg2);border-radius:22px 22px 0 0;position:relative;}
+.sheet-hdr::before{content:'';display:block;position:absolute;top:10px;left:50%;transform:translateX(-50%);width:40px;height:4px;background:var(--bdr);border-radius:2px;}
+.sheet-hdr::after{content:'';position:absolute;top:calc(100% - 1px);left:0;right:0;height:20px;background:linear-gradient(to bottom,var(--bg2),transparent);pointer-events:none;z-index:1;}
+.sheet-title{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:900;letter-spacing:.8px;text-transform:uppercase;color:var(--text);}
+.sheet-x{width:28px;height:28px;border-radius:50%;background:var(--card2);color:var(--t2);font-size:16px;display:flex;align-items:center;justify-content:center;}
+.sheet-body{padding:0 18px 32px;overflow-y:auto;-webkit-overflow-scrolling:touch;flex:1;min-height:0;}
+.sheet-body::-webkit-scrollbar{display:none;}
+
+/* ── EXERCISE PICKER ──
+   .ex-search-inp      text search field
+   .ex-search-sticky   sticky wrapper for search + category pills
+   .cat-lbl            category section label
+   .pills / .pill      filter chip row
+   .pill.active        selected chip
+   .ex-backdrop / .ex-weight-panel  inline weight entry panel
+────────────────────────────────────────────────────────────── */
+.ex-search-inp{width:100%;background:var(--card);border:1.5px solid var(--bdr);border-radius:11px;padding:12px 14px;color:var(--text);font-size:16px;font-family:inherit;font-weight:500;outline:none;margin-bottom:14px;}
+.ex-search-inp::placeholder{color:var(--t3);}
+.ex-search-inp:focus{border-color:var(--acc);}
+.cat-lbl{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--t3);margin:8px 0 6px;}
+.pills{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px;}
+.pill{background:var(--card);border:1.5px solid var(--bdr);border-radius:20px;padding:7px 13px;font-size:13px;font-weight:600;color:var(--t2);cursor:pointer;white-space:nowrap;}
+.pill.active{background:var(--acc);border-color:var(--acc);color:var(--card);}
+.ex-search-sticky{flex-shrink:0;background:var(--bg2);position:relative;border-radius:22px 22px 0 0;}
+.ex-search-sticky::after{content:'';position:absolute;top:calc(100% - 1px);left:0;right:0;height:16px;background:linear-gradient(to bottom,var(--bg2),transparent);pointer-events:none;z-index:1;}
+#exOverlay .sheet-hdr::after{display:none;}
+.ex-backdrop{position:fixed;inset:0;z-index:209;background:rgba(0,0,0,.55);opacity:0;pointer-events:none;transition:opacity .28s;}
+.ex-backdrop.visible{opacity:1;pointer-events:auto;}
+.ex-weight-panel{position:fixed;bottom:0;left:0;right:0;z-index:210;background:var(--bg2);border-radius:22px 22px 0 0;padding-bottom:16px;padding-top:10px;transform:translateY(100%);transition:transform .28s cubic-bezier(.32,.72,0,1);}
+.ex-weight-panel.visible{transform:translateY(0);}
+
+/* ── WEIGHT INPUT ──
+   .input-block / .input-lbl  labelled block separator
+   .weight-big / .weight-direct  large editable weight display
+   .weight-steps / .ws-btn  quick ±step grid
+   .steppers / .stepper     reps and sets steppers
+────────────────────────────────────────────────────────────── */
+.input-block{margin-top:16px;border-top:1px solid var(--bdr);padding-top:16px;}
+.input-lbl{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--t3);margin-bottom:10px;display:block;}
+.weight-big{font-family:'Barlow Condensed',sans-serif;font-size:64px;font-weight:900;text-align:center;color:var(--text);line-height:1;margin-bottom:10px;cursor:pointer;user-select:none;letter-spacing:2px;}
+.weight-big small{font-size:22px;color:var(--t3);}
+.weight-direct{width:100%;font-family:'Barlow Condensed',sans-serif;font-size:56px;font-weight:900;text-align:center;color:var(--text);background:transparent;border:none;padding:8px 0;margin-bottom:10px;outline:none;letter-spacing:2px;}
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
+input[type=number]{-moz-appearance:textfield;}
+.weight-steps{display:grid;grid-template-columns:repeat(6,1fr);gap:5px;margin-bottom:14px;}
+.ws-btn{padding:9px 0;border-radius:10px;font-size:12px;font-weight:700;background:var(--card2);color:var(--text);}
+.ws-btn.minus{color:var(--t2);}
+.steppers{display:flex;gap:10px;margin-bottom:8px;}
+.stepper{flex:1;background:var(--card);border-radius:14px;padding:12px;display:flex;flex-direction:column;align-items:center;gap:8px;}
+.stepper-lbl{font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--t3);}
+.stepper-row{display:flex;align-items:center;gap:14px;}
+.step-btn{width:34px;height:34px;border-radius:50%;background:var(--card2);color:var(--text);font-size:20px;font-weight:700;display:flex;align-items:center;justify-content:center;}
+.step-val{font-family:'Barlow Condensed',sans-serif;font-size:30px;font-weight:900;color:var(--text);min-width:36px;text-align:center;}
+
+/* ── BUTTONS ──
+   .btn-save   primary full-width save button
+   .prf-btn    ghost secondary button (profile actions)
+   .tiny-btn   small square icon button
+────────────────────────────────────────────────────────────── */
+.btn-save{width:100%;padding:14px;background:var(--acc);border:none;border-radius:13px;color:var(--card);font-size:16px;font-weight:800;font-family:inherit;cursor:pointer;margin-top:10px;letter-spacing:.3px;}
+.btn-save:active{opacity:.88;}
+.prf-btn{background:var(--card);border:1.5px solid var(--bdr);border-radius:20px;padding:8px 14px;font-size:13px;font-weight:600;color:var(--t2);font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;white-space:nowrap;}
+.tiny-btn{width:30px;height:30px;border-radius:8px;background:var(--card2);color:var(--t3);display:flex;align-items:center;justify-content:center;font-size:13px;border:none;cursor:pointer;flex-shrink:0;}
+
+/* ── TOGGLE SWITCH ──
+   aria-pressed drives the visual state
+────────────────────────────────────────────────────────────── */
+.set-toggle{width:46px;height:26px;border-radius:13px;background:var(--bdr);position:relative;flex-shrink:0;transition:background .2s;}
+.set-toggle[aria-pressed="true"]{background:var(--acc);}
+.set-toggle-knob{position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .2s,box-shadow .2s;box-shadow:0 1px 3px rgba(0,0,0,.2);}
+.set-toggle[aria-pressed="true"] .set-toggle-knob{transform:translateX(20px);}
+
+/* ── TOAST ── */
+#toast{position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-80px);background:var(--text);color:var(--card);font-size:14px;font-weight:600;padding:10px 18px;border-radius:30px;z-index:999;white-space:nowrap;transition:transform .25s cubic-bezier(.32,.72,0,1);pointer-events:none;}
+#toast.show{transform:translateX(-50%) translateY(0);}
+
+/* ── UTILITY ANIMATIONS ── */
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes slideInFromLeft{from{transform:translateX(-28px);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes slideInFromRight{from{transform:translateX(28px);opacity:0}to{transform:translateX(0);opacity:1}}
+.slide-prev{animation:slideInFromLeft .22s ease;}
+.slide-next{animation:slideInFromRight .22s ease;}

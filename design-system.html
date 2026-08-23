@@ -1,0 +1,821 @@
+<title>GymLog Design System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Syne:wght@500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+/* ── TOKENS ── */
+:root {
+  --bg:    #e0e2db;
+  --bg2:   #eaebe6;
+  --card:  #f0f1ec;
+  --card2: #e6e8e2;
+  --bdr:   #d2d4c8;
+  --bdr2:  rgba(95,116,112,.18);
+  --text:  #1c2422;
+  --t2:    #889696;
+  --t3:    #b8bdb5;
+  --acc:   #5f7470;
+  --acc2:  rgba(95,116,112,.1);
+  --acc3:  rgba(95,116,112,.06);
+  --tc:#5f7470;--tc2:rgba(95,116,112,.1);
+  --te:#6a8080;--te2:rgba(106,128,128,.1);
+  --tm:#8a7248;--tm2:rgba(138,114,72,.1);
+  --ta:#9a6850;--ta2:rgba(154,104,80,.1);
+  --tb:#888;  --tb2:rgba(136,136,136,.1);
+
+  --ds-sidebar: #e8eae4;
+  --ds-sidebar-bdr: #d2d4c8;
+  --ds-chip-bg: rgba(95,116,112,.09);
+  --ds-chip-text: #5f7470;
+  --ds-pre-bg: #f6f7f3;
+  --ds-pre-bdr: #d2d4c8;
+  --ds-label: #889696;
+  --ds-section-line: #d2d4c8;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg:    #161816;
+    --bg2:   #1f211f;
+    --card:  #252725;
+    --card2: #2d2f2d;
+    --bdr:   #333533;
+    --bdr2:  rgba(184,189,181,.12);
+    --text:  #e8eae4;
+    --t2:    #7a8a88;
+    --t3:    #4a5452;
+    --acc:   #7a9e9a;
+    --acc2:  rgba(122,158,154,.12);
+    --acc3:  rgba(122,158,154,.06);
+    --ds-sidebar: #1a1c1a;
+    --ds-sidebar-bdr: #2d2f2d;
+    --ds-chip-bg: rgba(122,158,154,.12);
+    --ds-chip-text: #7a9e9a;
+    --ds-pre-bg: #1f211f;
+    --ds-pre-bdr: #333533;
+    --ds-label: #5a6a68;
+    --ds-section-line: #2d2f2d;
+  }
+}
+:root[data-theme="dark"] {
+  --bg:    #161816;
+  --bg2:   #1f211f;
+  --card:  #252725;
+  --card2: #2d2f2d;
+  --bdr:   #333533;
+  --bdr2:  rgba(184,189,181,.12);
+  --text:  #e8eae4;
+  --t2:    #7a8a88;
+  --t3:    #4a5452;
+  --acc:   #7a9e9a;
+  --acc2:  rgba(122,158,154,.12);
+  --acc3:  rgba(122,158,154,.06);
+  --ds-sidebar: #1a1c1a;
+  --ds-sidebar-bdr: #2d2f2d;
+  --ds-chip-bg: rgba(122,158,154,.12);
+  --ds-chip-text: #7a9e9a;
+  --ds-pre-bg: #1f211f;
+  --ds-pre-bdr: #333533;
+  --ds-label: #5a6a68;
+  --ds-section-line: #2d2f2d;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Syne', sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── LAYOUT ── */
+.ds-wrap { display: flex; min-height: 100vh; }
+
+.ds-nav {
+  width: 200px;
+  flex-shrink: 0;
+  background: var(--ds-sidebar);
+  border-right: 1px solid var(--ds-sidebar-bdr);
+  padding: 28px 0 40px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+.ds-nav::-webkit-scrollbar { display: none; }
+.ds-nav-logo {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--acc);
+  padding: 0 20px 24px;
+  border-bottom: 1px solid var(--ds-sidebar-bdr);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.ds-nav-logo svg { flex-shrink: 0; }
+.ds-nav-section {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--t3);
+  padding: 12px 20px 4px;
+}
+.ds-nav a {
+  display: block;
+  padding: 7px 20px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--t2);
+  text-decoration: none;
+  border-radius: 0 8px 8px 0;
+  margin-right: 8px;
+  transition: background .12s, color .12s;
+}
+.ds-nav a:hover, .ds-nav a.active {
+  background: var(--ds-chip-bg);
+  color: var(--acc);
+}
+
+.ds-main {
+  flex: 1;
+  min-width: 0;
+  padding: 40px 48px 80px;
+  max-width: 860px;
+}
+
+/* ── SECTION ── */
+.ds-section {
+  margin-bottom: 64px;
+  scroll-margin-top: 32px;
+}
+.ds-section-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 36px;
+  font-weight: 900;
+  letter-spacing: -0.5px;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+.ds-section-desc {
+  font-size: 13px;
+  color: var(--t2);
+  font-weight: 500;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--ds-section-line);
+  padding-bottom: 16px;
+}
+.ds-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+  margin-bottom: 20px;
+}
+.ds-preview {
+  flex: 1;
+  min-width: 0;
+  background: var(--bg2);
+  border: 1px solid var(--bdr);
+  border-radius: 14px;
+  padding: 20px;
+}
+.ds-preview.dark-bg {
+  background: #1c2422;
+}
+.ds-meta {
+  width: 180px;
+  flex-shrink: 0;
+}
+.ds-class {
+  display: inline-block;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: .5px;
+  background: var(--ds-chip-bg);
+  color: var(--ds-chip-text);
+  padding: 2px 8px;
+  border-radius: 6px;
+  margin: 2px 2px 2px 0;
+}
+.ds-note {
+  font-size: 11px;
+  color: var(--t3);
+  margin-top: 6px;
+  line-height: 1.5;
+}
+
+/* ── COLOR GRID ── */
+.color-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; }
+.color-swatch {
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--bdr);
+}
+.color-swatch-block { height: 52px; }
+.color-swatch-label {
+  background: var(--card);
+  padding: 6px 8px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--t2);
+  letter-spacing: .3px;
+}
+.color-swatch-name { font-size: 11px; font-weight: 800; color: var(--text); }
+
+/* ── TYPE SCALE ── */
+.type-row { margin-bottom: 16px; border-bottom: 1px solid var(--ds-section-line); padding-bottom: 16px; }
+.type-row:last-child { border-bottom: none; }
+.type-label { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--t3); margin-bottom: 6px; }
+
+/* ── COMPONENT STYLES (mirrored from design-system.css) ── */
+.card { background: var(--card); border: 1px solid var(--bdr); border-radius: 14px; overflow: hidden; }
+.card-hd { font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--t3); margin-bottom: 6px; }
+.lbl { font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--t3); }
+.divr { border-bottom: 1px solid var(--bdr); }
+.divr:last-child { border-bottom: none; }
+
+.ex-row { display: flex; align-items: center; justify-content: space-between; padding: 11px 14px; gap: 8px; }
+.ex-left { flex: 1; min-width: 0; }
+.ex-name { font-size: 14px; font-weight: 700; margin-bottom: 3px; }
+.ex-nums { display: flex; align-items: center; gap: 7px; flex-shrink: 0; }
+.ex-w { font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 900; letter-spacing: .5px; color: var(--text); }
+.ex-s { font-size: 10.5px; font-weight: 700; background: var(--card2); color: var(--t2); padding: 3px 7px; border-radius: 6px; letter-spacing: .5px; }
+
+.add-row { display: flex; align-items: center; gap: 9px; padding: 11px 14px; color: var(--t2); font-size: 13px; font-weight: 600; width: 100%; background: none; border: none; cursor: pointer; }
+.add-ic { width: 22px; height: 22px; border-radius: 50%; background: var(--acc2); color: var(--acc); display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700; line-height: 1; flex-shrink: 0; }
+
+.bdg { font-size: 10px; font-weight: 800; letter-spacing: .8px; text-transform: uppercase; padding: 3px 8px; border-radius: 100px; white-space: nowrap; }
+.b-c { background: var(--tc2); color: var(--tc); border: 1px solid rgba(95,116,112,.2); }
+.b-e { background: var(--te2); color: var(--te); border: 1px solid rgba(106,128,128,.2); }
+.b-m { background: var(--tm2); color: var(--tm); border: 1px solid rgba(138,114,72,.2); }
+.b-a { background: var(--ta2); color: var(--ta); border: 1px solid rgba(154,104,80,.2); }
+.b-b { background: var(--tb2); color: var(--tb); border: 1px solid rgba(136,136,136,.2); }
+
+.pill { background: var(--card); border: 1.5px solid var(--bdr); border-radius: 20px; padding: 7px 13px; font-size: 13px; font-weight: 600; color: var(--t2); cursor: pointer; white-space: nowrap; }
+.pill.active { background: var(--acc); border-color: var(--acc); color: var(--card); }
+
+.btn-save { width: 100%; padding: 14px; background: var(--acc); border: none; border-radius: 13px; color: var(--card); font-size: 16px; font-weight: 800; font-family: 'Syne', sans-serif; cursor: pointer; letter-spacing: .3px; }
+.prf-btn { background: var(--card); border: 1.5px solid var(--bdr); border-radius: 20px; padding: 8px 14px; font-size: 13px; font-weight: 600; color: var(--t2); font-family: 'Syne', sans-serif; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; }
+.tiny-btn { width: 30px; height: 30px; border-radius: 8px; background: var(--card2); color: var(--t3); display: flex; align-items: center; justify-content: center; font-size: 13px; border: none; cursor: pointer; }
+
+.set-toggle { width: 46px; height: 26px; border-radius: 13px; background: var(--bdr); position: relative; flex-shrink: 0; border: none; cursor: pointer; }
+.set-toggle[aria-pressed="true"] { background: var(--acc); }
+.set-toggle-knob { position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: transform .2s; box-shadow: 0 1px 3px rgba(0,0,0,.2); pointer-events: none; }
+.set-toggle[aria-pressed="true"] .set-toggle-knob { transform: translateX(20px); }
+
+.nav-preview { display: flex; background: var(--bg2); border: 1px solid var(--bdr); border-radius: 14px; overflow: hidden; padding: 8px; gap: 4px; }
+.nb-p { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 4px; border-radius: 10px; color: var(--t2); font-size: 10px; font-weight: 700; letter-spacing: .3px; }
+.nb-p.on { color: var(--acc); background: var(--acc2); }
+.nb-p svg { width: 18px; height: 18px; }
+
+.weight-big-demo { font-family: 'Barlow Condensed', sans-serif; font-size: 56px; font-weight: 900; text-align: center; color: var(--text); line-height: 1; letter-spacing: 2px; }
+.weight-big-demo small { font-size: 20px; color: var(--t3); }
+.ws-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; margin-top: 10px; }
+.ws-btn { padding: 8px 0; border-radius: 8px; font-size: 12px; font-weight: 700; background: var(--card2); color: var(--text); border: none; cursor: pointer; }
+.ws-btn.minus { color: var(--t2); }
+
+.stepper-demo { display: flex; gap: 10px; margin-top: 10px; }
+.stepper-d { flex: 1; background: var(--card); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; align-items: center; gap: 8px; border: 1px solid var(--bdr); }
+.stepper-lbl-d { font-size: 10px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; color: var(--t3); }
+.stepper-row-d { display: flex; align-items: center; gap: 12px; }
+.step-btn-d { width: 32px; height: 32px; border-radius: 50%; background: var(--card2); color: var(--text); font-size: 18px; display: flex; align-items: center; justify-content: center; border: none; cursor: pointer; }
+.step-val-d { font-family: 'Barlow Condensed', sans-serif; font-size: 28px; font-weight: 900; color: var(--text); min-width: 32px; text-align: center; }
+
+.trend-up { font-size: 11px; font-weight: 800; color: #4a9e6a; display: flex; align-items: center; gap: 2px; }
+.trend-flat { font-size: 11px; font-weight: 800; color: var(--t3); }
+
+/* sheet demo */
+.sheet-demo { background: var(--bg2); border-radius: 16px; overflow: hidden; border: 1px solid var(--bdr); }
+.sheet-pull-d { width: 36px; height: 4px; background: var(--bdr); border-radius: 2px; margin: 10px auto 0; }
+.sheet-hdr-d { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px 8px; }
+.sheet-title-d { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 900; letter-spacing: .8px; text-transform: uppercase; }
+.sheet-x-d { width: 26px; height: 26px; border-radius: 50%; background: var(--card2); color: var(--t2); font-size: 15px; display: flex; align-items: center; justify-content: center; border: none; cursor: pointer; }
+
+.badge-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.pill-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.btn-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.toggle-row { display: flex; gap: 16px; align-items: center; }
+
+/* sq-card */
+.sq-card-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.sq-card { position: relative; overflow: hidden; border-radius: 14px; aspect-ratio: 1; background: var(--card); border: 1px solid var(--bdr); }
+.sq-card-inner { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; height: 100%; }
+.sq-card-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: blur(2px) brightness(.75); transform: scale(1.06); }
+.sq-card-overlay { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,.08) 0%, rgba(0,0,0,.55) 100%); }
+.sq-card-av { width: 52px; height: 52px; border-radius: 50%; background: rgba(255,255,255,.2); display: flex; align-items: center; justify-content: center; font-family: 'Barlow Condensed', sans-serif; font-size: 24px; font-weight: 900; color: #fff; border: 2.5px solid rgba(255,255,255,.5); }
+.sq-card-name { font-family: 'Barlow Condensed', sans-serif; font-size: 17px; font-weight: 900; color: #fff; text-shadow: 0 1px 4px rgba(0,0,0,.5); line-height: 1.1; text-align: center; }
+
+/* rank badge icon demo */
+.rank-icon-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.rank-icon-item { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.rank-icon-item span { font-size: 9px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; color: var(--t3); }
+
+/* token table */
+.token-table { width: 100%; border-collapse: collapse; }
+.token-table th { text-align: left; font-size: 9px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; color: var(--t3); padding: 0 0 8px; border-bottom: 1px solid var(--ds-section-line); }
+.token-table td { padding: 8px 0; border-bottom: 1px solid var(--ds-section-line); font-size: 12px; vertical-align: middle; }
+.token-table tr:last-child td { border-bottom: none; }
+.token-name { font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 14px; letter-spacing: .5px; color: var(--ds-chip-text); }
+.token-swatch { width: 24px; height: 24px; border-radius: 6px; border: 1px solid var(--bdr); display: inline-block; vertical-align: middle; margin-right: 8px; }
+.token-val { color: var(--t2); font-weight: 600; }
+</style>
+
+<div class="ds-wrap">
+
+  <!-- SIDEBAR NAV -->
+  <nav class="ds-nav">
+    <div class="ds-nav-logo">
+      <svg width="22" height="26" viewBox="2 0 56 68" xmlns="http://www.w3.org/2000/svg">
+        <path d="M30,3 L55,14 L55,38 Q55,58 30,65 Q5,58 5,38 L5,14 Z" fill="var(--acc)"/>
+        <text x="30" y="37" text-anchor="middle" dominant-baseline="central" font-family="Barlow Condensed,sans-serif" font-size="22" font-weight="900" fill="#fff">G</text>
+      </svg>
+      GymLog DS
+    </div>
+    <div class="ds-nav-section">Foundations</div>
+    <a href="#tokens">Color Tokens</a>
+    <a href="#type">Typography</a>
+    <div class="ds-nav-section">Components</div>
+    <a href="#card">Card</a>
+    <a href="#sqcard">Square Card</a>
+    <a href="#exrow">Exercise Row</a>
+    <a href="#addrow">Add Row</a>
+    <a href="#badges">Badges</a>
+    <a href="#sheet">Bottom Sheet</a>
+    <a href="#pills">Pills</a>
+    <a href="#weight">Weight Input</a>
+    <a href="#buttons">Buttons</a>
+    <a href="#toggle">Toggle</a>
+    <a href="#nav">Navigation</a>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <main class="ds-main">
+
+    <div style="margin-bottom:48px">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:52px;font-weight:900;letter-spacing:-1px;line-height:1;color:var(--text)">Design System</div>
+      <div style="font-size:13px;color:var(--t2);margin-top:6px;font-weight:500">GymLog · <code style="font-size:11px;background:var(--card);padding:2px 6px;border-radius:5px;border:1px solid var(--bdr)">design-system.css</code> · All reusable tokens and components</div>
+    </div>
+
+    <!-- ── COLOR TOKENS ── -->
+    <section class="ds-section" id="tokens">
+      <div class="ds-section-title">Color Tokens</div>
+      <div class="ds-section-desc">All values are CSS custom properties on <code>:root</code>. Swap them in one place to create a new theme. Themes are defined in <code>app.js</code> via <code>applyTheme()</code>.</div>
+
+      <div class="color-grid" style="margin-bottom:24px">
+        <div class="color-swatch"><div class="color-swatch-block" style="background:#e0e2db"></div><div class="color-swatch-label"><div class="color-swatch-name">--bg</div>#e0e2db</div></div>
+        <div class="color-swatch"><div class="color-swatch-block" style="background:#eaebe6"></div><div class="color-swatch-label"><div class="color-swatch-name">--bg2</div>#eaebe6</div></div>
+        <div class="color-swatch"><div class="color-swatch-block" style="background:#f0f1ec"></div><div class="color-swatch-label"><div class="color-swatch-name">--card</div>#f0f1ec</div></div>
+        <div class="color-swatch"><div class="color-swatch-block" style="background:#e6e8e2"></div><div class="color-swatch-label"><div class="color-swatch-name">--card2</div>#e6e8e2</div></div>
+        <div class="color-swatch"><div class="color-swatch-block" style="background:#d2d4c8"></div><div class="color-swatch-label"><div class="color-swatch-name">--bdr</div>#d2d4c8</div></div>
+        <div class="color-swatch"><div class="color-swatch-block" style="background:#5f7470"></div><div class="color-swatch-label"><div class="color-swatch-name">--acc</div>#5f7470</div></div>
+        <div class="color-swatch"><div class="color-swatch-block" style="background:#1c2422"></div><div class="color-swatch-label"><div class="color-swatch-name">--text</div>#1c2422</div></div>
+        <div class="color-swatch"><div class="color-swatch-block" style="background:#889696"></div><div class="color-swatch-label"><div class="color-swatch-name">--t2</div>#889696</div></div>
+        <div class="color-swatch"><div class="color-swatch-block" style="background:#b8bdb5"></div><div class="color-swatch-label"><div class="color-swatch-name">--t3</div>#b8bdb5</div></div>
+      </div>
+
+      <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--t3);margin-bottom:10px">Rank Tier Colors</div>
+      <div class="color-grid">
+        <div class="color-swatch"><div class="color-swatch-block" style="background:#5f7470"></div><div class="color-swatch-label"><div class="color-swatch-name">--tc</div>Common</div></div>
+        <div class="color-swatch"><div class="color-swatch-block" style="background:#6a8080"></div><div class="color-swatch-label"><div class="color-swatch-name">--te</div>Elite</div></div>
+        <div class="color-swatch"><div class="color-swatch-block" style="background:#8a7248"></div><div class="color-swatch-label"><div class="color-swatch-name">--tm</div>Master</div></div>
+        <div class="color-swatch"><div class="color-swatch-block" style="background:#9a6850"></div><div class="color-swatch-label"><div class="color-swatch-name">--ta</div>Apex</div></div>
+        <div class="color-swatch"><div class="color-swatch-block" style="background:#888"></div><div class="color-swatch-label"><div class="color-swatch-name">--tb</div>Base</div></div>
+      </div>
+    </section>
+
+    <!-- ── TYPOGRAPHY ── -->
+    <section class="ds-section" id="type">
+      <div class="ds-section-title">Typography</div>
+      <div class="ds-section-desc">Two typefaces. <strong>Barlow Condensed</strong> for all large numbers, display titles, and screen headers. <strong>Syne</strong> for all body text, labels, and UI copy.</div>
+
+      <div class="type-row">
+        <div class="type-label">Barlow Condensed 900 — Screen Title</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:48px;font-weight:900;letter-spacing:-1px;line-height:1;color:var(--text)">Records</div>
+      </div>
+      <div class="type-row">
+        <div class="type-label">Barlow Condensed 900 — Weight Display</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:32px;font-weight:900;letter-spacing:.5px;color:var(--text)">120 kg × 8</div>
+      </div>
+      <div class="type-row">
+        <div class="type-label">Barlow Condensed 900 — Sheet Title</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:900;letter-spacing:.8px;text-transform:uppercase;color:var(--text)">Add Exercise</div>
+      </div>
+      <div class="type-row">
+        <div class="type-label">Syne 700 — Row Label</div>
+        <div style="font-size:14px;font-weight:700;color:var(--text)">Bench Press</div>
+      </div>
+      <div class="type-row">
+        <div class="type-label">Syne 600 — Secondary / Meta</div>
+        <div style="font-size:12px;font-weight:600;color:var(--t2)">3 sets · yesterday</div>
+      </div>
+      <div class="type-row">
+        <div class="type-label">Syne 700 — Section Label (.lbl / .card-hd)</div>
+        <div class="lbl">Saturday, Aug 22</div>
+      </div>
+    </section>
+
+    <!-- ── CARD ── -->
+    <section class="ds-section" id="card">
+      <div class="ds-section-title">Card</div>
+      <div class="ds-section-desc">The primary surface. Use <code>.card</code> as a container; combine with <code>.card-hd</code> above it and <code>.divr</code> between rows inside.</div>
+
+      <div class="ds-row">
+        <div class="ds-preview">
+          <div class="card-hd" style="margin-bottom:8px">Saturday, Aug 22</div>
+          <div class="card">
+            <div class="divr" style="padding:11px 14px;font-size:14px;font-weight:700">Bench Press</div>
+            <div class="divr" style="padding:11px 14px;font-size:14px;font-weight:700">Squat</div>
+            <div style="padding:11px 14px;font-size:14px;font-weight:700">Pull-up</div>
+          </div>
+        </div>
+        <div class="ds-meta">
+          <span class="ds-class">.card</span>
+          <span class="ds-class">.card-hd</span>
+          <span class="ds-class">.lbl</span>
+          <span class="ds-class">.divr</span>
+          <p class="ds-note">.divr on all rows except last, or use .divr:last-child { border-bottom: none }</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── EXERCISE ROW ── -->
+    <section class="ds-section" id="exrow">
+      <div class="ds-section-title">Exercise Row</div>
+      <div class="ds-section-desc">The core list row. Left side takes remaining width; right side is rigid (numbers + trend + badge). Used in sessions, PR list, week view, and friend PR list.</div>
+
+      <div class="ds-row">
+        <div class="ds-preview">
+          <div class="card">
+            <!-- with rank badge + trend -->
+            <div class="ex-row divr">
+              <div class="ex-left" style="display:flex;align-items:center;gap:10px">
+                <div style="width:28px;height:28px;border-radius:50%;background:rgba(95,116,112,.15);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:var(--acc);flex-shrink:0">G</div>
+                <div>
+                  <div class="ex-name">Bench Press</div>
+                  <div style="font-size:11px;color:var(--t3);margin-top:2px">yesterday</div>
+                </div>
+              </div>
+              <div class="ex-nums">
+                <span class="trend-up">↑</span>
+                <span class="ex-w">100 kg × 5</span>
+              </div>
+            </div>
+            <!-- bodyweight -->
+            <div class="ex-row divr">
+              <div class="ex-left">
+                <div class="ex-name">Pull-up</div>
+                <div style="font-size:11px;color:var(--t3);margin-top:2px">3 days ago</div>
+              </div>
+              <div class="ex-nums">
+                <span class="ex-w">BW × 12</span>
+              </div>
+            </div>
+            <!-- with sets chip -->
+            <div class="ex-row">
+              <div class="ex-left">
+                <div class="ex-name">Squat</div>
+              </div>
+              <div class="ex-nums">
+                <span class="ex-s">4×</span>
+                <span class="ex-w">140 kg × 6</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="ds-meta">
+          <span class="ds-class">.ex-row</span>
+          <span class="ds-class">.ex-left</span>
+          <span class="ds-class">.ex-name</span>
+          <span class="ds-class">.ex-nums</span>
+          <span class="ds-class">.ex-w</span>
+          <span class="ds-class">.ex-s</span>
+          <p class="ds-note">Combine with .divr for separation. Badge image and trend arrow go inside .ex-nums.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── SQUARE CARD ── -->
+    <section class="ds-section" id="sqcard">
+      <div class="ds-section-title">Square Card</div>
+      <div class="ds-section-desc">Square media card with hero background fill + centered avatar + name overlay. Used in the friends tab 2-column grid. The hero bg is always blurred and darkened; text is always white.</div>
+
+      <div class="ds-row">
+        <div class="ds-preview">
+          <div class="sq-card-grid" style="max-width:300px">
+            <!-- with hero bg (simulated with gradient) -->
+            <div class="sq-card">
+              <div style="position:absolute;inset:0;background:linear-gradient(135deg,#3a5a58,#1c3230);"></div>
+              <div class="sq-card-overlay"></div>
+              <div class="sq-card-inner">
+                <div class="sq-card-av">A</div>
+                <div class="sq-card-name">Alex Kim</div>
+              </div>
+            </div>
+            <!-- without hero bg -->
+            <div class="sq-card">
+              <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.08) 0%,rgba(0,0,0,.15) 100%)"></div>
+              <div class="sq-card-inner">
+                <div class="sq-card-av" style="background:var(--acc2);color:var(--acc);border-color:transparent">J</div>
+                <div class="sq-card-name" style="color:var(--text);text-shadow:none">Jordan</div>
+              </div>
+            </div>
+            <div class="sq-card">
+              <div style="position:absolute;inset:0;background:linear-gradient(135deg,#5a3a3a,#2c1c1c);"></div>
+              <div class="sq-card-overlay"></div>
+              <div class="sq-card-inner">
+                <div class="sq-card-av">M</div>
+                <div class="sq-card-name">Morgan</div>
+              </div>
+            </div>
+            <div class="sq-card">
+              <div style="position:absolute;inset:0;background:linear-gradient(135deg,#3a4a5a,#1c2430);"></div>
+              <div class="sq-card-overlay"></div>
+              <div class="sq-card-inner">
+                <div class="sq-card-av">S</div>
+                <div class="sq-card-name">Sam Reeves</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="ds-meta">
+          <span class="ds-class">.sq-card-grid</span>
+          <span class="ds-class">.sq-card</span>
+          <p class="ds-note">aspect-ratio: 1 — always a perfect square. Wrap in .sq-card-grid for the 2-col layout. Content goes in a z-index:2 child; bg image + overlay sit below it.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── ADD ROW ── -->
+    <section class="ds-section" id="addrow">
+      <div class="ds-section-title">Add Row</div>
+      <div class="ds-section-desc">Ghost action row — "add exercise", "add set". Goes at the bottom of a card group.</div>
+
+      <div class="ds-row">
+        <div class="ds-preview">
+          <div class="card">
+            <div class="ex-row divr">
+              <div class="ex-left"><div class="ex-name">Deadlift</div></div>
+              <div class="ex-nums"><span class="ex-w">180 kg × 3</span></div>
+            </div>
+            <button class="add-row">
+              <span class="add-ic">+</span>
+              Add Exercise
+            </button>
+          </div>
+        </div>
+        <div class="ds-meta">
+          <span class="ds-class">.add-row</span>
+          <span class="ds-class">.add-ic</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── BADGES ── -->
+    <section class="ds-section" id="badges">
+      <div class="ds-section-title">Badges</div>
+      <div class="ds-section-desc">Text badges for rank tier labels and category tags. Base class <code>.bdg</code> + a variant modifier.</div>
+
+      <div class="ds-row">
+        <div class="ds-preview">
+          <div class="badge-row">
+            <span class="bdg b-c">Common</span>
+            <span class="bdg b-e">Elite</span>
+            <span class="bdg b-m">Master</span>
+            <span class="bdg b-a">Apex</span>
+            <span class="bdg b-b">Base</span>
+          </div>
+        </div>
+        <div class="ds-meta">
+          <span class="ds-class">.bdg</span>
+          <span class="ds-class">.b-c</span>
+          <span class="ds-class">.b-e</span>
+          <span class="ds-class">.b-m</span>
+          <span class="ds-class">.b-a</span>
+          <span class="ds-class">.b-b</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── BOTTOM SHEET ── -->
+    <section class="ds-section" id="sheet">
+      <div class="ds-section-title">Bottom Sheet</div>
+      <div class="ds-section-desc">Modal that slides up from the bottom. <code>.overlay</code> wraps the backdrop; <code>.sheet</code> is the sliding panel inside it. Toggle <code>.open</code> on the overlay to show/hide.</div>
+
+      <div class="ds-row">
+        <div class="ds-preview">
+          <div class="sheet-demo">
+            <div class="sheet-pull-d"></div>
+            <div class="sheet-hdr-d">
+              <span class="sheet-title-d">Add Exercise</span>
+              <button class="sheet-x-d">×</button>
+            </div>
+            <div style="padding:0 16px 16px;font-size:13px;color:var(--t2);font-weight:500">Sheet body content goes here…</div>
+          </div>
+        </div>
+        <div class="ds-meta">
+          <span class="ds-class">.overlay</span>
+          <span class="ds-class">.overlay.open</span>
+          <span class="ds-class">.sheet</span>
+          <span class="ds-class">.sheet-pull</span>
+          <span class="ds-class">.sheet-hdr</span>
+          <span class="ds-class">.sheet-title</span>
+          <span class="ds-class">.sheet-x</span>
+          <span class="ds-class">.sheet-body</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── PILLS ── -->
+    <section class="ds-section" id="pills">
+      <div class="ds-section-title">Pills</div>
+      <div class="ds-section-desc">Filter chips for exercise categories, PR sort, and any horizontal filter row.</div>
+
+      <div class="ds-row">
+        <div class="ds-preview">
+          <div class="pill-row">
+            <button class="pill active">Recent</button>
+            <button class="pill">Best</button>
+            <button class="pill">A – Z</button>
+            <button class="pill">Chest</button>
+            <button class="pill">Back</button>
+          </div>
+        </div>
+        <div class="ds-meta">
+          <span class="ds-class">.pill</span>
+          <span class="ds-class">.pill.active</span>
+          <p class="ds-note">Wrap in <code>.pills</code> for flex-wrap layout. Filter bars use inline flex without wrapping.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── WEIGHT INPUT ── -->
+    <section class="ds-section" id="weight">
+      <div class="ds-section-title">Weight Input</div>
+      <div class="ds-section-desc">Large tap-to-edit weight display + quick-step grid + reps/sets steppers. Used inside the exercise entry panel.</div>
+
+      <div class="ds-row">
+        <div class="ds-preview">
+          <div class="weight-big-demo">60<small> kg</small></div>
+          <div class="ws-grid">
+            <button class="ws-btn minus">−10</button>
+            <button class="ws-btn minus">−5</button>
+            <button class="ws-btn minus">−1</button>
+            <button class="ws-btn">+1</button>
+            <button class="ws-btn">+5</button>
+            <button class="ws-btn">+10</button>
+          </div>
+          <div class="stepper-demo">
+            <div class="stepper-d">
+              <span class="stepper-lbl-d">Sets</span>
+              <div class="stepper-row-d">
+                <button class="step-btn-d">−</button>
+                <span class="step-val-d">3</span>
+                <button class="step-btn-d">+</button>
+              </div>
+            </div>
+            <div class="stepper-d">
+              <span class="stepper-lbl-d">Reps</span>
+              <div class="stepper-row-d">
+                <button class="step-btn-d">−</button>
+                <span class="step-val-d">8</span>
+                <button class="step-btn-d">+</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="ds-meta">
+          <span class="ds-class">.weight-big</span>
+          <span class="ds-class">.weight-direct</span>
+          <span class="ds-class">.weight-steps</span>
+          <span class="ds-class">.ws-btn</span>
+          <span class="ds-class">.ws-btn.minus</span>
+          <span class="ds-class">.steppers</span>
+          <span class="ds-class">.stepper</span>
+          <span class="ds-class">.step-btn</span>
+          <span class="ds-class">.step-val</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── BUTTONS ── -->
+    <section class="ds-section" id="buttons">
+      <div class="ds-section-title">Buttons</div>
+      <div class="ds-section-desc">Three button types. <code>.btn-save</code> is the primary full-width CTA. <code>.prf-btn</code> is a ghost secondary. <code>.tiny-btn</code> is a square icon holder.</div>
+
+      <div class="ds-row">
+        <div class="ds-preview" style="display:flex;flex-direction:column;gap:12px">
+          <button class="btn-save">Save Exercise</button>
+          <div class="btn-row">
+            <button class="prf-btn">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+              Follow
+            </button>
+            <button class="prf-btn">Share</button>
+            <button class="tiny-btn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="ds-meta">
+          <span class="ds-class">.btn-save</span>
+          <span class="ds-class">.prf-btn</span>
+          <span class="ds-class">.tiny-btn</span>
+          <span class="ds-class">.tap-scale</span>
+          <p class="ds-note">Add .tap-scale to any interactive element for the press animation.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── TOGGLE ── -->
+    <section class="ds-section" id="toggle">
+      <div class="ds-section-title">Toggle Switch</div>
+      <div class="ds-section-desc">Driven by <code>aria-pressed</code>. Toggle the attribute in JS; the CSS handles the visual state.</div>
+
+      <div class="ds-row">
+        <div class="ds-preview">
+          <div class="toggle-row">
+            <button class="set-toggle" aria-pressed="false" onclick="this.setAttribute('aria-pressed', this.getAttribute('aria-pressed')==='true'?'false':'true')">
+              <span class="set-toggle-knob"></span>
+            </button>
+            <span style="font-size:13px;color:var(--t2);font-weight:600">Off</span>
+            <button class="set-toggle" aria-pressed="true" onclick="this.setAttribute('aria-pressed', this.getAttribute('aria-pressed')==='true'?'false':'true')">
+              <span class="set-toggle-knob"></span>
+            </button>
+            <span style="font-size:13px;color:var(--acc);font-weight:600">On</span>
+          </div>
+          <p style="font-size:11px;color:var(--t3);margin-top:10px">Click either toggle to test interaction</p>
+        </div>
+        <div class="ds-meta">
+          <span class="ds-class">.set-toggle</span>
+          <span class="ds-class">.set-toggle-knob</span>
+          <p class="ds-note">Set aria-pressed="true" | "false" on the button element.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── NAV ── -->
+    <section class="ds-section" id="nav">
+      <div class="ds-section-title">Navigation Bar</div>
+      <div class="ds-section-desc">Bottom tab bar. <code>.nb.on</code> marks the active tab. The bar sits at the bottom of <code>#app</code> as a flex sibling to the screen container.</div>
+
+      <div class="ds-row">
+        <div class="ds-preview">
+          <div class="nav-preview">
+            <div class="nb-p on">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+              Home
+            </div>
+            <div class="nb-p">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+              Week
+            </div>
+            <div class="nb-p">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              PR
+            </div>
+            <div class="nb-p">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+              Friends
+            </div>
+            <div class="nb-p">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+              Profile
+            </div>
+          </div>
+        </div>
+        <div class="ds-meta">
+          <span class="ds-class">.nav</span>
+          <span class="ds-class">.nb</span>
+          <span class="ds-class">.nb.on</span>
+          <p class="ds-note">backdrop-filter blur on .nav requires the bar to be a sibling of the screen, not a child.</p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+  // highlight active nav link on scroll
+  const sections = document.querySelectorAll('.ds-section');
+  const navLinks = document.querySelectorAll('.ds-nav a');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        navLinks.forEach(a => a.classList.remove('active'));
+        const link = document.querySelector(`.ds-nav a[href="#${e.target.id}"]`);
+        if (link) link.classList.add('active');
+      }
+    });
+  }, { threshold: 0.3 });
+  sections.forEach(s => observer.observe(s));
+</script>
