@@ -86,9 +86,11 @@ function showSplash() {
 function hideSplash() {
   const el = document.getElementById('authTransLoader');
   if (!el) return;
-  el.style.opacity = '0';
-  el.style.pointerEvents = 'none';
-  setTimeout(() => el.remove(), 260);
+  setTimeout(() => {
+    el.style.opacity = '0';
+    el.style.pointerEvents = 'none';
+    setTimeout(() => el.remove(), 260);
+  }, 250);
 }
 
 async function signInWithGoogle() {
@@ -174,8 +176,8 @@ _auth.onAuthStateChanged(async user => {
     renderTodaySession();
     renderFriendsTab();
     if (document.getElementById('profileOverlay')?.classList.contains('open')) openProfile();
-    hideSplash();
     showToast('✓ Signed in as ' + (user.displayName || user.email).split(' ')[0]);
+    hideSplash();
   } else {
     localStorage.removeItem(_UID_KEY);
     _hideAuthLoader();
@@ -648,7 +650,7 @@ function buildProfileHero(o) {
   if (allPRs.length) {
     const show = allPRs.slice(0,5);
     const rows = show.map(pr => {
-      const badge = pr.tierId ? `<img src="${RANK_ICONS[pr.tierId]}" style="width:28px;height:28px;image-rendering:pixelated;filter:drop-shadow(0 0 4px ${TIER_COLORS[pr.tierId]}99)">` : '';
+      const badge = pr.tierId ? `<img src="${RANK_ICONS[pr.tierId]}" style="width:20px;height:20px;flex-shrink:0;display:block;image-rendering:pixelated;filter:drop-shadow(0 0 3px ${TIER_COLORS[pr.tierId]}99)">` : '';
       const val = pr.cardio ? '' : `<span class="ex-w">${fmtWeight(pr.weight??0,pr.name)} × ${pr.reps}</span>`;
       const dateStr = pr.day ? new Date(pr.day).toLocaleDateString('en',{month:'short',day:'numeric'}) : '';
       return `<div class="ex-row divr">
@@ -720,21 +722,23 @@ async function openVisitorProfile(uid, name, code, avatar, heroBg) {
     body.innerHTML = html;
   }
 
-  renderVisitor({ name, avatar, heroBg: heroBg || null });
-  // slide in like a tab (from right)
-  const sv = document.getElementById('sv');
-  const cur = document.querySelector('.scr.on');
-  sv.classList.add('on','scr-er');
-  if (cur) { cur.classList.add('scr-xl'); cur.addEventListener('animationend',()=>cur.classList.remove('on','scr-xl'),{once:true}); }
-  sv.addEventListener('animationend',()=>sv.classList.remove('scr-er'),{once:true});
-  history.pushState({ sv: uid }, '');
-
+  // fetch first behind the splash, then animate in with full content
+  showSplash();
+  let profileData = { name, avatar, heroBg: heroBg || null };
   if (_user) {
     try {
       const snap = await _profilesCol().doc(uid).get();
-      if (sv.classList.contains('on') && snap.exists) renderVisitor(snap.data());
+      if (snap.exists) profileData = snap.data();
     } catch(e) {}
   }
+  renderVisitor(profileData);
+
+  const sv = document.getElementById('sv');
+  const cur = document.querySelector('.scr.on');
+  if (cur) cur.classList.remove('on');
+  sv.classList.add('on');
+  history.pushState({ sv: uid }, '');
+  hideSplash();
 }
 
 let _friendPRsCache = null;
@@ -780,7 +784,7 @@ function renderFriendPRs() {
   const list = document.getElementById('friendPRList');
 
   function makeRow(pr) {
-    const badge = pr.tierId ? `<img src="${RANK_ICONS[pr.tierId]}" style="width:28px;height:28px;image-rendering:pixelated;filter:drop-shadow(0 0 4px ${TIER_COLORS[pr.tierId]}99)">` : '';
+    const badge = pr.tierId ? `<img src="${RANK_ICONS[pr.tierId]}" style="width:20px;height:20px;flex-shrink:0;display:block;image-rendering:pixelated;filter:drop-shadow(0 0 3px ${TIER_COLORS[pr.tierId]}99)">` : '';
     const ago = timeAgo(pr.day);
     const val = pr.cardio ? '' : `<span class="ex-w">${fmtWeight(pr.weight??0,pr.name)} × ${pr.reps}</span>`;
     const row = document.createElement('div');
@@ -1078,7 +1082,7 @@ function renderProfileTab(){
     let badgeHtml='';
     if(p?.weight&&!pr._cardio){
       const{tier,div}=scoreToTierDiv(calcExScore(pr,p,exName));
-      badgeHtml=`<img src="${RANK_ICONS[tier.id]}" style="width:28px;height:28px;image-rendering:pixelated;filter:drop-shadow(0 0 4px ${TIER_COLORS[tier.id]}99)">`;
+      badgeHtml=`<img src="${RANK_ICONS[tier.id]}" style="width:20px;height:20px;flex-shrink:0;display:block;image-rendering:pixelated;filter:drop-shadow(0 0 3px ${TIER_COLORS[tier.id]}99)">`;
     }
     let valHtml;
     if(pr._cardio){
@@ -1121,7 +1125,7 @@ function goScr(t, dir){
   if(t==='sh') renderTodaySession();
   if(t==='sw') renderWeek();
   if(t==='sp') renderPRs();
-  if(t==='sf'){ renderFriendsTab(); if(_user) { processFriendRequests(); refreshFriendProfiles(); } }
+  if(t==='sf'){ renderFriendsTab(); if(_user) processFriendRequests(); }
   if(t==='spr') renderProfileTab();
   sessionStorage.setItem('gymlog_scr',t);
   // push a history entry so back button returns to previous tab, not closes app
@@ -1150,10 +1154,16 @@ function goScr(t, dir){
 }
 
 document.querySelectorAll('.nb').forEach(b=>{
-  b.addEventListener('click',()=>{
+  b.addEventListener('click', async ()=>{
     const from = NAV_ORDER.indexOf(document.querySelector('.scr.on')?.id);
     const to   = NAV_ORDER.indexOf(b.dataset.t);
-    if(b.dataset.t==='sf') renderFriendsTab();
+    if(b.dataset.t==='sf' && _user) {
+      showSplash();
+      await refreshFriendProfiles();
+      hideSplash();
+      goScr(b.dataset.t, to > from ? 1 : to < from ? -1 : 0);
+      return;
+    }
     if(b.dataset.t==='spr') renderProfileTab();
     goScr(b.dataset.t, to > from ? 1 : to < from ? -1 : 0);
   });
@@ -1288,9 +1298,11 @@ const RANK_ICONS={
 };
 function rankIconSvg(id,color,{size=60,glow=true,opacity=1,div=1}={}){
   const imgSrc=RANK_ICONS[id]||RANK_ICONS.wood;
-  const f=glow?`filter:drop-shadow(0 0 ${Math.round(size/7)}px ${color}99)`:'';
-  const op=opacity<1?`;opacity:${opacity}`:'';
-  return `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" style="${f}${op}"><image href="${imgSrc}" x="5" y="5" width="50" height="50" style="image-rendering:pixelated"/></svg>`;
+  // snap to nearest integer multiple of 20 (source PNG is 20×21px) for pixel-perfect rendering
+  const snap = Math.max(20, Math.round(size / 20) * 20);
+  const f=glow?`filter:drop-shadow(0 0 ${Math.round(snap/5)}px ${color}99);`:'';
+  const op=opacity<1?`opacity:${opacity};`:'';
+  return `<img src="${imgSrc}" width="${snap}" height="${snap}" style="flex-shrink:0;display:block;width:${snap}px;height:${snap}px;${op}${f}image-rendering:pixelated">`;
 }
 const TIER_COLORS = {
   wood:'#8B6343',     iron:'#7A8A96',      bronze:'#C47A32',   silver:'#9AAEBB',
@@ -1616,7 +1628,7 @@ function renderBestPRs(){
     let badgeHtml='';
     if(p?.weight&&!pr._cardio){
       const{tier,div}=scoreToTierDiv(calcExScore(pr,p,name));
-      badgeHtml=`<img src="${RANK_ICONS[tier.id]}" style="width:28px;height:28px;image-rendering:pixelated;filter:drop-shadow(0 0 4px ${TIER_COLORS[tier.id]}99)">`;
+      badgeHtml=`<img src="${RANK_ICONS[tier.id]}" style="width:20px;height:20px;flex-shrink:0;display:block;image-rendering:pixelated;filter:drop-shadow(0 0 3px ${TIER_COLORS[tier.id]}99)">`;
     }
     const row = document.createElement('div');
     row.className='ex-row divr';
@@ -1847,10 +1859,15 @@ function renderWeekDay(dir){
           wrap.style.opacity='0';
           wrap.style.height='0';
           setTimeout(()=>{
+            const _p=db.profile;
+            const _prevRk=(!isCardio(ex.name)&&db.prs[ex.name]&&_p?.weight)?scoreToTierDiv(calcExScore(db.prs[ex.name],_p,ex.name)):null;
             db.schedule[dateStr]=db.schedule[dateStr].filter(e=>e.id!==ex.id);
             db.history=db.history.filter(h=>h._entryId!==ex.id);
             recomputePR(ex.name);
+            const _newRk=(!isCardio(ex.name)&&db.prs[ex.name]&&_p?.weight)?scoreToTierDiv(calcExScore(db.prs[ex.name],_p,ex.name)):null;
             persist();renderWeek();renderTodaySession();renderRankCard();renderPRs();renderBestPRs();showToast('Exercise removed');
+            if(_prevRk&&_newRk){const pi=RANK_TIERS.findIndex(t=>t.id===_prevRk.tier.id),ni=RANK_TIERS.findIndex(t=>t.id===_newRk.tier.id);if(ni<pi||(ni===pi&&_newRk.div<_prevRk.div))setTimeout(()=>showRankUp(_prevRk.tier.id,_prevRk.div,_newRk.tier.id,_newRk.div,true,ex.name),400);}
+            else if(_prevRk&&!_newRk)setTimeout(()=>showRankUp(_prevRk.tier.id,_prevRk.div,'wood',1,true,ex.name),400);
           },200);
         },500);
       };
@@ -2041,7 +2058,7 @@ function renderPRs(){
       valueHtml=`<span class="ex-w">${fmtWeight(pr.weight,name)} × ${pr.reps}</span>`;
       if(p?.weight){
         const{tier,div}=scoreToTierDiv(calcExScore(pr,p,name));
-        badgeHtml=`<img src="${RANK_ICONS[tier.id]}" style="width:28px;height:28px;image-rendering:pixelated;filter:drop-shadow(0 0 4px ${TIER_COLORS[tier.id]}99)">`;
+        badgeHtml=`<img src="${RANK_ICONS[tier.id]}" style="width:20px;height:20px;flex-shrink:0;display:block;image-rendering:pixelated;filter:drop-shadow(0 0 3px ${TIER_COLORS[tier.id]}99)">`;
       }
     }
     const row=document.createElement('div');
@@ -2178,10 +2195,15 @@ function openExPicker(dateStr, g) {
         card.style.height = card.offsetHeight + 'px';
         requestAnimationFrame(() => { card.style.height = '0'; card.style.padding = '0'; });
         setTimeout(() => {
+          const _p=db.profile;
+          const _prevRk=(!isCardio(g.name)&&db.prs[g.name]&&_p?.weight)?scoreToTierDiv(calcExScore(db.prs[g.name],_p,g.name)):null;
           db.schedule[dateStr] = (db.schedule[dateStr]||[]).filter(e => e.id !== ex.id);
           db.history = (db.history||[]).filter(h => h._entryId !== ex.id);
           recomputePR(g.name);
+          const _newRk=(!isCardio(g.name)&&db.prs[g.name]&&_p?.weight)?scoreToTierDiv(calcExScore(db.prs[g.name],_p,g.name)):null;
           persist(); renderWeek(); renderTodaySession(); renderRankCard(); renderPRs(); renderBestPRs();
+          if(_prevRk&&_newRk){const pi=RANK_TIERS.findIndex(t=>t.id===_prevRk.tier.id),ni=RANK_TIERS.findIndex(t=>t.id===_newRk.tier.id);if(ni<pi||(ni===pi&&_newRk.div<_prevRk.div))setTimeout(()=>showRankUp(_prevRk.tier.id,_prevRk.div,_newRk.tier.id,_newRk.div,true,g.name),400);}
+          else if(_prevRk&&!_newRk)setTimeout(()=>showRankUp(_prevRk.tier.id,_prevRk.div,'wood',1,true,g.name),400);
           card.remove();
           // close when 1 or fewer entries remain (picker no longer needed)
           if ((db.schedule[dateStr]||[]).filter(e => e.name === g.name).length <= 1) {
@@ -2295,7 +2317,7 @@ function buildYouVsOthers(name,p){
       <div style="height:16px;display:flex;align-items:center;justify-content:center">
         <div style="width:${dotSize}px;height:${dotSize}px;border-radius:50%;background:${isCur||isPast?c:'var(--bdr)'};opacity:${opacity};${isCur?`box-shadow:0 0 10px ${c}99`:''}"></div>
       </div>
-      <img src="${RANK_ICONS[t.id]}" style="width:16px;height:16px;opacity:${isCur?1:isPast?1:0.25};image-rendering:pixelated">
+      <img src="${RANK_ICONS[t.id]}" style="width:16px;height:16px;opacity:${isCur?1:isPast?1:0.25}">
     </div>`;
   }).join('');
   return `<div class="card" style="margin:0 0 16px;border-radius:14px;padding:16px 18px 20px">
@@ -3072,18 +3094,14 @@ applyTheme(localStorage.getItem(THEME_KEY)||'carbon');
   let fontsReady=false, authReady=false;
   function tryDismiss(){
     if(!fontsReady||!authReady) return;
-    splash.classList.add('hide');
-    setTimeout(()=>splash.remove(),600);
+    setTimeout(()=>{
+      splash.classList.add('hide');
+      setTimeout(()=>splash.remove(),600);
+    }, 500);
   }
 
   // pre-render all tabs while splash is showing
   renderTodaySession(); renderWeek(); renderPRs(); renderBestPRs(); renderRankCard(); renderFriendsTab(); renderProfileTab();
-  const last=sessionStorage.getItem('gymlog_scr');
-  if(last && last!=='sh'){
-    if(last==='sw'){weekOffset=0;selWeekDate=null;}
-    const target=document.getElementById(last);
-    if(target) goScr(last); else sessionStorage.removeItem('gymlog_scr');
-  }
 
   const fontsTimeout=setTimeout(()=>{fontsReady=true;tryDismiss();},1700);
   if(document.fonts){

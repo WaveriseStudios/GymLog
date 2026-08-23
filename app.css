@@ -154,7 +154,7 @@
 .prf3-av-wrap{position:relative;flex-shrink:0;}
 .prf3-av{width:80px;height:80px;border-radius:50%;background:var(--acc2);color:var(--acc);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:32px;font-weight:900;overflow:hidden;cursor:pointer;border:3px solid rgba(255,255,255,.3);box-shadow:0 4px 20px rgba(0,0,0,.4);}
 .prf3-av img{width:100%;height:100%;object-fit:cover;}
-.prf3-av-rank{position:absolute;bottom:-4px;right:-4px;width:28px;height:28px;image-rendering:pixelated;}
+.prf3-av-rank{position:absolute;bottom:-4px;right:-4px;width:28px;height:28px;flex-shrink:0;image-rendering:-webkit-optimize-contrast;image-rendering:crisp-edges;}
 .prf3-name{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:900;color:#fff;line-height:1;margin-top:10px;letter-spacing:-.2px;text-shadow:0 1px 8px rgba(0,0,0,.5);}
 /* stat strip */
 .prf3-stat-strip{display:flex;align-items:center;background:var(--card);border-bottom:1px solid var(--bdr);padding:16px 0;}
@@ -302,7 +302,7 @@
 #rankUpOverlay[data-mode=derank] #rankUpBg{background:radial-gradient(ellipse at 50% 35%,color-mix(in srgb,#e11d48 10%,var(--bg)),var(--bg) 68%);}
 
 /* ── SPLASH ── */
-#splash{position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;transition:opacity .6s ease;}
+#splash{position:fixed;inset:0;z-index:10000;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;transition:opacity .6s ease;}
 #splash.hide{opacity:0;pointer-events:none;}
 #splash-logo{animation:splashPop .9s cubic-bezier(.34,1.46,.64,1) both;}
 #splash-wordmark{font-family:'Barlow Condensed',sans-serif;font-size:36px;font-weight:900;letter-spacing:5px;text-transform:uppercase;color:var(--t1);animation:splashRise .7s cubic-bezier(.22,1,.36,1) .45s both;}
