@@ -584,7 +584,10 @@ function syncPublicProfile() {
 }
 
 let _svPrevTab = 'sf';
-let _friendProfileCache = {}; // uid → { heroBg, avatar } — session only
+const _FPC_KEY='gymlog_fpc';
+function _loadFPC(){try{const s=localStorage.getItem(_FPC_KEY);if(!s)return{};const p=JSON.parse(s);if(Date.now()-p._t>3600000)return{};return p;}catch{return{};}}
+function _saveFPC(c){try{localStorage.setItem(_FPC_KEY,JSON.stringify({...c,_t:Date.now()}));}catch{}}
+let _friendProfileCache=_loadFPC(); // uid → { heroBg, avatar } — persisted 1h
 
 async function refreshFriendProfiles() {
   if (!_user) return;
@@ -597,7 +600,7 @@ async function refreshFriendProfiles() {
       if (snap.exists) {
         const d = snap.data();
         _friendProfileCache[f.uid] = { heroBg: d.heroBg || null, avatar: d.avatar || null };
-        console.log('[friends] profile fetched for', f.name, '| heroBg:', !!d.heroBg, '| avatar:', !!d.avatar);
+        _saveFPC(_friendProfileCache);
       } else {
         console.warn('[friends] no profile doc for', f.name, f.uid);
       }
@@ -1162,10 +1165,8 @@ document.querySelectorAll('.nb').forEach(b=>{
     const from = NAV_ORDER.indexOf(document.querySelector('.scr.on')?.id);
     const to   = NAV_ORDER.indexOf(b.dataset.t);
     if(b.dataset.t==='sf' && _user) {
-      showSplash();
-      await refreshFriendProfiles();
-      hideSplash();
       goScr(b.dataset.t, to > from ? 1 : to < from ? -1 : 0);
+      refreshFriendProfiles();
       return;
     }
     if(b.dataset.t==='spr') renderProfileTab();
