@@ -3123,7 +3123,7 @@ applyTheme(localStorage.getItem(THEME_KEY)||'carbon');
 
   // bar completion always forces dismiss
   const barFill=document.getElementById('splash-bar-fill');
-  if(barFill) barFill.addEventListener('animationend',()=>{barDone=true;dismiss();},{once:true});
+  if(barFill) barFill.addEventListener('animationend',()=>{barDone=true;hideSplash();dismiss();},{once:true});
 
   // pre-render all tabs while splash is showing
   renderTodaySession(); renderWeek(); renderPRs(); renderBestPRs(); renderRankCard(); renderFriendsTab(); renderProfileTab();
