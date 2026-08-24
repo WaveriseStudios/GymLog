@@ -573,6 +573,7 @@ function syncPublicProfile() {
     avatar: p?.avatar || null,
     rankTier: r?.tier?.id || null,
     rankDiv: r?.div || null,
+    rankLp: r?.pct ?? null,
     prsCount: entries.length,
     workoutDays: new Set((db.history||[]).map(h=>h.day||h.date).filter(Boolean)).size,
     friendsCount: (db.friends||[]).length,
@@ -1538,9 +1539,10 @@ async function openGlobalRanking(){
       if(!d.rankTier) return;
       const ti=RANK_TIERS.findIndex(t=>t.id===d.rankTier);
       if(ti<0) return;
-      rows.push({uid:doc.id,name:d.name||'Athlete',avatar:d.avatar||null,heroBg:d.heroBg||null,rankTier:d.rankTier,rankDiv:d.rankDiv||1,step:ti*3+(d.rankDiv||1)-1,recentPRs:d.recentPRs||[],prsCount:d.prsCount,workoutDays:d.workoutDays,friendsCount:d.friendsCount});
+      const lp=d.rankLp??null;
+      rows.push({uid:doc.id,name:d.name||'Athlete',avatar:d.avatar||null,heroBg:d.heroBg||null,rankTier:d.rankTier,rankDiv:d.rankDiv||1,rankLp:lp,step:ti*3+(d.rankDiv||1)-1,recentPRs:d.recentPRs||[],prsCount:d.prsCount,workoutDays:d.workoutDays,friendsCount:d.friendsCount});
     });
-    rows.sort((a,b)=>b.step-a.step||(b.rankDiv-a.rankDiv));
+    rows.sort((a,b)=>b.step-a.step||((b.rankLp??0)-(a.rankLp??0)));
     if(_user){const mi=rows.findIndex(r=>r.uid===_user.uid);if(mi>=0){_myWorldRank=mi+1;renderGlobalRankCard();renderRankCard();renderProfileTab();}}
     _grCache=rows;
     localStorage.setItem(_GR_KEY,JSON.stringify({data:rows,_t:Date.now()}));
@@ -1592,7 +1594,7 @@ function _renderGlobalList(body,rows){
           `<img src="${RANK_ICONS[u.rankTier]}" style="width:28px;height:28px;flex-shrink:0;image-rendering:pixelated;filter:drop-shadow(0 0 4px ${color}99)">`+
           `<div>`+
             `<div class="ex-name">${u.name}</div>`+
-            `<div style="font-size:11px;color:var(--t3);margin-top:2px;font-variant-numeric:tabular-nums">#${rank} · ${label}</div>`+
+            `<div style="font-size:11px;color:var(--t3);margin-top:2px;font-variant-numeric:tabular-nums">${label}${u.rankLp!=null?' · '+u.rankLp+' LP':''}</div>`+
           `</div>`+
         `</div>`+
         `<div class="ex-nums">${right}</div>`;
