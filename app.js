@@ -1488,15 +1488,14 @@ let _myWorldRank=null;
 function renderGlobalRankCard(){
   const el=document.getElementById('globalRankCard');
   if(!el) return;
-  const worldTag=_myWorldRank?`<span style="font-size:12px;color:var(--t2)">#${_myWorldRank} in the world</span>`:'';
+  const rankNum=_myWorldRank
+    ?`<div style="font-family:'Barlow Condensed',sans-serif;font-size:32px;font-weight:900;line-height:1;color:var(--acc);font-variant-numeric:tabular-nums">#${_myWorldRank}</div>`
+    :`<div style="font-size:22px;line-height:1">🏆</div>`;
   el.innerHTML=`<div class="card" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;padding:16px 18px" onclick="openGlobalRanking()">
-    <div style="display:flex;align-items:center;gap:12px">
-      <div style="font-size:22px;line-height:1">🏆</div>
+    <div style="display:flex;align-items:center;gap:14px">
+      ${rankNum}
       <div>
-        <div style="display:flex;align-items:center;gap:8px">
-          <span style="font-weight:700;font-size:15px;color:var(--text)">Global Ranking</span>
-          ${worldTag}
-        </div>
+        <div style="font-weight:700;font-size:15px;color:var(--text)">Global Ranking</div>
         <div style="font-size:12px;color:var(--t2);margin-top:2px">See where everyone stands</div>
       </div>
     </div>
@@ -1550,7 +1549,19 @@ function _renderGlobalList(body,rows){
   if(!rows.length){body.innerHTML=`<div style="text-align:center;padding:40px 0;color:var(--t2);font-size:13px">No ranked users yet.</div>`;return;}
   const friendUids=new Set((db.friends||[]).map(f=>f.uid));
   const myUid=_user?.uid;
-  body.innerHTML=rows.map((u,i)=>{
+  // section boundaries: rank 1 starts "Top 1", rank 2 starts "Top 2", etc.
+  const BRACKETS=[1,2,3,10,25,50,100,250,500,1000];
+  const sectionFor=rank=>BRACKETS.find(b=>rank<=b)||Infinity;
+  let curSection=null;
+  let html='';
+  rows.forEach((u,i)=>{
+    const rank=i+1;
+    const sec=sectionFor(rank);
+    if(sec!==curSection){
+      curSection=sec;
+      const lbl=sec===Infinity?'Ranked':`Top ${sec}`;
+      html+=`<div style="padding:12px 14px 4px;font-size:11px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--t3)">${lbl}</div>`;
+    }
     const color=TIER_COLORS[u.rankTier]||'var(--acc)';
     const label=`${RANK_TIERS.find(t=>t.id===u.rankTier)?.label||''} ${ROMAN[(u.rankDiv||1)-1]}`;
     const icon=`<img src="${RANK_ICONS[u.rankTier]}" style="width:32px;height:32px;image-rendering:pixelated;filter:drop-shadow(0 0 4px ${color}99)">`;
@@ -1560,18 +1571,19 @@ function _renderGlobalList(body,rows){
       isMe?`<span style="font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--t2);background:var(--card2);border-radius:6px;padding:2px 6px">You</span>`:'',
       isFriend?`<span style="font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--acc);background:var(--acc2);border-radius:6px;padding:2px 6px">Friend</span>`:''
     ].filter(Boolean).join('');
-    const numStyle=i===0?'color:var(--acc);font-weight:900;font-size:15px':i<3?'color:var(--t2);font-weight:800':'color:var(--t3);font-weight:700;font-size:12px';
+    const numStyle=rank===1?'color:var(--acc);font-weight:900;font-size:15px':rank<=3?'color:var(--t2);font-weight:800':'color:var(--t3);font-weight:700;font-size:12px';
     const onclick=isMe
       ?`closeGlobalRanking();goScr('spr',1)`
       :`closeGlobalRanking();setTimeout(()=>openVisitorProfile('${u.uid}',${JSON.stringify(u.name)},null,${JSON.stringify(u.avatar)},${JSON.stringify(u.heroBg)}),300)`;
-    return `<div class="ex-row divr tap-scale" style="cursor:pointer" onclick="${onclick}">`+
+    html+=`<div class="ex-row divr tap-scale" style="cursor:pointer" onclick="${onclick}">`+
       `<div class="ex-left" style="display:flex;align-items:center;gap:12px">`+
-      `<div style="width:36px;text-align:right;flex-shrink:0;font-variant-numeric:tabular-nums;${numStyle}">#${i+1}</div>`+
+      `<div style="width:36px;text-align:right;flex-shrink:0;font-variant-numeric:tabular-nums;${numStyle}">#${rank}</div>`+
       `${icon}`+
       `<div><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><span style="font-weight:700;font-size:14px;color:var(--text)">${u.name}</span>${tags}</div>`+
       `<div style="font-size:12px;color:var(--t2);margin-top:1px">${label}</div></div>`+
       `</div></div>`;
-  }).join('');
+  });
+  body.innerHTML=html;
 }
 
 function closeGlobalRanking(){
