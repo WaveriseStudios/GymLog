@@ -1406,7 +1406,7 @@ function calcExScore(pr,profile,name){
     const added=pr.weight||0;
     const reps=Math.max(pr.reps||1,1);
     const f=BW_FRACTION[name]??1;
-    const xEff=reps*(1+added/bw)*f;
+    const xEff=reps*(f+added/bw);
     const t=Math.min(1,Math.max(0,(Math.log(1+xEff)-BW_LOG_LN_B)/BW_LOG_DENOM));
     return Math.pow(t,BW_LOG_EXP)*21*ageMult*setsBonus;
   }
