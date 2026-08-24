@@ -1524,7 +1524,8 @@ async function openGlobalRanking(){
   const cur=document.querySelector('.scr.on');
   const gr=document.getElementById('gr');
   cur?.classList.remove('on');
-  gr.classList.add('on');
+  gr.classList.add('on','scr-er');
+  gr.addEventListener('animationend',()=>gr.classList.remove('scr-er'),{once:true});
   history.pushState({scr:'gr'},'','');
   const stored=_grCache||(()=>{try{const s=localStorage.getItem(_GR_KEY);if(!s)return null;const p=JSON.parse(s);return Date.now()-p._t<300000?p.data:null;}catch{return null;}})();
   if(stored){_renderGlobalList(body,stored);}
@@ -1579,7 +1580,7 @@ function _renderGlobalList(body,rows){
       const isFriend=friendUids.has(u.uid);
       const onclick=isMe
         ?`closeGlobalRanking();goScr('spr',1)`
-        :`closeGlobalRanking();setTimeout(()=>openVisitorProfile('${u.uid}',${JSON.stringify(u.name)},null,${JSON.stringify(u.avatar)},${JSON.stringify(u.heroBg)}),300)`;
+        :`openVisitorProfile('${u.uid}',${JSON.stringify(u.name)},null,${JSON.stringify(u.avatar)},${JSON.stringify(u.heroBg)})`;
       const row=document.createElement('div');
       row.className='ex-row divr tap-scale';
       row.style.cursor='pointer';
