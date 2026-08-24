@@ -1482,13 +1482,11 @@ function renderRankCard(){
 }
 
 /* ── GLOBAL RANKING ── */
-let _myWorldRank=null;
+let _myWorldRank=(()=>{try{const s=localStorage.getItem('gymlog_myrank');if(!s)return null;const p=JSON.parse(s);return Date.now()-p._t<3600000?p.rank:null;}catch{return null;}})();
 
 function renderGlobalRankCard(){
   const el=document.getElementById('globalRankCard');
   if(!el) return;
-  // try to load rank from cache if not yet set
-  if(!_myWorldRank&&_user){try{const s=localStorage.getItem(_GR_KEY);if(s){const p=JSON.parse(s);if(Date.now()-p._t<300000){const mi=p.data?.findIndex(r=>r.uid===_user.uid);if(mi>=0)_myWorldRank=mi+1;}}}catch{}}
   const rankNum=_myWorldRank
     ?`<div style="font-family:'Barlow Condensed',sans-serif;font-size:32px;font-weight:900;line-height:1;color:var(--acc);font-variant-numeric:tabular-nums">#${_myWorldRank}</div>`
     :`<div style="font-size:22px;line-height:1">🏆</div>`;
@@ -1505,6 +1503,9 @@ function renderGlobalRankCard(){
 }
 
 const _GR_KEY='gymlog_globalrank';
+const _MY_RANK_KEY='gymlog_myrank';
+function _saveMyRank(r){try{localStorage.setItem(_MY_RANK_KEY,JSON.stringify({rank:r,_t:Date.now()}));}catch{}}
+function _loadMyRank(){try{const s=localStorage.getItem(_MY_RANK_KEY);if(!s)return null;const p=JSON.parse(s);return Date.now()-p._t<3600000?p.rank:null;}catch{return null;}}
 let _grCache=null;
 let _grPrevScr=null;
 
@@ -1541,7 +1542,7 @@ async function openGlobalRanking(){
       rows.push({uid:doc.id,name:d.name||'Athlete',avatar:d.avatar||null,heroBg:d.heroBg||null,rankTier:d.rankTier,rankDiv:d.rankDiv||1,rankLp:lp,step:ti*3+(d.rankDiv||1)-1,recentPRs:d.recentPRs||[],prsCount:d.prsCount,workoutDays:d.workoutDays,friendsCount:d.friendsCount});
     });
     rows.sort((a,b)=>b.step-a.step||((b.rankLp??0)-(a.rankLp??0)));
-    if(_user){const mi=rows.findIndex(r=>r.uid===_user.uid);if(mi>=0){_myWorldRank=mi+1;renderGlobalRankCard();renderRankCard();renderProfileTab();}}
+    if(_user){const mi=rows.findIndex(r=>r.uid===_user.uid);if(mi>=0){_myWorldRank=mi+1;_saveMyRank(_myWorldRank);renderGlobalRankCard();renderRankCard();renderProfileTab();}}
     _grCache=rows;
     localStorage.setItem(_GR_KEY,JSON.stringify({data:rows,_t:Date.now()}));
     _renderGlobalList(body,rows);
