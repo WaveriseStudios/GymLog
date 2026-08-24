@@ -1549,41 +1549,61 @@ function _renderGlobalList(body,rows){
   if(!rows.length){body.innerHTML=`<div style="text-align:center;padding:40px 0;color:var(--t2);font-size:13px">No ranked users yet.</div>`;return;}
   const friendUids=new Set((db.friends||[]).map(f=>f.uid));
   const myUid=_user?.uid;
-  // section boundaries: rank 1 starts "Top 1", rank 2 starts "Top 2", etc.
   const BRACKETS=[1,2,3,10,25,50,100,250,500,1000];
   const sectionFor=rank=>BRACKETS.find(b=>rank<=b)||Infinity;
-  let curSection=null;
-  let html='';
+  // group rows by section
+  const sections=[];
   rows.forEach((u,i)=>{
     const rank=i+1;
     const sec=sectionFor(rank);
-    if(sec!==curSection){
-      curSection=sec;
-      const lbl=sec===Infinity?'Ranked':`Top ${sec}`;
-      html+=`<div style="padding:12px 14px 4px;font-size:11px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--t3)">${lbl}</div>`;
-    }
-    const color=TIER_COLORS[u.rankTier]||'var(--acc)';
-    const label=`${RANK_TIERS.find(t=>t.id===u.rankTier)?.label||''} ${ROMAN[(u.rankDiv||1)-1]}`;
-    const icon=`<img src="${RANK_ICONS[u.rankTier]}" style="width:32px;height:32px;image-rendering:pixelated;filter:drop-shadow(0 0 4px ${color}99)">`;
-    const isMe=u.uid===myUid;
-    const isFriend=friendUids.has(u.uid);
-    const tags=[
-      isMe?`<span style="font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--t2);background:var(--card2);border-radius:6px;padding:2px 6px">You</span>`:'',
-      isFriend?`<span style="font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--acc);background:var(--acc2);border-radius:6px;padding:2px 6px">Friend</span>`:''
-    ].filter(Boolean).join('');
-    const numStyle=rank===1?'color:var(--acc);font-weight:900;font-size:15px':rank<=3?'color:var(--t2);font-weight:800':'color:var(--t3);font-weight:700;font-size:12px';
-    const onclick=isMe
-      ?`closeGlobalRanking();goScr('spr',1)`
-      :`closeGlobalRanking();setTimeout(()=>openVisitorProfile('${u.uid}',${JSON.stringify(u.name)},null,${JSON.stringify(u.avatar)},${JSON.stringify(u.heroBg)}),300)`;
-    html+=`<div class="ex-row divr tap-scale" style="cursor:pointer" onclick="${onclick}">`+
-      `<div class="ex-left" style="display:flex;align-items:center;gap:12px">`+
-      `<div style="width:36px;text-align:right;flex-shrink:0;font-variant-numeric:tabular-nums;${numStyle}">#${rank}</div>`+
-      `${icon}`+
-      `<div><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><span style="font-weight:700;font-size:14px;color:var(--text)">${u.name}</span>${tags}</div>`+
-      `<div style="font-size:12px;color:var(--t2);margin-top:1px">${label}</div></div>`+
-      `</div></div>`;
+    if(!sections.length||sections[sections.length-1].sec!==sec) sections.push({sec,label:sec===Infinity?'Ranked':`Top ${sec}`,users:[]});
+    sections[sections.length-1].users.push({u,rank});
   });
-  body.innerHTML=html;
+  const frag=document.createDocumentFragment();
+  sections.forEach(({label,users})=>{
+    const hd=document.createElement('div');
+    hd.className='card-hd';
+    hd.textContent=label;
+    frag.appendChild(hd);
+    const card=document.createElement('div');
+    card.className='card';
+    card.style.margin='0 16px';
+    card.style.overflow='hidden';
+    users.forEach(({u,rank})=>{
+      const color=TIER_COLORS[u.rankTier]||'var(--acc)';
+      const label=`${RANK_TIERS.find(t=>t.id===u.rankTier)?.label||''} ${ROMAN[(u.rankDiv||1)-1]}`;
+      const isMe=u.uid===myUid;
+      const isFriend=friendUids.has(u.uid);
+      const numStyle=rank===1?`color:var(--acc);font-weight:900;font-size:15px`:rank<=3?`color:var(--t2);font-weight:800`:`color:var(--t3);font-weight:600;font-size:12px`;
+      const tags=[
+        isMe?`<span style="font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--t2);background:var(--card2);border-radius:6px;padding:2px 6px">You</span>`:'',
+        isFriend?`<span style="font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--acc);background:var(--acc2);border-radius:6px;padding:2px 6px">Friend</span>`:''
+      ].filter(Boolean).join('');
+      const onclick=isMe
+        ?`closeGlobalRanking();goScr('spr',1)`
+        :`closeGlobalRanking();setTimeout(()=>openVisitorProfile('${u.uid}',${JSON.stringify(u.name)},null,${JSON.stringify(u.avatar)},${JSON.stringify(u.heroBg)}),300)`;
+      const row=document.createElement('div');
+      row.className='ex-row divr tap-scale';
+      row.style.cursor='pointer';
+      row.setAttribute('onclick',onclick);
+      row.innerHTML=
+        `<div class="ex-left" style="gap:10px">`+
+          `<div style="width:32px;text-align:right;flex-shrink:0;font-variant-numeric:tabular-nums;${numStyle}">#${rank}</div>`+
+          `<img src="${RANK_ICONS[u.rankTier]}" style="width:28px;height:28px;flex-shrink:0;image-rendering:pixelated;filter:drop-shadow(0 0 4px ${color}99)">`+
+          `<div>`+
+            `<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><span class="ex-name">${u.name}</span>${tags}</div>`+
+            `<div style="font-size:12px;color:var(--t2)">${label}</div>`+
+          `</div>`+
+        `</div>`;
+      card.appendChild(row);
+    });
+    frag.appendChild(card);
+    const gap=document.createElement('div');
+    gap.style.height='14px';
+    frag.appendChild(gap);
+  });
+  body.innerHTML='';
+  body.appendChild(frag);
 }
 
 function closeGlobalRanking(){
