@@ -172,8 +172,8 @@ _auth.onAuthStateChanged(async user => {
     renderProfileTab();
     renderRankCard();
     renderGlobalRankCard();
-    // silently fetch GR list to get world rank if not cached
-    if(!_myWorldRank) _fetchMyWorldRank();
+    // always refresh world rank on sign-in
+    _fetchMyWorldRank();
     renderPRs();
     renderBestPRs();
     renderTodaySession();
@@ -1521,11 +1521,15 @@ async function _fetchMyWorldRank(){
       if(!d.rankTier) return;
       const ti=RANK_TIERS.findIndex(t=>t.id===d.rankTier);
       if(ti<0) return;
-      rows.push({uid:doc.id,step:ti*3+(d.rankDiv||1)-1,rankLp:d.rankLp??0});
+      const lp=d.rankLp??null;
+      rows.push({uid:doc.id,name:d.name||'Athlete',avatar:d.avatar||null,heroBg:d.heroBg||null,rankTier:d.rankTier,rankDiv:d.rankDiv||1,rankLp:lp,step:ti*3+(d.rankDiv||1)-1,recentPRs:d.recentPRs||[],prsCount:d.prsCount,workoutDays:d.workoutDays,friendsCount:d.friendsCount});
     });
     rows.sort((a,b)=>b.step-a.step||((b.rankLp??0)-(a.rankLp??0)));
+    _grCache=rows;
+    localStorage.setItem(_GR_KEY,JSON.stringify({data:rows,_t:Date.now()}));
     const mi=rows.findIndex(r=>r.uid===_user.uid);
-    if(mi>=0){_myWorldRank=mi+1;_saveMyRank(_myWorldRank);renderGlobalRankCard();renderRankCard();renderProfileTab();}
+    if(mi>=0){_myWorldRank=mi+1;_saveMyRank(_myWorldRank);}
+    renderGlobalRankCard();renderRankCard();renderProfileTab();
   }catch{}
 }
 
