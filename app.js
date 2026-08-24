@@ -1474,8 +1474,9 @@ function renderRankCard(){
         <div class="rank-sub">${subtitle}</div>
         <div class="rank-name">${curLabel}</div>
         ${worldLine}
+        <div class="rank-percentile" style="margin-bottom:4px;font-variant-numeric:tabular-nums">${pct} LP</div>
         <div class="rank-bar-wrap"><div class="rank-bar-fill" style="width:${pct}%"></div></div>
-        <div class="rank-bar-lbls"><span>${curLabel}</span><span style="font-variant-numeric:tabular-nums">${pct} LP</span><span>${nextLabel}</span></div>
+        <div class="rank-bar-lbls"><span>${curLabel}</span><span>${nextLabel}</span></div>
       </div>
     </div>
   </div>`;
