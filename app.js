@@ -1373,6 +1373,13 @@ const PER_ARM_EX = new Set([
 function isDumbbell(name){return PER_ARM_EX.has(name);}
 function fmtExName(name){return name.replace('Dumbbell ','DB ');}
 const BW_FRACTION   = {'Push-up':0.65,'Plank':0.65,'Hanging Leg Raise':0.35,'Leg Raise':0.35,'Toes to Bar':0.35,'Dragon Flag':0.80,'Crunch':0.15,'Sit-up':0.20};
+// Bodyweight log-curve constants (inspired by log-normalization formula)
+// t = (ln(1+x) - ln(1+B)) / (ln(1+O) - ln(1+B)), score = t^EXP × 21
+const BW_LOG_B   = 1;    // beginner benchmark (1 rep = floor)
+const BW_LOG_O   = 45;   // olympian benchmark (45 effective reps)
+const BW_LOG_EXP = 2.5;  // steepness (higher = harder at top end)
+const BW_LOG_LN_B = Math.log(1 + BW_LOG_B);
+const BW_LOG_DENOM = Math.log(1 + BW_LOG_O) - BW_LOG_LN_B;
 
 function calcLBM(weight,height,gender){
   if(!weight||!height) return Math.max((weight||70)*0.8,20);
@@ -1391,13 +1398,20 @@ function calcEpley(weight,reps,cap){
 function calcExScore(pr,profile,name){
   const lbm=calcLBM(profile.weight,profile.height||170,profile.gender||'m');
   const coeff=EX_COEFF[name]??0.70;
-  let base,cap;
-  if(BODYWEIGHT_EX.has(name)){
-    const f=BW_FRACTION[name]??1;
-    base=(profile.weight||0)*f+(pr.weight||0);cap=0;
-  }else{base=(pr.weight||0)*(isDumbbell(name)?2:1);cap=30;}
+  const lbmNorm=Math.pow(Math.max(lbm,20),0.667);
   const setsBonus=1+0.08*Math.log(Math.max(pr.sets||1,1));
-  return(calcEpley(base,pr.reps,cap)/(Math.pow(Math.max(lbm,20),0.667)*coeff))*calcAgeMult(profile.age)*setsBonus;
+  const ageMult=calcAgeMult(profile.age);
+  if(BODYWEIGHT_EX.has(name)){
+    const bw=profile.weight||70;
+    const added=pr.weight||0;
+    const reps=Math.max(pr.reps||1,1);
+    const f=BW_FRACTION[name]??1;
+    const xEff=reps*(1+added/bw)*f;
+    const t=Math.min(1,Math.max(0,(Math.log(1+xEff)-BW_LOG_LN_B)/BW_LOG_DENOM));
+    return Math.pow(t,BW_LOG_EXP)*21*ageMult*setsBonus;
+  }
+  const base=(pr.weight||0)*(isDumbbell(name)?2:1);
+  return(calcEpley(base,pr.reps,30)/(lbmNorm*coeff))*ageMult*setsBonus;
 }
 function scoreToTierDiv(score){
   let idx=0;
@@ -2056,7 +2070,7 @@ function renderWeekDay(dir){
             db.history=db.history.filter(h=>h._entryId!==ex.id);
             recomputePR(ex.name);
             const _newRk=(!isCardio(ex.name)&&db.prs[ex.name]&&_p?.weight)?scoreToTierDiv(calcExScore(db.prs[ex.name],_p,ex.name)):null;
-            persist();renderWeek();renderTodaySession();renderRankCard();renderPRs();renderBestPRs();showToast('Exercise removed');
+            persist();renderWeek();renderTodaySession();renderRankCard();renderPRs();renderBestPRs();showToast('Exercise removed');syncPublicProfile();_fetchMyWorldRank();
             if(_prevRk&&_newRk){const pi=RANK_TIERS.findIndex(t=>t.id===_prevRk.tier.id),ni=RANK_TIERS.findIndex(t=>t.id===_newRk.tier.id);if(ni<pi||(ni===pi&&_newRk.div<_prevRk.div))setTimeout(()=>showRankUp(_prevRk.tier.id,_prevRk.div,_newRk.tier.id,_newRk.div,true,ex.name),400);}
             else if(_prevRk&&!_newRk)setTimeout(()=>showRankUp(_prevRk.tier.id,_prevRk.div,'wood',1,true,ex.name),400);
           },200);
@@ -2394,7 +2408,7 @@ function openExPicker(dateStr, g) {
           db.history = (db.history||[]).filter(h => h._entryId !== ex.id);
           recomputePR(g.name);
           const _newRk=(!isCardio(g.name)&&db.prs[g.name]&&_p?.weight)?scoreToTierDiv(calcExScore(db.prs[g.name],_p,g.name)):null;
-          persist(); renderWeek(); renderTodaySession(); renderRankCard(); renderPRs(); renderBestPRs();
+          persist(); renderWeek(); renderTodaySession(); renderRankCard(); renderPRs(); renderBestPRs(); syncPublicProfile(); _fetchMyWorldRank();
           if(_prevRk&&_newRk){const pi=RANK_TIERS.findIndex(t=>t.id===_prevRk.tier.id),ni=RANK_TIERS.findIndex(t=>t.id===_newRk.tier.id);if(ni<pi||(ni===pi&&_newRk.div<_prevRk.div))setTimeout(()=>showRankUp(_prevRk.tier.id,_prevRk.div,_newRk.tier.id,_newRk.div,true,g.name),400);}
           else if(_prevRk&&!_newRk)setTimeout(()=>showRankUp(_prevRk.tier.id,_prevRk.div,'wood',1,true,g.name),400);
           card.remove();
@@ -2921,6 +2935,8 @@ document.getElementById('exSave').addEventListener('click',()=>{
   recomputePR(name);
   if(oldName&&oldName!==name) recomputePR(oldName);
   persist();
+  syncPublicProfile();
+  _fetchMyWorldRank();
   closeExModal();
   renderTodaySession();
   renderWeek();
