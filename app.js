@@ -1574,11 +1574,6 @@ function _renderGlobalList(body,rows){
       const label=`${RANK_TIERS.find(t=>t.id===u.rankTier)?.label||''} ${ROMAN[(u.rankDiv||1)-1]}`;
       const isMe=u.uid===myUid;
       const isFriend=friendUids.has(u.uid);
-      const numStyle=rank===1?`color:var(--acc);font-weight:900;font-size:15px`:rank<=3?`color:var(--t2);font-weight:800`:`color:var(--t3);font-weight:600;font-size:12px`;
-      const tags=[
-        isMe?`<span style="font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--t2);background:var(--card2);border-radius:6px;padding:2px 6px">You</span>`:'',
-        isFriend?`<span style="font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--acc);background:var(--acc2);border-radius:6px;padding:2px 6px">Friend</span>`:''
-      ].filter(Boolean).join('');
       const onclick=isMe
         ?`closeGlobalRanking();goScr('spr',1)`
         :`closeGlobalRanking();setTimeout(()=>openVisitorProfile('${u.uid}',${JSON.stringify(u.name)},null,${JSON.stringify(u.avatar)},${JSON.stringify(u.heroBg)}),300)`;
@@ -1586,15 +1581,16 @@ function _renderGlobalList(body,rows){
       row.className='ex-row divr tap-scale';
       row.style.cursor='pointer';
       row.setAttribute('onclick',onclick);
+      const right=isMe?`<span class="ex-w">You</span>`:isFriend?`<span class="ex-w">Friend</span>`:'';;
       row.innerHTML=
-        `<div class="ex-left" style="gap:10px">`+
-          `<div style="width:32px;text-align:right;flex-shrink:0;font-variant-numeric:tabular-nums;${numStyle}">#${rank}</div>`+
+        `<div class="ex-left" style="display:flex;align-items:center;gap:10px">`+
           `<img src="${RANK_ICONS[u.rankTier]}" style="width:28px;height:28px;flex-shrink:0;image-rendering:pixelated;filter:drop-shadow(0 0 4px ${color}99)">`+
           `<div>`+
-            `<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><span class="ex-name">${u.name}</span>${tags}</div>`+
-            `<div style="font-size:12px;color:var(--t2)">${label}</div>`+
+            `<div class="ex-name">${u.name}</div>`+
+            `<div style="font-size:11px;color:var(--t3);margin-top:2px;font-variant-numeric:tabular-nums">#${rank} · ${label}</div>`+
           `</div>`+
-        `</div>`;
+        `</div>`+
+        `<div class="ex-nums">${right}</div>`;
       card.appendChild(row);
     });
     frag.appendChild(card);
