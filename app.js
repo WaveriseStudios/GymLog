@@ -1302,7 +1302,7 @@ const RANK_TIERS = [
   {id:'amethyst', label:'Amethyst', threshold:11.5},
   {id:'emerald',  label:'Emerald',  threshold:14.0},
   {id:'ruby',     label:'Ruby',     threshold:17.0},
-  {id:'mythril',  label:'Mythril',  threshold:21.0},
+  {id:'iridium',  label:'Iridium',  threshold:21.0},
 ];
 const ROMAN = ['I','II','III'];
 const RANK_ICONS={
@@ -1317,7 +1317,7 @@ const RANK_ICONS={
   amethyst: 'Icons/rank_amethyst.png',
   emerald:  'Icons/rank_emerald.png',
   ruby:     'Icons/rank_ruby.png',
-  mythril:  'Icons/rank_mythril.png',
+  iridium:  'Icons/rank_iridium.png',
 };
 function rankIconSvg(id,color,{size=60,glow=true,opacity=1,div=1}={}){
   const imgSrc=RANK_ICONS[id]||RANK_ICONS.wood;
@@ -1330,7 +1330,7 @@ function rankIconSvg(id,color,{size=60,glow=true,opacity=1,div=1}={}){
 const TIER_COLORS = {
   wood:'#8B6343',     iron:'#7A8A96',      bronze:'#C47A32',   silver:'#9AAEBB',
   gold:'#CFA020',     platinum:'#94A3B8',  sapphire:'#2563EB', diamond:'#67E8F9',
-  amethyst:'#F472B6', emerald:'#10B981',   ruby:'#E11D48',     mythril:'#9333EA',
+  amethyst:'#F472B6', emerald:'#10B981',   ruby:'#E11D48',     iridium:'#F97316',
 };
 const EX_COEFF = {
   // Chest
@@ -1465,7 +1465,7 @@ function renderRankCard(){
   const{tier,div,pct,nextTier,nextDiv,isMaxDiv,count}=r;
   const color=TIER_COLORS[tier.id];
   const curLabel=`${tier.label} ${ROMAN[div-1]}`;
-  const nextLabel=isMaxDiv?'Mythril III · Max':div===3?`${nextTier.label} I`:`${tier.label} ${ROMAN[div]}`;
+  const nextLabel=isMaxDiv?'Iridium III · Max':div===3?`${nextTier.label} I`:`${tier.label} ${ROMAN[div]}`;
   const subtitle=count>0?`Based on ${count} exercise${count!==1?'s':''}`:'Log exercises to rank up';
   el.innerHTML=`<div class="card" style="cursor:pointer" onclick="openRankBreakdown()">
     <div class="rank-card" style="--tc:${color}">
@@ -1489,8 +1489,10 @@ let _myWorldRank=(()=>{try{const s=localStorage.getItem('gymlog_myrank');if(!s)r
 function renderGlobalRankCard(){
   const el=document.getElementById('globalRankCard');
   if(!el) return;
+  const r=calcOverallRank();
+  const rankColor=r?TIER_COLORS[r.tier.id]||'var(--acc)':'var(--acc)';
   const rankNum=_myWorldRank
-    ?`<div style="font-family:'Barlow Condensed',sans-serif;font-size:32px;font-weight:900;line-height:1;color:var(--acc);font-variant-numeric:tabular-nums">#${_myWorldRank}</div>`
+    ?`<div style="font-family:'Barlow Condensed',sans-serif;font-size:32px;font-weight:900;line-height:1;color:${rankColor};font-variant-numeric:tabular-nums">#${_myWorldRank}</div>`
     :`<div style="font-size:22px;line-height:1">🏆</div>`;
   el.innerHTML=`<div class="card" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;padding:16px 18px" onclick="openGlobalRanking()">
     <div style="display:flex;align-items:center;gap:14px">
@@ -1644,7 +1646,7 @@ function closeGlobalRanking(){
 }
 
 /* ── RANK BREAKDOWN ── */
-// 12 tiers × 3 divs = 36 steps (Iron I … Mythril III)
+// 12 tiers × 3 divs = 36 steps (Iron I … Iridium III)
 const STEP_PERCENTILE=[2,4,6,9,12,16,20,25,30,36,42,48,54,60,65,70,74,78,81,83,85,87,89,91,92.5,94,95.5,97,97.5,98,98.5,99,99.3,99.5,99.7,99.8];
 const EX_MUSCLE={
   'Bench Press':'Chest','Incline Bench Press':'Chest','Decline Bench Press':'Chest',
@@ -1775,7 +1777,7 @@ const DAY_KEYS  = ['mon','tue','wed','thu','fri','sat','sun'];
 const DAY_SHORT = ['MON','TUE','WED','THU','FRI','SAT','SUN'];
 const DAY_LONG  = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 const LETTERS   = ['M','T','W','T','F','S','S'];
-const TIER_SHORT = {wood:'Wood',iron:'Iron',bronze:'Brz',silver:'Slv',gold:'Gold',platinum:'Plat',sapphire:'Sph',diamond:'Dia',amethyst:'Amy',emerald:'Emr',ruby:'Ruby',mythril:'Mythril'};
+const TIER_SHORT = {wood:'Wood',iron:'Iron',bronze:'Brz',silver:'Slv',gold:'Gold',platinum:'Plat',sapphire:'Sph',diamond:'Dia',amethyst:'Amy',emerald:'Emr',ruby:'Ruby',iridium:'Iridium'};
 
 function todayKey(){return DAY_KEYS[[6,0,1,2,3,4,5][new Date().getDay()]];}
 function uid(){return Math.random().toString(36).slice(2)+Date.now().toString(36);}
