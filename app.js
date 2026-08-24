@@ -1550,7 +1550,7 @@ function _renderGlobalList(body,rows){
     const onclick=clickable?`closeGlobalRanking();setTimeout(()=>openVisitorProfile('${u.uid}',${JSON.stringify(u.name)},null,${JSON.stringify(u.avatar)},${JSON.stringify(u.heroBg)}),300)`:'';
     return `<div class="ex-row divr${clickable?' tap-scale':''}" style="cursor:${clickable?'pointer':'default'}"${onclick?` onclick="${onclick}"`:''}>`+
       `<div class="ex-left" style="display:flex;align-items:center;gap:12px">`+
-      `<div style="min-width:28px;text-align:center;${numStyle}">#${i+1}</div>`+
+      `<div style="width:36px;text-align:right;flex-shrink:0;font-variant-numeric:tabular-nums;${numStyle}">#${i+1}</div>`+
       `${icon}`+
       `<div><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><span style="font-weight:700;font-size:14px;color:var(--text)">${u.name}</span>${tags}</div>`+
       `<div style="font-size:12px;color:var(--t2);margin-top:1px">${label}</div></div>`+
@@ -3214,29 +3214,27 @@ applyTheme(localStorage.getItem(THEME_KEY)||'carbon');
   document.getElementById('splash-logo').innerHTML=rankIconSvg(r?r.tier.id:'wood',color,{size:140,glow:true,div:r?r.div:1});
   document.getElementById('splash-wordmark').textContent=rankLabel;
 
-  let fontsReady=false, authReady=false, barDone=false;
+  let authReady=false, barDone=false;
   function dismiss(){
     splash.classList.add('hide');
     setTimeout(()=>splash.remove(),600);
   }
+  // dismiss only when BOTH bar is done AND auth resolved (or no account)
   function tryDismiss(){
-    if(barDone||(fontsReady&&authReady)) dismiss();
+    if(barDone&&authReady) dismiss();
   }
 
-  // bar completion always forces dismiss
   const barFill=document.getElementById('splash-bar-fill');
   if(barFill){
     barFill.addEventListener('animationstart',()=>{hideSplash();_hideAuthLoader();},{once:true});
-    barFill.addEventListener('animationend',()=>{barDone=true;dismiss();},{once:true});
+    barFill.addEventListener('animationend',()=>{barDone=true;tryDismiss();},{once:true});
+  } else {
+    // no bar (shouldn't happen) — fall through immediately
+    barDone=true;
   }
 
   // pre-render all tabs while splash is showing
   renderTodaySession(); renderWeek(); renderPRs(); renderBestPRs(); renderRankCard(); renderGlobalRankCard(); renderFriendsTab(); renderProfileTab();
-
-  const fontsTimeout=setTimeout(()=>{fontsReady=true;tryDismiss();},1700);
-  if(document.fonts){
-    document.fonts.ready.then(()=>{clearTimeout(fontsTimeout);setTimeout(()=>{fontsReady=true;tryDismiss();},400);});
-  }
 
   // wait for Firebase auth to resolve before dismissing
   const unsub=_auth.onAuthStateChanged(()=>{
