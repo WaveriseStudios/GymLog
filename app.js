@@ -172,6 +172,8 @@ _auth.onAuthStateChanged(async user => {
     renderProfileTab();
     renderRankCard();
     renderGlobalRankCard();
+    // silently fetch GR list to get world rank if not cached
+    if(!_myWorldRank) _fetchMyWorldRank();
     renderPRs();
     renderBestPRs();
     renderTodaySession();
@@ -1508,6 +1510,24 @@ function _saveMyRank(r){try{localStorage.setItem(_MY_RANK_KEY,JSON.stringify({ra
 function _loadMyRank(){try{const s=localStorage.getItem(_MY_RANK_KEY);if(!s)return null;const p=JSON.parse(s);return Date.now()-p._t<3600000?p.rank:null;}catch{return null;}}
 let _grCache=null;
 let _grPrevScr=null;
+
+async function _fetchMyWorldRank(){
+  if(!_user) return;
+  try{
+    const snap=await _profilesCol().get();
+    const rows=[];
+    snap.forEach(doc=>{
+      const d=doc.data();
+      if(!d.rankTier) return;
+      const ti=RANK_TIERS.findIndex(t=>t.id===d.rankTier);
+      if(ti<0) return;
+      rows.push({uid:doc.id,step:ti*3+(d.rankDiv||1)-1,rankLp:d.rankLp??0});
+    });
+    rows.sort((a,b)=>b.step-a.step||((b.rankLp??0)-(a.rankLp??0)));
+    const mi=rows.findIndex(r=>r.uid===_user.uid);
+    if(mi>=0){_myWorldRank=mi+1;_saveMyRank(_myWorldRank);renderGlobalRankCard();renderRankCard();renderProfileTab();}
+  }catch{}
+}
 
 function _grFilter(q){
   if(!_grCache) return;
