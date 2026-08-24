@@ -155,11 +155,9 @@
 
   <!-- GLOBAL RANKING PAGE -->
   <div class="scr" id="gr">
-    <div class="scr-hd" style="display:flex;align-items:center;gap:10px">
-      <button onclick="closeGlobalRanking()" style="background:none;border:none;padding:0 4px 0 0;cursor:pointer;color:var(--text);font-size:22px;line-height:1;flex-shrink:0">‹</button>
-      <h1 style="margin:0">Global Ranking</h1>
-    </div>
-    <div class="sb" id="globalRankBody"></div>
+    <div class="scr-hd"><h1>Global Ranking</h1></div>
+    <div style="padding:0 14px 8px"><input class="ex-search-inp" id="grSearch" type="text" placeholder="Search players…" autocomplete="off" autocorrect="off" spellcheck="false" oninput="_grFilter(this.value)" style="width:100%;box-sizing:border-box"></div>
+    <div class="sb" id="globalRankBody" style="padding-top:4px"></div>
   </div>
 
   <!-- NAV -->

@@ -1168,6 +1168,12 @@ function goScr(t, dir){
 
 document.querySelectorAll('.nb').forEach(b=>{
   b.addEventListener('click', async ()=>{
+    // if GR page is open, close it and navigate to the tapped tab
+    if(document.getElementById('gr')?.classList.contains('on')){
+      _grPrevScr=b.dataset.t;
+      closeGlobalRanking();
+      return;
+    }
     const from = NAV_ORDER.indexOf(document.querySelector('.scr.on')?.id);
     const to   = NAV_ORDER.indexOf(b.dataset.t);
     if(b.dataset.t==='sf' && _user) {
@@ -1502,8 +1508,17 @@ const _GR_KEY='gymlog_globalrank';
 let _grCache=null;
 let _grPrevScr=null;
 
+function _grFilter(q){
+  if(!_grCache) return;
+  const body=document.getElementById('globalRankBody');
+  const filtered=q?_grCache.filter(u=>u.name.toLowerCase().includes(q.toLowerCase())):_grCache;
+  _renderGlobalList(body,filtered);
+}
+
 async function openGlobalRanking(){
   const body=document.getElementById('globalRankBody');
+  const srch=document.getElementById('grSearch');
+  if(srch) srch.value='';
   _grPrevScr=document.querySelector('.scr.on')?.id||'sh';
   const cur=document.querySelector('.scr.on');
   const gr=document.getElementById('gr');
@@ -1546,9 +1561,10 @@ function _renderGlobalList(body,rows){
       isFriend?`<span style="font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--acc);background:var(--acc2);border-radius:6px;padding:2px 6px">Friend</span>`:''
     ].filter(Boolean).join('');
     const numStyle=i===0?'color:var(--acc);font-weight:900;font-size:15px':i<3?'color:var(--t2);font-weight:800':'color:var(--t3);font-weight:700;font-size:12px';
-    const clickable=!isMe;
-    const onclick=clickable?`closeGlobalRanking();setTimeout(()=>openVisitorProfile('${u.uid}',${JSON.stringify(u.name)},null,${JSON.stringify(u.avatar)},${JSON.stringify(u.heroBg)}),300)`:'';
-    return `<div class="ex-row divr${clickable?' tap-scale':''}" style="cursor:${clickable?'pointer':'default'}"${onclick?` onclick="${onclick}"`:''}>`+
+    const onclick=isMe
+      ?`closeGlobalRanking();goScr('spr',1)`
+      :`closeGlobalRanking();setTimeout(()=>openVisitorProfile('${u.uid}',${JSON.stringify(u.name)},null,${JSON.stringify(u.avatar)},${JSON.stringify(u.heroBg)}),300)`;
+    return `<div class="ex-row divr tap-scale" style="cursor:pointer" onclick="${onclick}">`+
       `<div class="ex-left" style="display:flex;align-items:center;gap:12px">`+
       `<div style="width:36px;text-align:right;flex-shrink:0;font-variant-numeric:tabular-nums;${numStyle}">#${i+1}</div>`+
       `${icon}`+
@@ -3236,9 +3252,14 @@ applyTheme(localStorage.getItem(THEME_KEY)||'carbon');
   // pre-render all tabs while splash is showing
   renderTodaySession(); renderWeek(); renderPRs(); renderBestPRs(); renderRankCard(); renderGlobalRankCard(); renderFriendsTab(); renderProfileTab();
 
-  // wait for Firebase auth to resolve before dismissing
+  // set bar color to user's rank color once auth resolves
+  const barFillEl=document.getElementById('splash-bar-fill');
   const unsub=_auth.onAuthStateChanged(()=>{
     unsub();
+    if(barFillEl){
+      const r=calcRank();
+      if(r) barFillEl.style.background=TIER_COLORS[r.tier.id]||'var(--acc)';
+    }
     authReady=true;
     tryDismiss();
   });
