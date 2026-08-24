@@ -1508,8 +1508,7 @@ async function openGlobalRanking(){
   const cur=document.querySelector('.scr.on');
   const gr=document.getElementById('gr');
   cur?.classList.remove('on');
-  gr.classList.add('on','scr-er');
-  gr.addEventListener('animationend',()=>gr.classList.remove('scr-er'),{once:true});
+  gr.classList.add('on');
   history.pushState({scr:'gr'},'','');
   const stored=_grCache||(()=>{try{const s=localStorage.getItem(_GR_KEY);if(!s)return null;const p=JSON.parse(s);return Date.now()-p._t<300000?p.data:null;}catch{return null;}})();
   if(stored){_renderGlobalList(body,stored);}
