@@ -403,15 +403,13 @@
   </div>
 </div>
 
-<!-- GLOBAL RANKING MODAL -->
-<div class="overlay" id="globalRankOverlay">
-  <div class="sheet">
-    <div class="sheet-hdr">
-      <span class="sheet-title">Global Ranking</span>
-      <button class="sheet-x" id="globalRankClose">✕</button>
-    </div>
-    <div class="sheet-body" id="globalRankBody"></div>
+<!-- GLOBAL RANKING PAGE -->
+<div class="scr" id="gr">
+  <div class="scr-hd" style="display:flex;align-items:center;gap:12px">
+    <button class="sheet-x" onclick="closeGlobalRanking()" style="flex-shrink:0">←</button>
+    <h1 style="margin:0">Global Ranking</h1>
   </div>
+  <div class="sb" id="globalRankBody"></div>
 </div>
 
 <!-- SETTINGS MODAL -->

@@ -1210,6 +1210,8 @@ document.querySelectorAll('.tap-scale').forEach(el=>{
 // seed an initial state so the very first popstate has somewhere to go back from
 history.replaceState({scr:'sh'}, '', '');
 window.addEventListener('popstate', e=>{
+  // close global ranking page if open
+  if(document.getElementById('gr')?.classList.contains('on')){ closeGlobalRanking(); return; }
   // close visitor screen if open
   if(e.state?.sv || document.getElementById('sv')?.classList.contains('on')){ closeVisitorProfile(); return; }
   // if any overlay is open, close it instead
@@ -1460,7 +1462,7 @@ function renderRankCard(){
       <div class="rank-info">
         <div class="rank-sub">${subtitle}</div>
         <div class="rank-name">${curLabel}</div>
-        <div class="rank-percentile">You are ${pctText}</div>
+        <div class="rank-percentile">You are ${pctText}${_myWorldRank?` · <b>#${_myWorldRank} in the world</b>`:''}</div>
         <div class="rank-bar-wrap"><div class="rank-bar-fill" style="width:${pct}%"></div></div>
         <div class="rank-bar-lbls"><span>${curLabel}</span><span>${nextLabel}</span></div>
       </div>
@@ -1469,14 +1471,20 @@ function renderRankCard(){
 }
 
 /* ── GLOBAL RANKING ── */
+let _myWorldRank=null;
+
 function renderGlobalRankCard(){
   const el=document.getElementById('globalRankCard');
   if(!el) return;
+  const worldTag=_myWorldRank?`<span style="font-size:12px;color:var(--t2)">#${_myWorldRank} in the world</span>`:'';
   el.innerHTML=`<div class="card" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;padding:16px 18px" onclick="openGlobalRanking()">
     <div style="display:flex;align-items:center;gap:12px">
       <div style="font-size:22px;line-height:1">🏆</div>
       <div>
-        <div style="font-weight:700;font-size:15px;color:var(--text)">Global Ranking</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-weight:700;font-size:15px;color:var(--text)">Global Ranking</span>
+          ${worldTag}
+        </div>
         <div style="font-size:12px;color:var(--t2);margin-top:2px">See where everyone stands</div>
       </div>
     </div>
@@ -1486,27 +1494,33 @@ function renderGlobalRankCard(){
 
 const _GR_KEY='gymlog_globalrank';
 let _grCache=null;
+let _grPrevScr=null;
 
 async function openGlobalRanking(){
-  openOverlay('globalRankOverlay');
   const body=document.getElementById('globalRankBody');
-  // show cached instantly
+  _grPrevScr=document.querySelector('.scr.on')?.id||'sh';
+  const cur=document.querySelector('.scr.on');
+  const gr=document.getElementById('gr');
+  cur?.classList.add('scr-xl');
+  gr.classList.add('on','scr-er');
+  history.pushState({scr:'gr'},'','');
+  cur?.addEventListener('animationend',()=>cur?.classList.remove('scr-xl'),{once:true});
+  gr.addEventListener('animationend',()=>gr.classList.remove('scr-er'),{once:true});
   const stored=_grCache||(()=>{try{const s=localStorage.getItem(_GR_KEY);if(!s)return null;const p=JSON.parse(s);return Date.now()-p._t<300000?p.data:null;}catch{return null;}})();
-  if(stored) _renderGlobalList(body,stored);
+  if(stored){_renderGlobalList(body,stored);}
   else body.innerHTML=`<div style="text-align:center;padding:40px 0;color:var(--t2);font-size:13px">Loading…</div>`;
-  // always refresh from Firestore
   try{
     const snap=await _profilesCol().get();
-    const friendUids=new Set((db.friends||[]).map(f=>f.uid));
     const rows=[];
     snap.forEach(doc=>{
       const d=doc.data();
       if(!d.rankTier) return;
       const ti=RANK_TIERS.findIndex(t=>t.id===d.rankTier);
       if(ti<0) return;
-      rows.push({uid:doc.id,name:d.name||'Athlete',avatar:d.avatar||null,heroBg:d.heroBg||null,rankTier:d.rankTier,rankDiv:d.rankDiv||1,step:ti*3+(d.rankDiv||1)-1,isFriend:friendUids.has(doc.id),isMe:_user&&doc.id===_user.uid,recentPRs:d.recentPRs||[],prsCount:d.prsCount,workoutDays:d.workoutDays,friendsCount:d.friendsCount});
+      rows.push({uid:doc.id,name:d.name||'Athlete',avatar:d.avatar||null,heroBg:d.heroBg||null,rankTier:d.rankTier,rankDiv:d.rankDiv||1,step:ti*3+(d.rankDiv||1)-1,recentPRs:d.recentPRs||[],prsCount:d.prsCount,workoutDays:d.workoutDays,friendsCount:d.friendsCount});
     });
     rows.sort((a,b)=>b.step-a.step||(b.rankDiv-a.rankDiv));
+    if(_user){const mi=rows.findIndex(r=>r.uid===_user.uid);if(mi>=0){_myWorldRank=mi+1;renderGlobalRankCard();renderRankCard();}}
     _grCache=rows;
     localStorage.setItem(_GR_KEY,JSON.stringify({data:rows,_t:Date.now()}));
     _renderGlobalList(body,rows);
@@ -1516,32 +1530,40 @@ async function openGlobalRanking(){
 function _renderGlobalList(body,rows){
   if(!rows.length){body.innerHTML=`<div style="text-align:center;padding:40px 0;color:var(--t2);font-size:13px">No ranked users yet.</div>`;return;}
   const friendUids=new Set((db.friends||[]).map(f=>f.uid));
+  const myUid=_user?.uid;
   body.innerHTML=rows.map((u,i)=>{
     const color=TIER_COLORS[u.rankTier]||'var(--acc)';
     const label=`${RANK_TIERS.find(t=>t.id===u.rankTier)?.label||''} ${ROMAN[(u.rankDiv||1)-1]}`;
     const icon=`<img src="${RANK_ICONS[u.rankTier]}" style="width:32px;height:32px;image-rendering:pixelated;filter:drop-shadow(0 0 4px ${color}99)">`;
-    const friendTag=friendUids.has(u.uid)?`<span style="font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--acc);background:var(--acc2);border-radius:6px;padding:2px 6px">Friend</span>`:'';
-    const meTag=(_user&&u.uid===_user.uid)?`<span style="font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--t2);background:var(--card2);border-radius:6px;padding:2px 6px">You</span>`:'';
-    const tags=[meTag,friendTag].filter(Boolean).join('');
-    return `<div class="ex-row divr tap-scale" style="cursor:pointer" onclick="closeGlobalRanking();setTimeout(()=>openVisitorProfile('${u.uid}',${JSON.stringify(u.name)},null,${JSON.stringify(u.avatar)},${JSON.stringify(u.heroBg)}),220)">
-      <div class="ex-left" style="display:flex;align-items:center;gap:12px">
-        <div style="min-width:24px;text-align:right;font-size:12px;font-weight:700;color:var(--t3)">#${i+1}</div>
-        ${icon}
-        <div>
-          <div style="display:flex;align-items:center;gap:6px">
-            <span style="font-weight:700;font-size:14px;color:var(--text)">${u.name}</span>
-            ${tags}
-          </div>
-          <div style="font-size:12px;color:var(--t2);margin-top:1px">${label}</div>
-        </div>
-      </div>
-    </div>`;
+    const isMe=u.uid===myUid;
+    const isFriend=friendUids.has(u.uid);
+    const tags=[
+      isMe?`<span style="font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--t2);background:var(--card2);border-radius:6px;padding:2px 6px">You</span>`:'',
+      isFriend?`<span style="font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--acc);background:var(--acc2);border-radius:6px;padding:2px 6px">Friend</span>`:''
+    ].filter(Boolean).join('');
+    const numStyle=i===0?'color:var(--acc);font-weight:900;font-size:15px':i<3?'color:var(--t2);font-weight:800':'color:var(--t3);font-weight:700;font-size:12px';
+    const clickable=!isMe;
+    const onclick=clickable?`closeGlobalRanking();setTimeout(()=>openVisitorProfile('${u.uid}',${JSON.stringify(u.name)},null,${JSON.stringify(u.avatar)},${JSON.stringify(u.heroBg)}),300)`:'';
+    return `<div class="ex-row divr${clickable?' tap-scale':''}" style="cursor:${clickable?'pointer':'default'}"${onclick?` onclick="${onclick}"`:''}>`+
+      `<div class="ex-left" style="display:flex;align-items:center;gap:12px">`+
+      `<div style="min-width:28px;text-align:center;${numStyle}">#${i+1}</div>`+
+      `${icon}`+
+      `<div><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><span style="font-weight:700;font-size:14px;color:var(--text)">${u.name}</span>${tags}</div>`+
+      `<div style="font-size:12px;color:var(--t2);margin-top:1px">${label}</div></div>`+
+      `</div></div>`;
   }).join('');
 }
 
-function closeGlobalRanking(){document.getElementById('globalRankOverlay').classList.remove('open');}
-document.getElementById('globalRankClose').addEventListener('click',closeGlobalRanking);
-document.getElementById('globalRankOverlay').addEventListener('click',e=>{if(e.target===document.getElementById('globalRankOverlay'))closeGlobalRanking();});
+function closeGlobalRanking(){
+  const gr=document.getElementById('gr');
+  const prev=document.getElementById(_grPrevScr||'sh');
+  if(!gr?.classList.contains('on')) return;
+  prev?.classList.add('on','scr-el');
+  gr.classList.add('scr-xr');
+  gr.addEventListener('animationend',()=>gr.classList.remove('on','scr-xr'),{once:true});
+  prev?.addEventListener('animationend',()=>prev?.classList.remove('scr-el'),{once:true});
+  history.pushState({scr:_grPrevScr||'sh'},'','');
+}
 
 /* ── RANK BREAKDOWN ── */
 // 12 tiers × 3 divs = 36 steps (Iron I … Mythril III)
