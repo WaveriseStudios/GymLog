@@ -3242,24 +3242,22 @@ applyTheme(localStorage.getItem(THEME_KEY)||'carbon');
 
   const barFill=document.getElementById('splash-bar-fill');
   if(barFill){
+    // color bar from local rank immediately (no wait for auth)
+    if(r) barFill.style.background=TIER_COLORS[r.tier.id]||'var(--acc)';
     barFill.addEventListener('animationstart',()=>{hideSplash();_hideAuthLoader();},{once:true});
     barFill.addEventListener('animationend',()=>{barDone=true;tryDismiss();},{once:true});
   } else {
-    // no bar (shouldn't happen) — fall through immediately
     barDone=true;
   }
 
   // pre-render all tabs while splash is showing
   renderTodaySession(); renderWeek(); renderPRs(); renderBestPRs(); renderRankCard(); renderGlobalRankCard(); renderFriendsTab(); renderProfileTab();
 
-  // set bar color to user's rank color once auth resolves
-  const barFillEl=document.getElementById('splash-bar-fill');
+  // safety: if bar animationend never fires (reduced-motion, hidden tab), force dismiss after 5s
+  setTimeout(()=>{barDone=true;tryDismiss();},5000);
+
   const unsub=_auth.onAuthStateChanged(()=>{
     unsub();
-    if(barFillEl){
-      const r=calcRank();
-      if(r) barFillEl.style.background=TIER_COLORS[r.tier.id]||'var(--acc)';
-    }
     authReady=true;
     tryDismiss();
   });
