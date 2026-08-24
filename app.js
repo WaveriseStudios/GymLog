@@ -3124,7 +3124,7 @@ applyTheme(localStorage.getItem(THEME_KEY)||'carbon');
   // bar completion always forces dismiss
   const barFill=document.getElementById('splash-bar-fill');
   if(barFill){
-    barFill.addEventListener('animationstart',()=>hideSplash(),{once:true});
+    barFill.addEventListener('animationstart',()=>{hideSplash();_hideAuthLoader();},{once:true});
     barFill.addEventListener('animationend',()=>{barDone=true;dismiss();},{once:true});
   }
 
