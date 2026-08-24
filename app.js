@@ -697,6 +697,7 @@ function buildProfileHero(o) {
       <div class="prf3-stat"><span class="prf3-stat-n">${o.workouts??'—'}</span><span class="prf3-stat-l">Workouts</span></div>
       <div class="prf3-stat-div"></div>
       <div class="prf3-stat"><span class="prf3-stat-n">${o.friendsCount??'—'}</span><span class="prf3-stat-l">Friends</span></div>
+      ${o.worldRank?`<div class="prf3-stat-div"></div><div class="prf3-stat"><span class="prf3-stat-n">#${o.worldRank}</span><span class="prf3-stat-l">World</span></div>`:''}
     </div>
     ${o.footer||''}
     <div style="padding:14px 0 32px">${socialsHtml}${socialsHtml&&bestPRsHtml?'<div style="height:14px"></div>':''}${bestPRsHtml}</div>
@@ -723,6 +724,7 @@ async function openVisitorProfile(uid, name, code, avatar, heroBg) {
       workouts:    p?.workoutDays ?? '—',
       friendsCount:p?.friendsCount ?? '—',
       recentPRs:   p?.recentPRs || p?.bestPRs || [],
+      worldRank:   _grCache?(_grCache.findIndex(r=>r.uid===uid)+1||null):null,
     });
     body.innerHTML = html;
   }
@@ -1056,6 +1058,10 @@ function renderProfileTab(){
   if(wsEl) wsEl.textContent=workoutDays;
   if(psEl) psEl.textContent=prsCount;
   if(fsEl) fsEl.textContent=friendsCount;
+  const wrEl=document.getElementById('scrStatWorld');
+  const wrDiv=document.getElementById('scrStatWorldDiv');
+  const wrWrap=document.getElementById('scrStatWorldWrap');
+  if(wrEl&&wrDiv&&wrWrap){if(_myWorldRank){wrEl.textContent='#'+_myWorldRank;wrDiv.style.display='';wrWrap.style.display='';}else{wrDiv.style.display='none';wrWrap.style.display='none';}}
   const rankTileEl=document.getElementById('scrStatRank');
   if(rankTileEl){rankTileEl.textContent=r?`${r.tier.label} ${ROMAN[r.div-1]}`:'—';}
   // socials section
@@ -1501,11 +1507,10 @@ async function openGlobalRanking(){
   _grPrevScr=document.querySelector('.scr.on')?.id||'sh';
   const cur=document.querySelector('.scr.on');
   const gr=document.getElementById('gr');
-  cur?.classList.add('scr-xl');
+  cur?.classList.remove('on');
   gr.classList.add('on','scr-er');
-  history.pushState({scr:'gr'},'','');
-  cur?.addEventListener('animationend',()=>cur?.classList.remove('scr-xl'),{once:true});
   gr.addEventListener('animationend',()=>gr.classList.remove('scr-er'),{once:true});
+  history.pushState({scr:'gr'},'','');
   const stored=_grCache||(()=>{try{const s=localStorage.getItem(_GR_KEY);if(!s)return null;const p=JSON.parse(s);return Date.now()-p._t<300000?p.data:null;}catch{return null;}})();
   if(stored){_renderGlobalList(body,stored);}
   else body.innerHTML=`<div style="text-align:center;padding:40px 0;color:var(--t2);font-size:13px">Loading…</div>`;
@@ -1520,7 +1525,7 @@ async function openGlobalRanking(){
       rows.push({uid:doc.id,name:d.name||'Athlete',avatar:d.avatar||null,heroBg:d.heroBg||null,rankTier:d.rankTier,rankDiv:d.rankDiv||1,step:ti*3+(d.rankDiv||1)-1,recentPRs:d.recentPRs||[],prsCount:d.prsCount,workoutDays:d.workoutDays,friendsCount:d.friendsCount});
     });
     rows.sort((a,b)=>b.step-a.step||(b.rankDiv-a.rankDiv));
-    if(_user){const mi=rows.findIndex(r=>r.uid===_user.uid);if(mi>=0){_myWorldRank=mi+1;renderGlobalRankCard();renderRankCard();}}
+    if(_user){const mi=rows.findIndex(r=>r.uid===_user.uid);if(mi>=0){_myWorldRank=mi+1;renderGlobalRankCard();renderRankCard();renderProfileTab();}}
     _grCache=rows;
     localStorage.setItem(_GR_KEY,JSON.stringify({data:rows,_t:Date.now()}));
     _renderGlobalList(body,rows);
