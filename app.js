@@ -1488,6 +1488,8 @@ let _myWorldRank=null;
 function renderGlobalRankCard(){
   const el=document.getElementById('globalRankCard');
   if(!el) return;
+  // try to load rank from cache if not yet set
+  if(!_myWorldRank&&_user){try{const s=localStorage.getItem(_GR_KEY);if(s){const p=JSON.parse(s);if(Date.now()-p._t<300000){const mi=p.data?.findIndex(r=>r.uid===_user.uid);if(mi>=0)_myWorldRank=mi+1;}}}catch{}}
   const rankNum=_myWorldRank
     ?`<div style="font-family:'Barlow Condensed',sans-serif;font-size:32px;font-weight:900;line-height:1;color:var(--acc);font-variant-numeric:tabular-nums">#${_myWorldRank}</div>`
     :`<div style="font-size:22px;line-height:1">🏆</div>`;
@@ -1563,6 +1565,7 @@ function _renderGlobalList(body,rows){
   sections.forEach(({label,users})=>{
     const hd=document.createElement('div');
     hd.className='card-hd';
+    hd.style.padding='0 16px';
     hd.textContent=label;
     frag.appendChild(hd);
     const card=document.createElement('div');
@@ -1581,7 +1584,8 @@ function _renderGlobalList(body,rows){
       row.className='ex-row divr tap-scale';
       row.style.cursor='pointer';
       row.setAttribute('onclick',onclick);
-      const right=isMe?`<span class="ex-w">You</span>`:isFriend?`<span class="ex-w">Friend</span>`:'';;
+      const chip=(txt,c,bg)=>`<span style="font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:${c};background:${bg};border-radius:6px;padding:2px 6px">${txt}</span>`;
+      const right=isMe?chip('You','var(--t2)','var(--card2)'):isFriend?chip('Friend','var(--acc)','var(--acc2)'):'';;
       row.innerHTML=
         `<div class="ex-left" style="display:flex;align-items:center;gap:10px">`+
           `<img src="${RANK_ICONS[u.rankTier]}" style="width:28px;height:28px;flex-shrink:0;image-rendering:pixelated;filter:drop-shadow(0 0 4px ${color}99)">`+
