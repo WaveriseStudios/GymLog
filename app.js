@@ -3112,14 +3112,18 @@ applyTheme(localStorage.getItem(THEME_KEY)||'carbon');
   document.getElementById('splash-logo').innerHTML=rankIconSvg(r?r.tier.id:'wood',color,{size:140,glow:true,div:r?r.div:1});
   document.getElementById('splash-wordmark').textContent=rankLabel;
 
-  let fontsReady=false, authReady=false;
-  function tryDismiss(){
-    if(!fontsReady||!authReady) return;
-    setTimeout(()=>{
-      splash.classList.add('hide');
-      setTimeout(()=>splash.remove(),600);
-    }, 500);
+  let fontsReady=false, authReady=false, barDone=false;
+  function dismiss(){
+    splash.classList.add('hide');
+    setTimeout(()=>splash.remove(),600);
   }
+  function tryDismiss(){
+    if(barDone||(fontsReady&&authReady)) dismiss();
+  }
+
+  // bar completion always forces dismiss
+  const barFill=document.getElementById('splash-bar-fill');
+  if(barFill) barFill.addEventListener('animationend',()=>{barDone=true;dismiss();},{once:true});
 
   // pre-render all tabs while splash is showing
   renderTodaySession(); renderWeek(); renderPRs(); renderBestPRs(); renderRankCard(); renderFriendsTab(); renderProfileTab();
