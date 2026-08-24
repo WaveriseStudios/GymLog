@@ -1465,7 +1465,6 @@ function renderRankCard(){
   const curLabel=`${tier.label} ${ROMAN[div-1]}`;
   const nextLabel=isMaxDiv?'Mythril III · Max':div===3?`${nextTier.label} I`:`${tier.label} ${ROMAN[div]}`;
   const subtitle=count>0?`Based on ${count} exercise${count!==1?'s':''}`:'Log exercises to rank up';
-  const worldLine=_myWorldRank?`<div class="rank-percentile" style="margin-bottom:4px">#${_myWorldRank} in the world</div>`:'';
   el.innerHTML=`<div class="card" style="cursor:pointer" onclick="openRankBreakdown()">
     <div class="rank-card" style="--tc:${color}">
       <div class="rank-hex-wrap" style="width:72px;height:72px">
@@ -1474,8 +1473,7 @@ function renderRankCard(){
       <div class="rank-info">
         <div class="rank-sub">${subtitle}</div>
         <div class="rank-name">${curLabel}</div>
-        ${worldLine}
-        <div class="rank-percentile" style="margin-bottom:4px;font-variant-numeric:tabular-nums">${pct} LP</div>
+        <div class="rank-percentile" style="margin-top:2px;margin-bottom:4px;font-variant-numeric:tabular-nums">${pct} LP</div>
         <div class="rank-bar-wrap"><div class="rank-bar-fill" style="width:${pct}%"></div></div>
         <div class="rank-bar-lbls"><span>${curLabel}</span><span>${nextLabel}</span></div>
       </div>
