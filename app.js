@@ -506,7 +506,7 @@ function renderFriendsTab() {
       <div style="position:relative;z-index:2;display:flex;align-items:center;width:100%">
         ${avHtml}
         <div style="flex:1;min-width:0;margin-left:10px">
-          <div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:900;color:${textColor};line-height:1.1">${f.name||'Friend'}</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:900;color:${textColor};line-height:1.1;display:flex;align-items:center">${displayName(f.name||'Friend',cached.isVerified)}</div>
           ${socials}
         </div>
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke-width="2" style="stroke:var(--t3);flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg>
@@ -621,7 +621,7 @@ async function refreshFriendProfiles() {
       const snap = await _profilesCol().doc(f.uid).get();
       if (snap.exists) {
         const d = snap.data();
-        _friendProfileCache[f.uid] = { heroBg: d.heroBg || null, avatar: d.avatar || null };
+        _friendProfileCache[f.uid] = { heroBg: d.heroBg || null, avatar: d.avatar || null, isVerified: d.isVerified || false };
         _saveFPC(_friendProfileCache);
       } else {
         console.warn('[friends] no profile doc for', f.name, f.uid);
@@ -682,10 +682,11 @@ function buildProfileHero(o) {
   const _ttSvgCard = `<svg width="14" height="14" viewBox="0 0 24 24"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.19 8.19 0 0 0 4.78 1.52V6.76a4.85 4.85 0 0 1-1.01-.07z" fill="var(--text)"/></svg>`;
   const _socialChip = (href, icon, platform) => `<a href="${href}" target="_blank" rel="noopener" class="prf-btn tap-scale" style="text-decoration:none;flex:1;justify-content:center;gap:7px">${icon}${platform}</a>`;
   let socialsHtml = '';
-  if (o.instagram || o.tiktok) {
+  if (o.instagram || o.tiktok || o.friendChip) {
     const chips = [
-      o.instagram ? _socialChip(`https://instagram.com/${o.instagram}`, _igSvgCard, 'Insta')  : '',
-      o.tiktok    ? _socialChip(`https://tiktok.com/@${o.tiktok}`,       _ttSvgCard, 'TikTok') : '',
+      o.friendChip || '',
+      o.instagram  ? _socialChip(`https://instagram.com/${o.instagram}`, _igSvgCard, 'Insta')  : '',
+      o.tiktok     ? _socialChip(`https://tiktok.com/@${o.tiktok}`,       _ttSvgCard, 'TikTok') : '',
     ].join('');
     socialsHtml = `<div class="card-hd" style="padding:0 20px 8px">Socials</div><div style="margin:0 16px;display:flex;gap:10px">${chips}</div>`;
   }
@@ -731,13 +732,12 @@ function buildProfileHero(o) {
           ${rankIcon}
         </div>
         <div style="padding-bottom:4px">
-          <div class="prf3-name">${o.name||'Athlete'}</div>
+          <div class="prf3-name" style="display:flex;align-items:center">${displayName(o.name,o.isVerified)}</div>
           ${rankBadge}
         </div>
       </div>
     </div>
     <div class="prf3-sheet">
-      ${o.addFriendBtn ? `<div style="padding:0 16px 12px">${o.addFriendBtn}</div>` : ''}
       <div class="prf3-stat-strip">
         <div class="prf3-stat"><span class="prf3-stat-n">${o.prsCount??'—'}</span><span class="prf3-stat-l">PRs</span></div>
         <div class="prf3-stat-div"></div>
@@ -764,20 +764,20 @@ async function openVisitorProfile(uid, name, code, avatar, heroBg) {
     const isOwnProfile = _user && uid === _user.uid;
 
     const actionButtons = `<div class="prf3-hero-actions">
-      <button class="prf3-ic-btn tap-scale" onclick="history.back()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg></button>
+      <div></div>
       <div></div>
     </div>`;
 
-    let addFriendBtn = '';
+    let friendChip = '';
     if (_user && !isOwnProfile) {
-      const safeN   = (p?.name||name||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+      const safeN    = (p?.name||name||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
       const safeUid2 = uid.replace(/'/g,"\\'");
       const safeAv2  = (p?.avatar||avatar||'').replace(/'/g,"\\'").replace(/"/g,'&quot;');
       const safeCode2= (code||'').replace(/'/g,"\\'");
       if (isFriend) {
-        addFriendBtn = `<button class="prf-btn tap-scale" style="width:100%;justify-content:center" onclick="if(confirm('Remove ${safeN} from friends?')){removeFriend('${safeUid2}')}">Remove Friend</button>`;
+        friendChip = `<button class="prf-btn tap-scale" style="flex:1;justify-content:center" onclick="if(confirm('Unfollow ${safeN}?')){removeFriend('${safeUid2}')}">Unfollow</button>`;
       } else {
-        addFriendBtn = `<button class="prf-btn tap-scale" style="width:100%;justify-content:center;background:var(--acc);color:#fff;border-color:var(--acc)" onclick="addFriendFromProfile('${safeUid2}','${safeN}','${safeCode2}','${safeAv2}')">+ Add Friend</button>`;
+        friendChip = `<button class="prf-btn tap-scale" style="flex:1;justify-content:center;background:var(--acc);color:#fff;border-color:var(--acc)" onclick="addFriendFromProfile('${safeUid2}','${safeN}','${safeCode2}','${safeAv2}')">Follow</button>`;
       }
     }
 
@@ -794,8 +794,9 @@ async function openVisitorProfile(uid, name, code, avatar, heroBg) {
       friendsCount: p?.friendsCount ?? '—',
       recentPRs:    p?.recentPRs || p?.bestPRs || [],
       worldRank:    _grCache?(_grCache.findIndex(r=>r.uid===uid)+1||null):null,
+      isVerified:   p?.isVerified || false,
       actionButtons,
-      addFriendBtn,
+      friendChip,
     });
     body.innerHTML = html;
   }
@@ -1061,7 +1062,7 @@ function renderProfileTab(){
   updateNotifToggle();
   // hero name
   const heroName=document.getElementById('scrProfileHeroName');
-  if(heroName) heroName.textContent=name||'Athlete';
+  if(heroName) heroName.innerHTML=displayName(name,db.profile?.isVerified);
   const topName=document.getElementById('scrProfileTopName');
   if(topName) topName.textContent=name||'Athlete';
   // avatar
@@ -1396,6 +1397,9 @@ function rankIconSvg(id,color,{size=60,glow=true,opacity=1,div=1}={}){
   const op=opacity<1?`opacity:${opacity};`:'';
   return `<img src="${imgSrc}" width="${snap}" height="${snap}" style="flex-shrink:0;display:block;width:${snap}px;height:${snap}px;${op}${f}image-rendering:pixelated">`;
 }
+const _DEV_BADGE = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:middle;margin-left:4px;flex-shrink:0"><circle cx="12" cy="12" r="12" fill="#1d9bf0"/><polyline points="7 12.5 10.5 16 17 9" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+function displayName(name, isVerified){ return (name||'Athlete')+(isVerified?_DEV_BADGE:''); }
+
 const TIER_COLORS = {
   wood:'#8B6343',     iron:'#7A8A96',      bronze:'#C47A32',   silver:'#9AAEBB',
   gold:'#CFA020',     platinum:'#94A3B8',  sapphire:'#2563EB', diamond:'#2b476f',
@@ -1608,7 +1612,7 @@ async function _fetchMyWorldRank(){
       const ti=RANK_TIERS.findIndex(t=>t.id===d.rankTier);
       if(ti<0) return;
       const lp=d.rankLp??null;
-      rows.push({uid:doc.id,name:d.name||'Athlete',avatar:d.avatar||null,heroBg:d.heroBg||null,rankTier:d.rankTier,rankDiv:d.rankDiv||1,rankLp:lp,step:ti*3+(d.rankDiv||1)-1,recentPRs:d.recentPRs||[],prsCount:d.prsCount,workoutDays:d.workoutDays,friendsCount:d.friendsCount});
+      rows.push({uid:doc.id,name:d.name||'Athlete',avatar:d.avatar||null,heroBg:d.heroBg||null,rankTier:d.rankTier,rankDiv:d.rankDiv||1,rankLp:lp,step:ti*3+(d.rankDiv||1)-1,recentPRs:d.recentPRs||[],prsCount:d.prsCount,workoutDays:d.workoutDays,friendsCount:d.friendsCount,isVerified:d.isVerified||false});
     });
     rows.sort((a,b)=>b.step-a.step||((b.rankLp??0)-(a.rankLp??0)));
     _grCache=rows;
@@ -1649,7 +1653,7 @@ async function openGlobalRanking(){
       const ti=RANK_TIERS.findIndex(t=>t.id===d.rankTier);
       if(ti<0) return;
       const lp=d.rankLp??null;
-      rows.push({uid:doc.id,name:d.name||'Athlete',avatar:d.avatar||null,heroBg:d.heroBg||null,rankTier:d.rankTier,rankDiv:d.rankDiv||1,rankLp:lp,step:ti*3+(d.rankDiv||1)-1,recentPRs:d.recentPRs||[],prsCount:d.prsCount,workoutDays:d.workoutDays,friendsCount:d.friendsCount});
+      rows.push({uid:doc.id,name:d.name||'Athlete',avatar:d.avatar||null,heroBg:d.heroBg||null,rankTier:d.rankTier,rankDiv:d.rankDiv||1,rankLp:lp,step:ti*3+(d.rankDiv||1)-1,recentPRs:d.recentPRs||[],prsCount:d.prsCount,workoutDays:d.workoutDays,friendsCount:d.friendsCount,isVerified:d.isVerified||false});
     });
     rows.sort((a,b)=>b.step-a.step||((b.rankLp??0)-(a.rankLp??0)));
     if(_user){const mi=rows.findIndex(r=>r.uid===_user.uid);if(mi>=0){_myWorldRank=mi+1;_saveMyRank(_myWorldRank);renderGlobalRankCard();renderRankCard();renderProfileTab();}}
@@ -1702,7 +1706,7 @@ function _renderGlobalList(body,rows){
         `<div class="ex-left" style="display:flex;align-items:center;gap:10px">`+
           `<img src="${RANK_ICONS[u.rankTier]}" style="width:28px;height:28px;flex-shrink:0;image-rendering:pixelated;filter:drop-shadow(0 0 4px ${color}99)">`+
           `<div>`+
-            `<div class="ex-name">${u.name}</div>`+
+            `<div class="ex-name" style="display:flex;align-items:center">${displayName(u.name,u.isVerified)}</div>`+
             `<div style="font-size:11px;color:var(--t3);margin-top:2px;font-variant-numeric:tabular-nums">${label}${u.rankLp!=null?' · '+u.rankLp+' LP':''}</div>`+
           `</div>`+
         `</div>`+

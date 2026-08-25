@@ -161,6 +161,10 @@
 .prf3-ic-btn{width:34px;height:34px;border-radius:50%;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;color:#fff;cursor:pointer;backdrop-filter:blur(8px);}
 /* identity: avatar + name bottom-left of hero */
 .prf3-hero-identity{position:absolute;bottom:48px;left:16px;display:flex;align-items:flex-end;gap:11px;z-index:2;}
+.prf3-hero-action-right{position:absolute;bottom:52px;right:16px;z-index:2;}
+.prf3-hero-pill{border:none;border-radius:20px;padding:8px 18px;font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;letter-spacing:.3px;cursor:pointer;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);}
+.prf3-hero-pill-add{background:var(--acc);color:#fff;}
+.prf3-hero-pill-friend{background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.28);}
 /* keep center class for any legacy refs */
 .prf3-hero-center{position:absolute;bottom:22px;left:0;right:0;display:flex;flex-direction:column;align-items:center;z-index:2;}
 .prf3-av-wrap{position:relative;flex-shrink:0;}
