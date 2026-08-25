@@ -1444,9 +1444,10 @@ function fmtExName(name){return name.replace('Dumbbell ','DB ');}
 const BW_FRACTION   = {'Push-up':0.65,'Plank':0.65,'Hanging Leg Raise':0.35,'Leg Raise':0.35,'Toes to Bar':0.35,'Dragon Flag':0.80,'Crunch':0.15,'Sit-up':0.20};
 // Bodyweight log-curve constants (inspired by log-normalization formula)
 // t = (ln(1+x) - ln(1+B)) / (ln(1+O) - ln(1+B)), score = t^EXP × 21
-const BW_LOG_B   = 1;    // beginner benchmark (1 rep = floor)
-const BW_LOG_O   = 45;   // olympian benchmark (45 effective reps)
-const BW_LOG_EXP = 2.5;  // steepness (higher = harder at top end)
+const BW_LOG_B   = 1;    // beginner benchmark
+const BW_LOG_O   = 45;   // olympian benchmark
+const BW_LOG_EXP = 1.8;  // steepness
+const BW_REF     = 75;   // reference bodyweight (kg) for normalisation
 const BW_LOG_LN_B = Math.log(1 + BW_LOG_B);
 const BW_LOG_DENOM = Math.log(1 + BW_LOG_O) - BW_LOG_LN_B;
 
@@ -1475,7 +1476,7 @@ function calcExScore(pr,profile,name){
     const added=pr.weight||0;
     const reps=Math.max(pr.reps||1,1);
     const f=BW_FRACTION[name]??1;
-    const xEff=reps*(f+added/bw);
+    const xEff=reps*(bw*f+added)/BW_REF;
     const t=Math.min(1,Math.max(0,(Math.log(1+xEff)-BW_LOG_LN_B)/BW_LOG_DENOM));
     return Math.pow(t,BW_LOG_EXP)*21*ageMult*setsBonus;
   }
