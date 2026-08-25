@@ -101,7 +101,6 @@
 
       <!-- hero section -->
       <div class="prf3-hero" id="scrProfileHero">
-        <!-- bg: blurred avatar or gradient -->
         <div class="prf3-hero-bg" id="scrProfileHeroBg"></div>
         <div class="prf3-hero-overlay"></div>
         <!-- top action buttons -->
@@ -113,43 +112,54 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
           </button>
         </div>
-        <!-- centered avatar + name -->
-        <div class="prf3-hero-center tap-scale" onclick="openProfile()" style="cursor:pointer">
+        <!-- avatar + name: bottom-left -->
+        <div class="prf3-hero-identity tap-scale" onclick="openProfile()" style="cursor:pointer">
           <div class="prf3-av-wrap">
             <div class="prf3-av" id="scrProfileAv" style="touch-action:manipulation;cursor:default">G</div>
             <img id="scrProfileRankBg" src="" class="prf3-av-rank" style="display:none">
           </div>
-          <div class="prf3-name" id="scrProfileHeroName">Athlete</div>
-          <div id="scrProfileRank" style="margin-top:6px"></div>
+          <div style="padding-bottom:4px">
+            <div class="prf3-name" id="scrProfileHeroName">Athlete</div>
+            <div id="scrProfileRank" style="margin-top:4px"></div>
+          </div>
         </div>
       </div>
 
-      <!-- stat strip -->
-      <div class="prf3-stat-strip">
-        <div class="prf3-stat">
-          <span class="prf3-stat-n" id="scrStatPRs">0</span>
-          <span class="prf3-stat-l">PRs</span>
+      <!-- bottom sheet -->
+      <div class="prf3-sheet">
+        <!-- edit profile button -->
+        <div style="padding:0 16px 12px">
+          <button class="prf-btn tap-scale" onclick="openProfile()" style="width:100%;justify-content:center">Edit Profile</button>
         </div>
-        <div class="prf3-stat-div"></div>
-        <div class="prf3-stat">
-          <span class="prf3-stat-n" id="scrStatWorkouts">0</span>
-          <span class="prf3-stat-l">Workouts</span>
+        <!-- stat card -->
+        <div class="prf3-stat-strip">
+          <div class="prf3-stat">
+            <span class="prf3-stat-n" id="scrStatPRs">0</span>
+            <span class="prf3-stat-l">PRs</span>
+          </div>
+          <div class="prf3-stat-div"></div>
+          <div class="prf3-stat">
+            <span class="prf3-stat-n" id="scrStatWorkouts">0</span>
+            <span class="prf3-stat-l">Workouts</span>
+          </div>
+          <div class="prf3-stat-div"></div>
+          <div class="prf3-stat">
+            <span class="prf3-stat-n" id="scrStatFriends">0</span>
+            <span class="prf3-stat-l">Friends</span>
+          </div>
+          <div class="prf3-stat-div" id="scrStatWorldDiv" style="display:none"></div>
+          <div class="prf3-stat" id="scrStatWorldWrap" style="display:none">
+            <span class="prf3-stat-n" id="scrStatWorld">—</span>
+            <span class="prf3-stat-l">World</span>
+          </div>
         </div>
-        <div class="prf3-stat-div"></div>
-        <div class="prf3-stat">
-          <span class="prf3-stat-n" id="scrStatFriends">0</span>
-          <span class="prf3-stat-l">Friends</span>
-        </div>
-        <div class="prf3-stat-div" id="scrStatWorldDiv" style="display:none"></div>
-        <div class="prf3-stat" id="scrStatWorldWrap" style="display:none">
-          <span class="prf3-stat-n" id="scrStatWorld">—</span>
-          <span class="prf3-stat-l">World</span>
+        <!-- socials + best PRs -->
+        <div style="padding:14px 0 0">
+          <div id="scrSocials"></div>
+          <div id="scrBestPRs" style="padding:0 0 32px"></div>
         </div>
       </div>
 
-      <!-- socials + best PRs -->
-      <div id="scrSocials"></div>
-      <div id="scrBestPRs" style="padding:0 0 32px"></div>
     </div>
   </div>
 
@@ -184,6 +194,11 @@
     </button>
   </nav>
 
+</div>
+
+<!-- AVATAR LIGHTBOX -->
+<div id="avatarLightbox" onclick="hideAvatarLightbox()" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.82);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);align-items:center;justify-content:center">
+  <img id="avatarLightboxImg" src="" style="width:260px;height:260px;border-radius:50%;object-fit:cover;border:3px solid rgba(255,255,255,.25);box-shadow:0 8px 40px rgba(0,0,0,.6)">
 </div>
 
 <!-- EXERCISE MODAL -->

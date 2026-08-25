@@ -439,7 +439,25 @@ async function removeFriend(uid) {
   renderFriendsSheet();
   renderProfileTab();
   renderFriendsTab();
+  window._svRenderVisitor?.();
   showToast('Friend removed');
+}
+
+async function addFriendFromProfile(uid, name, code, avatar) {
+  if (!_user) return;
+  if ((db.friends||[]).find(f => f.uid === uid)) { showToast('Already friends!'); return; }
+  if (!db.friends) db.friends = [];
+  db.friends.push({ uid, name: name||'Friend', code: code||'', avatar: avatar||null, since: new Date().toISOString().slice(0,10) });
+  persist();
+  try {
+    await _requestsCol(uid).doc(_user.uid).set({
+      uid: _user.uid, name: db.profile?.name||'', code: db.code||'', avatar: db.profile?.avatar||null
+    });
+  } catch(e) { console.warn('addFriendFromProfile', e); }
+  showToast('Friend added!');
+  renderFriendsTab();
+  renderProfileTab();
+  window._svRenderVisitor?.();
 }
 
 function renderFriendsTab() {
@@ -616,6 +634,26 @@ async function refreshFriendProfiles() {
 // ── shared profile hero builder ─────────────────────────────────────────────
 // Used by both own profile (renderProfileTab) and visitor profile (renderVisitor).
 // Returns a complete HTML string ready to inject into a container.
+function showAvatarLightbox(src) {
+  const lb = document.getElementById('avatarLightbox');
+  const img = document.getElementById('avatarLightboxImg');
+  if (!lb || !img) return;
+  img.src = src;
+  lb.style.display = 'flex';
+  lb.classList.remove('lb-closing');
+  lb.classList.add('lb-opening');
+}
+function hideAvatarLightbox() {
+  const lb = document.getElementById('avatarLightbox');
+  if (!lb) return;
+  lb.classList.remove('lb-opening');
+  lb.classList.add('lb-closing');
+  lb.addEventListener('animationend', () => {
+    lb.style.display = 'none';
+    lb.classList.remove('lb-closing');
+  }, { once: true });
+}
+
 function buildProfileHero(o) {
   const c = o.rankTier ? (TIER_COLORS[o.rankTier]||'#C0392B') : '#C0392B';
   // hero background priority: custom heroBg → blurred avatar → rank gradient
@@ -626,6 +664,7 @@ function buildProfileHero(o) {
       : `background-image:radial-gradient(ellipse at 60% 40%,${c}55 0%,transparent 70%),linear-gradient(135deg,#140a0a 0%,#1a0e1a 100%);transform:scale(1.05)`;
 
   const initials = (o.name||'?')[0].toUpperCase();
+  const safeAvSrc = (o.avatar||'').replace(/"/g,'&quot;').replace(/'/g,"\\'");
   const avInner = o.avatar
     ? `<img src="${o.avatar}" style="width:100%;height:100%;object-fit:cover">`
     : `<span style="font-family:'Barlow Condensed',sans-serif;font-size:32px;font-weight:900">${initials}</span>`;
@@ -686,25 +725,30 @@ function buildProfileHero(o) {
       <div class="prf3-hero-bg" style="${bgStyle}"></div>
       <div class="prf3-hero-overlay"></div>
       ${o.actionButtons||''}
-      <div class="prf3-hero-center">
+      <div class="prf3-hero-identity">
         <div class="prf3-av-wrap">
-          <div class="prf3-av" style="cursor:default">${avInner}</div>
+          <div class="prf3-av" ${o.avatar?`onclick="showAvatarLightbox('${safeAvSrc}')" style="cursor:pointer"`:`style="cursor:default"`}>${avInner}</div>
           ${rankIcon}
         </div>
-        <div class="prf3-name">${o.name||'Athlete'}</div>
-        ${rankBadge}
+        <div style="padding-bottom:4px">
+          <div class="prf3-name">${o.name||'Athlete'}</div>
+          ${rankBadge}
+        </div>
       </div>
     </div>
-    <div class="prf3-stat-strip">
-      <div class="prf3-stat"><span class="prf3-stat-n">${o.prsCount??'—'}</span><span class="prf3-stat-l">PRs</span></div>
-      <div class="prf3-stat-div"></div>
-      <div class="prf3-stat"><span class="prf3-stat-n">${o.workouts??'—'}</span><span class="prf3-stat-l">Workouts</span></div>
-      <div class="prf3-stat-div"></div>
-      <div class="prf3-stat"><span class="prf3-stat-n">${o.friendsCount??'—'}</span><span class="prf3-stat-l">Friends</span></div>
-      ${o.worldRank?`<div class="prf3-stat-div"></div><div class="prf3-stat"><span class="prf3-stat-n">#${o.worldRank}</span><span class="prf3-stat-l">World</span></div>`:''}
+    <div class="prf3-sheet">
+      ${o.addFriendBtn ? `<div style="padding:0 16px 12px">${o.addFriendBtn}</div>` : ''}
+      <div class="prf3-stat-strip">
+        <div class="prf3-stat"><span class="prf3-stat-n">${o.prsCount??'—'}</span><span class="prf3-stat-l">PRs</span></div>
+        <div class="prf3-stat-div"></div>
+        <div class="prf3-stat"><span class="prf3-stat-n">${o.workouts??'—'}</span><span class="prf3-stat-l">Workouts</span></div>
+        <div class="prf3-stat-div"></div>
+        <div class="prf3-stat"><span class="prf3-stat-n">${o.friendsCount??'—'}</span><span class="prf3-stat-l">Friends</span></div>
+        ${o.worldRank?`<div class="prf3-stat-div"></div><div class="prf3-stat"><span class="prf3-stat-n">#${o.worldRank}</span><span class="prf3-stat-l">World</span></div>`:''}
+      </div>
+      ${o.footer||''}
+      <div style="padding:14px 0 32px">${socialsHtml}${socialsHtml&&bestPRsHtml?'<div style="height:14px"></div>':''}${bestPRsHtml}</div>
     </div>
-    ${o.footer||''}
-    <div style="padding:14px 0 32px">${socialsHtml}${socialsHtml&&bestPRsHtml?'<div style="height:14px"></div>':''}${bestPRsHtml}</div>
   </div>`;
 }
 // ───────────────────────────────────────────────────────────────────────────
@@ -716,22 +760,46 @@ async function openVisitorProfile(uid, name, code, avatar, heroBg) {
   _svPrevTab = document.querySelector('.scr.on')?.id || 'sf';
 
   function renderVisitor(p) {
+    const isFriend = _user && (db.friends||[]).some(f => f.uid === uid);
+    const isOwnProfile = _user && uid === _user.uid;
+
+    const actionButtons = `<div class="prf3-hero-actions">
+      <button class="prf3-ic-btn tap-scale" onclick="history.back()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg></button>
+      <div></div>
+    </div>`;
+
+    let addFriendBtn = '';
+    if (_user && !isOwnProfile) {
+      const safeN   = (p?.name||name||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+      const safeUid2 = uid.replace(/'/g,"\\'");
+      const safeAv2  = (p?.avatar||avatar||'').replace(/'/g,"\\'").replace(/"/g,'&quot;');
+      const safeCode2= (code||'').replace(/'/g,"\\'");
+      if (isFriend) {
+        addFriendBtn = `<button class="prf-btn tap-scale" style="width:100%;justify-content:center" onclick="if(confirm('Remove ${safeN} from friends?')){removeFriend('${safeUid2}')}">Remove Friend</button>`;
+      } else {
+        addFriendBtn = `<button class="prf-btn tap-scale" style="width:100%;justify-content:center;background:var(--acc);color:#fff;border-color:var(--acc)" onclick="addFriendFromProfile('${safeUid2}','${safeN}','${safeCode2}','${safeAv2}')">+ Add Friend</button>`;
+      }
+    }
+
     const html = buildProfileHero({
-      heroBg:      p?.heroBg  || null,
-      avatar:      p?.avatar  || avatar || null,
-      rankTier:    p?.rankTier || null,
-      rankDiv:     p?.rankDiv  || null,
-      name:        p?.name    || name || 'Friend',
-      instagram:   p?.instagram || null,
-      tiktok:      p?.tiktok   || null,
-      prsCount:    p?.prsCount    ?? '—',
-      workouts:    p?.workoutDays ?? '—',
-      friendsCount:p?.friendsCount ?? '—',
-      recentPRs:   p?.recentPRs || p?.bestPRs || [],
-      worldRank:   _grCache?(_grCache.findIndex(r=>r.uid===uid)+1||null):null,
+      heroBg:       p?.heroBg  || heroBg || null,
+      avatar:       p?.avatar  || avatar || null,
+      rankTier:     p?.rankTier || null,
+      rankDiv:      p?.rankDiv  || null,
+      name:         p?.name    || name || 'Friend',
+      instagram:    p?.instagram || null,
+      tiktok:       p?.tiktok   || null,
+      prsCount:     p?.prsCount    ?? '—',
+      workouts:     p?.workoutDays ?? '—',
+      friendsCount: p?.friendsCount ?? '—',
+      recentPRs:    p?.recentPRs || p?.bestPRs || [],
+      worldRank:    _grCache?(_grCache.findIndex(r=>r.uid===uid)+1||null):null,
+      actionButtons,
+      addFriendBtn,
     });
     body.innerHTML = html;
   }
+  window._svRenderVisitor = renderVisitor;
 
   // fetch first behind the splash, then animate in with full content
   showSplash();
@@ -742,6 +810,7 @@ async function openVisitorProfile(uid, name, code, avatar, heroBg) {
       if (snap.exists) profileData = snap.data();
     } catch(e) {}
   }
+  window._svRenderVisitor = () => renderVisitor(profileData);
   renderVisitor(profileData);
 
   const sv = document.getElementById('sv');
@@ -1329,7 +1398,7 @@ function rankIconSvg(id,color,{size=60,glow=true,opacity=1,div=1}={}){
 }
 const TIER_COLORS = {
   wood:'#8B6343',     iron:'#7A8A96',      bronze:'#C47A32',   silver:'#9AAEBB',
-  gold:'#CFA020',     platinum:'#94A3B8',  sapphire:'#2563EB', diamond:'#67E8F9',
+  gold:'#CFA020',     platinum:'#94A3B8',  sapphire:'#2563EB', diamond:'#2b476f',
   amethyst:'#F472B6', emerald:'#10B981',   ruby:'#E11D48',     iridium:'#F97316',
 };
 const EX_COEFF = {

@@ -3,6 +3,15 @@
    Screen- and feature-specific. Requires design-system.css.
    ═══════════════════════════════════════════════════════════════ */
 
+@keyframes lb-in  { from { opacity:0; backdrop-filter:blur(0); } to { opacity:1; } }
+@keyframes lb-out { from { opacity:1; } to { opacity:0; backdrop-filter:blur(0); } }
+@keyframes lb-img-in  { from { transform:scale(.6); opacity:0; } to { transform:scale(1); opacity:1; } }
+@keyframes lb-img-out { from { transform:scale(1); opacity:1; } to { transform:scale(.6); opacity:0; } }
+#avatarLightbox.lb-opening { animation:lb-in .22s ease forwards; }
+#avatarLightbox.lb-closing { animation:lb-out .18s ease forwards; }
+#avatarLightbox.lb-opening #avatarLightboxImg { animation:lb-img-in .22s cubic-bezier(.34,1.56,.64,1) forwards; }
+#avatarLightbox.lb-closing #avatarLightboxImg { animation:lb-img-out .18s ease forwards; }
+
 /* ── SCREEN HEADERS ── */
 .scr-hd{padding:12px 22px 16px;}
 .scr-hd h1{font-family:'Barlow Condensed',sans-serif;font-size:48px;font-weight:900;line-height:1;letter-spacing:-1px;}
@@ -145,19 +154,24 @@
 .tcb-reset{background:var(--card);color:var(--t2);border:1px solid var(--bdr);}
 
 /* ── PROFILE HERO ── */
-.prf3-hero{position:relative;height:234px;overflow:hidden;flex-shrink:0;}
-.prf3-hero-bg{position:absolute;inset:0;background:linear-gradient(135deg,#1a0a0a 0%,#2d1010 50%,#0d0d1a 100%);background-size:cover;background-position:center;filter:blur(0px);transform:scale(1.05);}
-.prf3-hero-overlay{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,.3) 0%,rgba(0,0,0,.55) 100%);}
+.prf3-hero{position:relative;height:162px;overflow:hidden;flex-shrink:0;}
+.prf3-hero-bg{position:absolute;inset:0;background:linear-gradient(135deg,#1a0a0a 0%,#2d1010 50%,#0d0d1a 100%);background-size:cover;background-position:center;}
+.prf3-hero-overlay{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,.15) 0%,rgba(0,0,0,.72) 100%);}
 .prf3-hero-actions{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-between;padding:14px 16px;z-index:2;}
 .prf3-ic-btn{width:34px;height:34px;border-radius:50%;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;color:#fff;cursor:pointer;backdrop-filter:blur(8px);}
+/* identity: avatar + name bottom-left of hero */
+.prf3-hero-identity{position:absolute;bottom:48px;left:16px;display:flex;align-items:flex-end;gap:11px;z-index:2;}
+/* keep center class for any legacy refs */
 .prf3-hero-center{position:absolute;bottom:22px;left:0;right:0;display:flex;flex-direction:column;align-items:center;z-index:2;}
 .prf3-av-wrap{position:relative;flex-shrink:0;}
-.prf3-av{width:80px;height:80px;border-radius:50%;background:var(--acc2);color:var(--acc);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:32px;font-weight:900;overflow:hidden;cursor:pointer;border:3px solid rgba(255,255,255,.3);box-shadow:0 4px 20px rgba(0,0,0,.4);}
+.prf3-av{width:68px;height:68px;border-radius:50%;background:var(--acc2);color:var(--acc);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:900;overflow:hidden;cursor:pointer;border:3px solid rgba(255,255,255,.25);box-shadow:0 4px 24px rgba(0,0,0,.5);}
 .prf3-av img{width:100%;height:100%;object-fit:cover;}
-.prf3-av-rank{position:absolute;bottom:-4px;right:-4px;width:28px;height:28px;flex-shrink:0;image-rendering:-webkit-optimize-contrast;image-rendering:crisp-edges;}
-.prf3-name{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:900;color:#fff;line-height:1;margin-top:10px;letter-spacing:-.2px;text-shadow:0 1px 8px rgba(0,0,0,.5);}
-/* stat strip */
-.prf3-stat-strip{display:flex;align-items:center;background:var(--card);border-bottom:1px solid var(--bdr);padding:16px 0;}
+.prf3-av-rank{position:absolute;bottom:-4px;right:-4px;width:24px;height:24px;flex-shrink:0;image-rendering:-webkit-optimize-contrast;image-rendering:crisp-edges;}
+.prf3-name{font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:900;color:#fff;line-height:1;letter-spacing:-.2px;text-shadow:0 1px 8px rgba(0,0,0,.6);}
+/* sheet: bottom-sheet card overlapping hero bottom */
+.prf3-sheet{background:var(--bg);border-radius:22px 22px 0 0;margin-top:-22px;position:relative;z-index:2;padding:16px 0 0;}
+/* stat strip: now a card */
+.prf3-stat-strip{display:flex;align-items:center;background:var(--card);border-radius:16px;padding:14px 0;margin:0 16px;}
 .prf3-stat{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;}
 .prf3-stat-div{width:1px;height:32px;background:var(--bdr);flex-shrink:0;}
 .prf3-stat-n{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:900;color:var(--text);line-height:1;}
