@@ -506,7 +506,7 @@ function renderFriendsTab() {
       <div style="position:relative;z-index:2;display:flex;align-items:center;width:100%">
         ${avHtml}
         <div style="flex:1;min-width:0;margin-left:10px">
-          <div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:900;color:${textColor};line-height:1.1;display:flex;align-items:center">${displayName(f.name||'Friend',cached.isVerified)}</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:900;color:${textColor};line-height:1.1">${f.name||'Friend'}</div>
           ${socials}
         </div>
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke-width="2" style="stroke:var(--t3);flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg>
@@ -621,7 +621,7 @@ async function refreshFriendProfiles() {
       const snap = await _profilesCol().doc(f.uid).get();
       if (snap.exists) {
         const d = snap.data();
-        _friendProfileCache[f.uid] = { heroBg: d.heroBg || null, avatar: d.avatar || null, isVerified: d.isVerified || false };
+        _friendProfileCache[f.uid] = { heroBg: d.heroBg || null, avatar: d.avatar || null };
         _saveFPC(_friendProfileCache);
       } else {
         console.warn('[friends] no profile doc for', f.name, f.uid);
@@ -732,7 +732,7 @@ function buildProfileHero(o) {
           ${rankIcon}
         </div>
         <div style="padding-bottom:4px">
-          <div class="prf3-name" style="display:flex;align-items:center">${displayName(o.name,o.isVerified)}</div>
+          <div class="prf3-name">${o.name||'Athlete'}</div>
           ${rankBadge}
         </div>
       </div>
@@ -794,7 +794,6 @@ async function openVisitorProfile(uid, name, code, avatar, heroBg) {
       friendsCount: p?.friendsCount ?? '—',
       recentPRs:    p?.recentPRs || p?.bestPRs || [],
       worldRank:    _grCache?(_grCache.findIndex(r=>r.uid===uid)+1||null):null,
-      isVerified:   p?.isVerified || false,
       actionButtons,
       friendChip,
     });
@@ -1062,7 +1061,7 @@ function renderProfileTab(){
   updateNotifToggle();
   // hero name
   const heroName=document.getElementById('scrProfileHeroName');
-  if(heroName) heroName.innerHTML=displayName(name,db.profile?.isVerified);
+  if(heroName) heroName.textContent=name||'Athlete';
   const topName=document.getElementById('scrProfileTopName');
   if(topName) topName.textContent=name||'Athlete';
   // avatar
@@ -1397,8 +1396,6 @@ function rankIconSvg(id,color,{size=60,glow=true,opacity=1,div=1}={}){
   const op=opacity<1?`opacity:${opacity};`:'';
   return `<img src="${imgSrc}" width="${snap}" height="${snap}" style="flex-shrink:0;display:block;width:${snap}px;height:${snap}px;${op}${f}image-rendering:pixelated">`;
 }
-const _DEV_BADGE = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="display:inline-block;vertical-align:middle;margin-left:4px;flex-shrink:0"><circle cx="12" cy="12" r="12" fill="#1d9bf0"/><polyline points="7 12.5 10.5 16 17 9" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-function displayName(name, isVerified){ return (name||'Athlete')+(isVerified?_DEV_BADGE:''); }
 
 const TIER_COLORS = {
   wood:'#8B6343',     iron:'#7A8A96',      bronze:'#C47A32',   silver:'#9AAEBB',
@@ -1612,7 +1609,7 @@ async function _fetchMyWorldRank(){
       const ti=RANK_TIERS.findIndex(t=>t.id===d.rankTier);
       if(ti<0) return;
       const lp=d.rankLp??null;
-      rows.push({uid:doc.id,name:d.name||'Athlete',avatar:d.avatar||null,heroBg:d.heroBg||null,rankTier:d.rankTier,rankDiv:d.rankDiv||1,rankLp:lp,step:ti*3+(d.rankDiv||1)-1,recentPRs:d.recentPRs||[],prsCount:d.prsCount,workoutDays:d.workoutDays,friendsCount:d.friendsCount,isVerified:d.isVerified||false});
+      rows.push({uid:doc.id,name:d.name||'Athlete',avatar:d.avatar||null,heroBg:d.heroBg||null,rankTier:d.rankTier,rankDiv:d.rankDiv||1,rankLp:lp,step:ti*3+(d.rankDiv||1)-1,recentPRs:d.recentPRs||[],prsCount:d.prsCount,workoutDays:d.workoutDays,friendsCount:d.friendsCount});
     });
     rows.sort((a,b)=>b.step-a.step||((b.rankLp??0)-(a.rankLp??0)));
     _grCache=rows;
@@ -1653,7 +1650,7 @@ async function openGlobalRanking(){
       const ti=RANK_TIERS.findIndex(t=>t.id===d.rankTier);
       if(ti<0) return;
       const lp=d.rankLp??null;
-      rows.push({uid:doc.id,name:d.name||'Athlete',avatar:d.avatar||null,heroBg:d.heroBg||null,rankTier:d.rankTier,rankDiv:d.rankDiv||1,rankLp:lp,step:ti*3+(d.rankDiv||1)-1,recentPRs:d.recentPRs||[],prsCount:d.prsCount,workoutDays:d.workoutDays,friendsCount:d.friendsCount,isVerified:d.isVerified||false});
+      rows.push({uid:doc.id,name:d.name||'Athlete',avatar:d.avatar||null,heroBg:d.heroBg||null,rankTier:d.rankTier,rankDiv:d.rankDiv||1,rankLp:lp,step:ti*3+(d.rankDiv||1)-1,recentPRs:d.recentPRs||[],prsCount:d.prsCount,workoutDays:d.workoutDays,friendsCount:d.friendsCount});
     });
     rows.sort((a,b)=>b.step-a.step||((b.rankLp??0)-(a.rankLp??0)));
     if(_user){const mi=rows.findIndex(r=>r.uid===_user.uid);if(mi>=0){_myWorldRank=mi+1;_saveMyRank(_myWorldRank);renderGlobalRankCard();renderRankCard();renderProfileTab();}}
@@ -1706,7 +1703,7 @@ function _renderGlobalList(body,rows){
         `<div class="ex-left" style="display:flex;align-items:center;gap:10px">`+
           `<img src="${RANK_ICONS[u.rankTier]}" style="width:28px;height:28px;flex-shrink:0;image-rendering:pixelated;filter:drop-shadow(0 0 4px ${color}99)">`+
           `<div>`+
-            `<div class="ex-name" style="display:flex;align-items:center">${displayName(u.name,u.isVerified)}</div>`+
+            `<div class="ex-name">${u.name}</div>`+
             `<div style="font-size:11px;color:var(--t3);margin-top:2px;font-variant-numeric:tabular-nums">${label}${u.rankLp!=null?' · '+u.rankLp+' LP':''}</div>`+
           `</div>`+
         `</div>`+
