@@ -3401,7 +3401,7 @@ applyTheme(localStorage.getItem(THEME_KEY)||'carbon');
   renderTodaySession(); renderWeek(); renderPRs(); renderBestPRs(); renderRankCard(); renderGlobalRankCard(); renderFriendsTab(); renderProfileTab();
 
   // safety: if bar animationend never fires (reduced-motion, hidden tab), force dismiss after 5s
-  setTimeout(()=>{barDone=true;tryDismiss();},5000);
+  setTimeout(()=>{barDone=true;tryDismiss();},8000);
 
   const unsub=_auth.onAuthStateChanged(()=>{
     unsub();
