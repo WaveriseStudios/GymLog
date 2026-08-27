@@ -2089,11 +2089,11 @@ function renderTodaySession(){
   const DAYS_L=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
   const dayName=DAYS_L[parseLocalDate(today).getDay()];
 
-  // build logged map: name → {totalSets, best, bestScore, cardio, sets[]}
+  // build logged map: name → {totalSets, best, bestScore, cardio, sets[], lastDate}
   const loggedMap={};
   todayHistoryExs().forEach(h=>{
     const cardio=isCardio(h.name);
-    if(!loggedMap[h.name])loggedMap[h.name]={totalSets:0,best:null,bestScore:-1,cardio,sets:[]};
+    if(!loggedMap[h.name])loggedMap[h.name]={totalSets:0,best:null,bestScore:-1,cardio,sets:[],lastDate:h.date||''};
     if(cardio){
       const cur=loggedMap[h.name].best;
       if(!cur||(h.distance||0)>(cur.distance||0)||((h.distance||0)===(cur.distance||0)&&(h.duration||0)<(cur.duration||0)))
@@ -2106,6 +2106,7 @@ function renderTodaySession(){
       const s=calcEpley(isBW?(bw*(BW_FRACTION[h.name]??1)+h.weight):h.weight,h.reps,isBW?0:30);
       if(s>loggedMap[h.name].bestScore){loggedMap[h.name].best=h;loggedMap[h.name].bestScore=s;}
     }
+    if(h.date>loggedMap[h.name].lastDate) loggedMap[h.name].lastDate=h.date;
   });
 
   // collapse identical weight+reps entries, build compact display string
@@ -2136,28 +2137,20 @@ function renderTodaySession(){
 
   const usualExs=usualExsForDate(today);
 
-  // no usual exercises — show logged session if something exists, otherwise empty state
-  const addExBtnHtml=`<button class="add-row" style="border-radius:0 0 12px 12px;border-top:1px solid var(--bdr)" onclick="openExModal('${today}',null)"><span class="add-ic">+</span>Add exercise</button>`;
-
   const hasLoggedToday=(db.history||[]).some(h=>h.day===today&&!h._cardio);
   const todayLp=calcTodayLp();
-  const finishedLp=hasLoggedToday?_sessionFinishedLp(today):0;
-  const finished=hasLoggedToday&&finishedLp>0;
-  const finishBtn=(!finished&&todayLp)?`<button class="finish-session-btn" onclick="finishSession()">
-    <span>Finish Session</span>
-    <span class="finish-lp-badge">+${todayLp.total} LP</span>
-  </button>`:'';
-  const finishedTag=finished?`<span class="session-done-tag">Done · +${finishedLp} LP</span>`:'';
 
   if(!usualExs.length){
-    const loggedNames=Object.keys(loggedMap);
+    const loggedNames=Object.keys(loggedMap).sort((a,b)=>loggedMap[b].lastDate.localeCompare(loggedMap[a].lastDate));
     if(!loggedNames.length){
       el.innerHTML=`<div class="session-hd" style="margin-bottom:10px"><span class="lbl">Today · ${dayName}</span></div>
-      <div class="card"><div style="padding:14px 16px;font-size:13px;color:var(--t2)">No workout for today — rest up or start one below.</div>${addExBtnHtml}</div>`;
+      <div class="card"><div style="padding:14px 16px;font-size:13px;color:var(--t2)">No workout for today — rest up or start one below.</div></div>`;
       return;
     }
-    // something was logged freestyle
-    const rows=loggedNames.map(name=>{
+    // something was logged freestyle — show last 2
+    const shown=loggedNames.slice(-2);
+    const overflow=loggedNames.length>2;
+    const rows=shown.map(name=>{
       const g=loggedMap[name];
       const prTag=isTodayPR(name,g)?`<span class="pr-tag">PR</span>`:'';
       const metaStr=g.cardio?fmtCardio(g.best):fmtSets(name,g);
@@ -2169,22 +2162,27 @@ function renderTodaySession(){
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color:var(--acc);flex-shrink:0"><polyline points="20 6 9 17 4 12"/></svg>
       </div>`;
     }).join('');
+    const moreRow=overflow?`<div class="lw-row" style="cursor:pointer;justify-content:center" onclick="goWeekToday()">
+      <span style="font-size:13px;color:var(--t2);font-weight:600">+${loggedNames.length-2} more</span>
+    </div>`:'';
     el.innerHTML=`<div class="session-hd" style="margin-bottom:10px">
       <span class="lbl">Today · ${dayName}</span>
-      <span style="display:flex;align-items:center;gap:8px"><span class="smeta">${loggedNames.length} logged</span>${finishedTag}</span>
-    </div><div class="card">${rows}${addExBtnHtml}${finishBtn}</div>`;
+      <span style="display:flex;align-items:center;gap:8px"><span class="smeta">${loggedNames.length} logged</span></span>
+    </div><div class="card">${rows}${moreRow}</div>`;
     return;
   }
 
-  const allNames=[...new Set([...usualExs.map(e=>e.name),...Object.keys(loggedMap)])];
+  const allNames=[...new Set([...Object.keys(loggedMap).sort((a,b)=>loggedMap[b].lastDate.localeCompare(loggedMap[a].lastDate)),...usualExs.map(e=>e.name)])];
   const doneCount=Object.keys(loggedMap).length;
   const subtitle=doneCount?`${doneCount} / ${allNames.length} done`:`${usualExs.length} exercise${usualExs.length!==1?'s':''}`;
 
-  const rows=allNames.map(name=>{
+  const shown=allNames.slice(0,2);
+  const overflow=allNames.length>2;
+
+  const rows=shown.map(name=>{
     const g=loggedMap[name];
     const usual=usualExs.find(e=>e.name===name);
     if(g){
-      // logged today — tap to edit
       const prTag2=isTodayPR(name,g)?`<span class="pr-tag">PR</span>`:'';
       const metaStr2=g.cardio?fmtCardio(g.best):fmtSets(name,g);
       return `<div class="lw-row" style="cursor:pointer" onclick="openExModal('${today}','${name}')">
@@ -2195,7 +2193,6 @@ function renderTodaySession(){
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color:var(--acc);flex-shrink:0"><polyline points="20 6 9 17 4 12"/></svg>
       </div>`;
     }else{
-      // not yet done — tap to log it now
       const ref=usual||{weight:0,reps:0,sets:0,distance:0,duration:0};
       const refMeta=isCardio(name)?fmtCardio(ref):`${fmtWeight(ref.weight,name)} × ${ref.reps} · ${ref.sets} sets`;
       return `<div class="lw-row" style="cursor:pointer;opacity:.6" onclick="openExModal('${today}',null,'${name}')">
@@ -2208,15 +2205,22 @@ function renderTodaySession(){
     }
   }).join('');
 
+  const moreRow=overflow?`<div class="lw-row" style="cursor:pointer;justify-content:center" onclick="goWeekToday()">
+    <span style="font-size:13px;color:var(--t2);font-weight:600">+${allNames.length-2} more</span>
+  </div>`:'';
+
+  const actionsHtml=``;
+
   el.innerHTML=`<div class="session-hd" style="margin-bottom:10px">
     <span class="lbl">Today · ${dayName}</span>
-    <span style="display:flex;align-items:center;gap:8px"><span class="smeta">${subtitle}</span>${finishedTag}</span>
+    <span style="display:flex;align-items:center;gap:8px"><span class="smeta">${subtitle}</span></span>
   </div>
-  <div class="card">${rows}${addExBtnHtml}${finishBtn}</div>`;
+  <div class="card">${rows}${moreRow}</div>${actionsHtml}`;
 }
 
 /* ── WEEK ── */
 let weekOffset=0, selWeekDate=null, slideDir=null;
+function goWeekToday(){weekOffset=0;selWeekDate=todayDateStr();goScr('sw');}
 const MONTHS_S=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const DAY_LETTERS=['M','T','W','T','F','S','S'];
 const DAY_SHORT_S=['MON','TUE','WED','THU','FRI','SAT','SUN'];
@@ -2257,17 +2261,31 @@ function renderWeekDay(dir){
   if(dir){el.classList.remove('slide-prev','slide-next');void el.offsetWidth;el.classList.add(`slide-${dir}`);}
   const dateStr=selWeekDate||todayDateStr();
   const today=todayDateStr();
-  const exs=db.schedule?.[dateStr]||[];
+  const _schedExs=db.schedule?.[dateStr]||[];
+  let exs=_schedExs;
+  if(dateStr===today){
+    const _schedIds=new Set(_schedExs.map(e=>e.id));
+    const _orphans=(db.history||[])
+      .filter(h=>h.day===dateStr&&!h._cardio&&h._entryId&&!_schedIds.has(h._entryId))
+      .map(h=>({...h,id:h._entryId}));
+    if(_orphans.length) exs=[..._schedExs,..._orphans];
+  }
+  const _histDateMap=new Map((db.history||[]).map(h=>[h._entryId,h.date]));
+  exs=[...exs].sort((a,b)=>{
+    const da=new Date(a.date||_histDateMap.get(a.id)||0);
+    const db_=new Date(b.date||_histDateMap.get(b.id)||0);
+    return db_-da;
+  });
   const p=db.profile;
 
   const d=parseLocalDate(dateStr);
   const dayName=DAY_SHORT_S[((d.getDay()+6)%7)];
   const lbl=`${dayName[0]}${dayName.slice(1).toLowerCase()}, ${MONTHS_S[d.getMonth()]} ${d.getDate()}${dateStr===today?' — Today':''}`;
 
-  const _showLp=dateStr<today||(dateStr===today&&_sessionFinishedLp(today)>0);
+  const _showLp=dateStr<today||dateStr===today;
   const dayLp=_showLp?calcSessionLp(dateStr):null;
   const lpBadge=dayLp?`<span class="session-lp-badge">+${dayLp.total} LP</span>`:'';
-  el.innerHTML=`<div class="wsec" style="display:flex;align-items:center;justify-content:space-between">${lbl}${lpBadge}</div><div class="card" id="weekCard"></div>`;
+  el.innerHTML=`<div class="wsec" style="display:flex;align-items:center;justify-content:space-between">${lbl}${lpBadge}</div>${exs.length?'<div class="card" id="weekCard"></div>':'<div id="weekCard"></div>'}`;
   const card=el.querySelector('#weekCard');
 
   function makeExRow(ex,editable){
@@ -2306,7 +2324,7 @@ function renderWeekDay(dir){
             db.history=db.history.filter(h=>h._entryId!==ex.id);
             recomputePR(ex.name);
             const _newRk=(!isCardio(ex.name)&&db.prs[ex.name]&&_p?.weight)?scoreToTierDiv(calcExScore(db.prs[ex.name],_p,ex.name)):null;
-            persist();if(_isSessionFinished(dateStr))_refreshSessionLp(dateStr);
+            persist();if(_isSessionFinished(dateStr)){if(dateStr===todayDateStr())_unmarkSessionFinished(dateStr);else _refreshSessionLp(dateStr);}
             renderWeek();renderTodaySession();renderRankCard();renderPRs();renderBestPRs();showToast('Exercise removed');syncPublicProfile();_fetchMyWorldRank();
             if(_prevRk&&_newRk){const pi=RANK_TIERS.findIndex(t=>t.id===_prevRk.tier.id),ni=RANK_TIERS.findIndex(t=>t.id===_newRk.tier.id);if(ni<pi||(ni===pi&&_newRk.div<_prevRk.div))setTimeout(()=>showRankUp(_prevRk.tier.id,_prevRk.div,_newRk.tier.id,_newRk.div,true,ex.name),400);}
             else if(_prevRk&&!_newRk)setTimeout(()=>showRankUp(_prevRk.tier.id,_prevRk.div,'wood',1,true,ex.name),400);
@@ -2364,11 +2382,24 @@ function renderWeekDay(dir){
     }
   });
 
+  const isToday=dateStr===todayDateStr();
+  const _weekLp=isToday?calcSessionLp(dateStr):null;
+  const _weekFinished=isToday&&_isSessionFinished(dateStr);
+  const actionsRow=document.createElement('div');
+  actionsRow.className='session-actions';
   const addBtn=document.createElement('button');
-  addBtn.className='add-row';
+  addBtn.className='add-ex-btn';
   addBtn.innerHTML='<span class="add-ic">+</span>Add exercise';
   addBtn.addEventListener('click',()=>openExModal(dateStr,null));
-  card.appendChild(addBtn);
+  actionsRow.appendChild(addBtn);
+  if(isToday&&_weekLp&&!_weekFinished){
+    const finBtn=document.createElement('button');
+    finBtn.className='finish-session-btn';
+    finBtn.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Finish';
+    finBtn.addEventListener('click',()=>finishSession());
+    actionsRow.appendChild(finBtn);
+  }
+  el.appendChild(actionsRow);
 
   // Usual exercises section
   const loggedToday=new Set((db.history||[]).filter(h=>h.day===dateStr&&!h._cardio).map(h=>h.name));
@@ -2390,8 +2421,7 @@ function renderWeekDay(dir){
         if(already){showToast('Already in this day');return;}
         const schedId=uid();
         db.schedule[dateStr].push({...ex,id:schedId});
-        const entryId=uid();
-        const histEntry={name:ex.name,weight:ex.weight,sets:ex.sets,reps:ex.reps,date:new Date().toISOString(),day:dateStr,_entryId:entryId};
+        const histEntry={name:ex.name,weight:ex.weight,sets:ex.sets,reps:ex.reps,date:new Date().toISOString(),day:dateStr,_entryId:schedId};
         if(!db.history)db.history=[];
         db.history.push(histEntry);
         persist();renderWeek();renderTodaySession();showToast(`${ex.name} added`);
@@ -2869,6 +2899,7 @@ function finishSession(){
   const newRank=calcOverallRank();
   document.getElementById('sessionLpChip')?.remove();
   renderTodaySession();
+  renderWeek();
   renderRankCard();
   syncPublicProfile();
   _fetchMyWorldRank();
@@ -2893,6 +2924,11 @@ function showSessionComplete(lp, prevRank, newRank){
   const prevLabel=prevRank?`${prevRank.tier.label} ${ROMAN[prevRank.div-1]}`:'';
   const barBefore=prevRank?Math.round(prevRank.pct/LP_DIV*100):0;
   const barAfter=newRank?Math.round(newRank.pct/LP_DIV*100):0;
+  // labels show current div → next div
+  const _isMaxDiv=newRank&&newRank.tierIdx===LP_RANK_TIERS.length-1&&newRank.div===3;
+  const _nextTier=newRank&&!_isMaxDiv?(newRank.div===3?LP_RANK_TIERS[newRank.tierIdx+1]:newRank.tier):null;
+  const _nextDiv=newRank&&!_isMaxDiv?(newRank.div===3?1:newRank.div+1):null;
+  const nextLabel=_isMaxDiv?'Max':(_nextTier?`${_nextTier.label} ${ROMAN[_nextDiv-1]}`:'');
 
   // cache element refs — avoids repeated getElementById across setup + animation callbacks
   const elBg=document.getElementById('scBg');
@@ -2906,10 +2942,15 @@ function showSessionComplete(lp, prevRank, newRank){
   const elTitle=document.getElementById('scRankTitle');
   const elHint=document.getElementById('scHint');
 
-  ol.style.setProperty('--sc-color',color);
+  const _divsStart=prevRank?(prevRank.tierIdx*3+prevRank.div-1):0;
+  const _divsEnd=newRank?(newRank.tierIdx*3+newRank.div-1):_divsStart;
+  const _multiLap=(_divsEnd-_divsStart)>0;
+  const _initRank=_multiLap?prevRank:newRank;
+  const _initColor=_initRank?TIER_COLORS[_initRank.tier.id]:color;
+  ol.style.setProperty('--sc-color',_initColor);
 
-  if(elBg&&newRank){
-    elBg.innerHTML=`<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;opacity:.15;filter:blur(6px);transform:scale(1.3);pointer-events:none">${rankIconSvg(newRank.tier.id,color,{size:220,glow:false,div:newRank.div})}</div>`;
+  if(elBg&&_initRank){
+    elBg.innerHTML=`<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;opacity:.15;filter:blur(6px);transform:scale(1.3);pointer-events:none">${rankIconSvg(_initRank.tier.id,_initColor,{size:220,glow:false,div:_initRank.div})}</div>`;
   }
 
   // build LP rows
@@ -2930,8 +2971,8 @@ function showSessionComplete(lp, prevRank, newRank){
   elBarFill.style.background=color;
   elBarWrap.style.opacity='0';
   elBarLbls.style.opacity='0';
-  elBarFrom.textContent=prevLabel;
-  elBarTo.textContent=rankedUp?newLabel:`${newRank?newRank.pct:0} / ${LP_DIV} LP`;
+  elBarFrom.textContent=newLabel;
+  elBarTo.textContent=nextLabel||`${newRank?newRank.pct:0} / ${LP_DIV} LP`;
   elTitle.textContent=rankedUp?`RANK UP · ${newLabel}`:'';
   elTitle.style.cssText='opacity:0;transform:translateY(20px) scale(.9)';
   elHint.style.opacity='0';
@@ -2954,24 +2995,78 @@ function showSessionComplete(lp, prevRank, newRank){
       elTotal.style.transform='scale(1)';
     },totalDelay);
 
-    // bar
+    // bar — animate per division, updating rank visuals at each crossing
     setTimeout(()=>{
       elBarWrap.style.opacity='1';
       elBarLbls.style.opacity='1';
-      elBarFill.style.width=barBefore+'%';
-      setTimeout(()=>{elBarFill.style.width=barAfter+'%';},200);
+      const divsStart=prevRank?(prevRank.tierIdx*3+prevRank.div-1):0;
+      const divsEnd=newRank?(newRank.tierIdx*3+newRank.div-1):divsStart;
+      const laps=divsEnd-divsStart;
+      const LAP_DUR=500, LAP_GAP=140;
+
+      const applyRankVisuals=(linearPos)=>{
+        const ti=Math.min(Math.floor(linearPos/3),LP_RANK_TIERS.length-1);
+        const dv=(linearPos%3)+1;
+        const tier=LP_RANK_TIERS[ti];
+        const c=TIER_COLORS[tier.id];
+        ol.style.setProperty('--sc-color',c);
+        elBarFill.style.background=c;
+        if(elBg) elBg.innerHTML=`<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;opacity:.15;filter:blur(6px);transform:scale(1.3);pointer-events:none">${rankIconSvg(tier.id,c,{size:220,glow:false,div:dv})}</div>`;
+        const _nx=dv===3?LP_RANK_TIERS[ti+1]:tier;
+        const _nd=dv===3?1:dv+1;
+        elBarFrom.textContent=`${tier.label} ${ROMAN[dv-1]}`;
+        elBarTo.textContent=_nx?`${_nx.label} ${ROMAN[_nd-1]}`:'Max';
+      };
+
+      if(laps<=0){
+        elBarFill.style.transition='none';
+        elBarFill.style.width=barBefore+'%';
+        setTimeout(()=>{
+          elBarFill.style.transition=`width ${LAP_DUR}ms cubic-bezier(.4,0,.2,1)`;
+          elBarFill.style.width=barAfter+'%';
+        },80);
+      } else {
+        // start with prevRank visuals before sweeping forward
+        applyRankVisuals(divsStart);
+        let t=0;
+        elBarFill.style.transition='none';
+        elBarFill.style.width=barBefore+'%';
+        for(let i=0;i<laps;i++){
+          t+=80;
+          setTimeout((ii=>{
+            return ()=>{
+              elBarFill.style.transition=`width ${LAP_DUR}ms cubic-bezier(.4,0,.2,1)`;
+              elBarFill.style.width='100%';
+              setTimeout(()=>{
+                // cross into next division — update visuals
+                applyRankVisuals(divsStart+ii+1);
+                elBarFill.style.transition='none';
+                elBarFill.style.width='0%';
+                if(ii===laps-1){
+                  // final lap — land at barAfter
+                  setTimeout(()=>{
+                    elBarFill.style.transition=`width ${LAP_DUR}ms cubic-bezier(.4,0,.2,1)`;
+                    elBarFill.style.width=barAfter+'%';
+                  },60);
+                }
+              },LAP_DUR+LAP_GAP);
+            };
+          })(i),t);
+          t+=LAP_DUR+LAP_GAP+140;
+        }
+      }
     },totalDelay+280);
 
-    // rank-up title
+    // rank-up title + hint — delay extra if multi-div laps
+    const _lapCount=newRank&&prevRank?Math.max(0,(newRank.tierIdx*3+newRank.div-1)-(prevRank.tierIdx*3+prevRank.div-1)):0;
+    const _barTotalMs=_lapCount>0?_lapCount*(500+120*2)+500:600;
     if(rankedUp){
       setTimeout(()=>{
         elTitle.style.opacity='1';
         elTitle.style.transform='translateY(0) scale(1)';
-      },totalDelay+700);
+      },totalDelay+280+_barTotalMs+80);
     }
-
-    // hint
-    setTimeout(()=>{elHint.style.opacity='1';},totalDelay+(rankedUp?1000:600));
+    setTimeout(()=>{elHint.style.opacity='1';},totalDelay+280+_barTotalMs+(rankedUp?380:200));
   });
 }
 
@@ -3361,8 +3456,8 @@ document.getElementById('exSave').addEventListener('click',()=>{
   const isNewEntry=histIdx<0;
   if(histIdx>=0) db.history[histIdx]=histEntry; else db.history.push(histEntry);
 
-  // unfinish session if a NEW exercise is added to an already-finished day
-  if(isNewEntry&&!cardio&&_isSessionFinished(exDay)) _unmarkSessionFinished(exDay);
+  // unfinish session when adding or editing an exercise on today
+  if(!cardio&&exDay===todayDateStr()&&_isSessionFinished(exDay)) _unmarkSessionFinished(exDay);
 
   recomputePR(name);
   if(oldName&&oldName!==name) recomputePR(oldName);
