@@ -1542,7 +1542,8 @@ function _intensityMult(weight, prWeight){
 function _strengthMult(effectiveWeight, bodyweight){
   if(!bodyweight||!effectiveWeight) return 1;
   const ratio=effectiveWeight/bodyweight;
-  return 1+Math.min(Math.max(ratio-0.5,0),2.0)*0.5;
+  // bonus: max 1.6× at 2.5+ BW, 1.15 at 1.0× BW
+  return 1+Math.min(Math.max(ratio-0.5,0),2.0)*0.3;
 }
 
 // Returns LP breakdown for a given day string ('YYYY-MM-DD')
