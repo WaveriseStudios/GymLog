@@ -1498,20 +1498,20 @@ function scoreToTierDiv(score){
 // Each division = LP_DIV LP. One full tier = 3 divisions.
 // Thresholds set so 608 LP ≈ Platinum I.
 // Gold is a "gate" tier (200 LP wide) to slow progression before Platinum.
-const LP_DIV = 33;
+const LP_DIV = 100; // each division = 100 LP, one full tier = 300 LP
 const LP_RANK_TIERS = [
-  {id:'wood',     label:'Wood',     threshold:0    },  // 100 LP wide → 33/div
-  {id:'iron',     label:'Iron',     threshold:100  },  // 100 LP wide → 33/div
-  {id:'bronze',   label:'Bronze',   threshold:200  },  // 100 LP wide → 33/div
-  {id:'silver',   label:'Silver',   threshold:300  },  // 100 LP wide → 33/div
-  {id:'gold',     label:'Gold',     threshold:400  },  // 200 LP wide → 67/div (gate)
-  {id:'platinum', label:'Platinum', threshold:600  },  // 100 LP wide → 33/div
-  {id:'sapphire', label:'Sapphire', threshold:700  },  // 100 LP wide → 33/div
-  {id:'diamond',  label:'Diamond',  threshold:800  },  // 150 LP wide → 50/div
-  {id:'amethyst', label:'Amethyst', threshold:950  },  // 200 LP wide → 67/div
-  {id:'emerald',  label:'Emerald',  threshold:1150 },  // 250 LP wide → 83/div
-  {id:'ruby',     label:'Ruby',     threshold:1400 },  // 350 LP wide → 117/div
-  {id:'iridium',  label:'Iridium',  threshold:1750 },  // top tier
+  {id:'wood',     label:'Wood',     threshold:0    },
+  {id:'iron',     label:'Iron',     threshold:300  },
+  {id:'bronze',   label:'Bronze',   threshold:600  },
+  {id:'silver',   label:'Silver',   threshold:900  },
+  {id:'gold',     label:'Gold',     threshold:1200 },
+  {id:'platinum', label:'Platinum', threshold:1800 },
+  {id:'sapphire', label:'Sapphire', threshold:2100 },
+  {id:'diamond',  label:'Diamond',  threshold:2400 },
+  {id:'amethyst', label:'Amethyst', threshold:2850 },
+  {id:'emerald',  label:'Emerald',  threshold:3450 },
+  {id:'ruby',     label:'Ruby',     threshold:4200 },
+  {id:'iridium',  label:'Iridium',  threshold:5250 },
 ];
 
 function lpToTierDiv(lp){
@@ -1572,7 +1572,7 @@ function calcSessionLp(day){
       const effW=isBW?(bw*bwFrac+addedW):addedW;
       const intMult=_intensityMult(addedW||effW, prWeight||effW);
       const strMult=_strengthMult(effW, bw);
-      exSetLp+=Math.round(sets*3*intMult*strMult);
+      exSetLp+=Math.round(sets*9*intMult*strMult);
       totalTonnage+=sets*(e.reps||1)*effW;
     }
     setLp+=exSetLp;
@@ -1585,7 +1585,7 @@ function calcSessionLp(day){
     let prog=0;
     if(lastEntry&&todayBest>(lastEntry.weight||0)){
       const imp=(todayBest-(lastEntry.weight||0))/(lastEntry.weight||1);
-      prog=imp>=0.05?20:10;
+      prog=imp>=0.05?60:30;
       progressLp+=prog;
     }
     details.push({name,sets:entries.reduce((s,e)=>s+(e.sets||1),0),exSetLp,prog});
@@ -1596,13 +1596,13 @@ function calcSessionLp(day){
   const weekSessions=[...new Set((db.history||[])
     .filter(h=>h.day&&h.day>=weekStart&&h.day<=day&&!h._cardio)
     .map(h=>h.day))];
-  const streak=weekSessions.length>=3?5:0;
+  const streak=weekSessions.length>=3?15:0;
 
   // Tonnage bonus: rewards total absolute weight moved, normalized by bodyweight.
   // Heavier lifters moving more total kg naturally earn more LP here.
-  const tonnageLp=bw>0?Math.floor(totalTonnage/(bw*6)):0;
+  const tonnageLp=bw>0?Math.floor(totalTonnage/(bw*2)):0;
   const raw=setLp+progressLp+streak+tonnageLp;
-  const total=Math.min(raw,250);
+  const total=Math.min(raw,750);
   return{total,setLp,progressLp,streak,tonnageLp,totalSets,details,capped:raw>250};
 }
 
