@@ -489,10 +489,10 @@ function renderFriendsTab() {
     const avHtml = avatar
       ? `<img src="${avatar}" style="width:42px;height:42px;border-radius:50%;object-fit:cover;flex-shrink:0;border:2px solid var(--bdr)">`
       : `<div style="width:42px;height:42px;border-radius:50%;background:var(--acc2);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:900;color:var(--acc);flex-shrink:0">${initials}</div>`;
-    const safeName   = (f.name||'Friend').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-    const safeCode   = (f.code||'').replace(/'/g,"\\'");
-    const safeAvatar = (avatar||'').replace(/"/g,'&quot;');
-    const safeHeroBg = (heroBg||'').replace(/"/g,'&quot;');
+    const safeName   = escAttr(f.name||'Friend');
+    const safeCode   = escAttr(f.code||'');
+    const safeAvatar = escAttr(avatar||'');
+    const safeHeroBg = escAttr(heroBg||'');
     const bgImg = '';
     const overlay = '';
     const textColor = 'var(--text)';
@@ -664,7 +664,7 @@ function buildProfileHero(o) {
       : `background-image:radial-gradient(ellipse at 60% 40%,${c}55 0%,transparent 70%),linear-gradient(135deg,#140a0a 0%,#1a0e1a 100%);transform:scale(1.05)`;
 
   const initials = (o.name||'?')[0].toUpperCase();
-  const safeAvSrc = (o.avatar||'').replace(/"/g,'&quot;').replace(/'/g,"\\'");
+  const safeAvSrc = escAttr(o.avatar||'');
   const avInner = o.avatar
     ? `<img src="${o.avatar}" style="width:100%;height:100%;object-fit:cover">`
     : `<span style="font-family:'Barlow Condensed',sans-serif;font-size:32px;font-weight:900">${initials}</span>`;
@@ -770,10 +770,10 @@ async function openVisitorProfile(uid, name, code, avatar, heroBg) {
 
     let friendChip = '';
     if (_user && !isOwnProfile) {
-      const safeN    = (p?.name||name||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-      const safeUid2 = uid.replace(/'/g,"\\'");
-      const safeAv2  = (p?.avatar||avatar||'').replace(/'/g,"\\'").replace(/"/g,'&quot;');
-      const safeCode2= (code||'').replace(/'/g,"\\'");
+      const safeN    = escAttr(p?.name||name||'');
+      const safeUid2 = escAttr(uid);
+      const safeAv2  = escAttr(p?.avatar||avatar||'');
+      const safeCode2= escAttr(code||'');
       if (isFriend) {
         friendChip = `<button class="prf-btn tap-scale" style="flex:1;justify-content:center" onclick="if(confirm('Unfollow ${safeN}?')){removeFriend('${safeUid2}')}">Unfollow</button>`;
       } else {
@@ -1493,14 +1493,130 @@ function scoreToTierDiv(score){
   const pct=Math.round(((frac*3)%1)*100);
   return{tierIdx:idx,tier,div,pct,nextTier:next||tier,nextDiv:div===3?1:div+1,isMaxDiv:idx===RANK_TIERS.length-1&&div===3};
 }
+// ── SESSION LP SYSTEM ──────────────────────────────────────────────────────
+// LP thresholds for rolling-30-day total (active user earns ~30 LP/session)
+// Each division = LP_DIV LP. One full tier = 3 divisions.
+// Thresholds set so 608 LP ≈ Platinum I.
+// Gold is a "gate" tier (200 LP wide) to slow progression before Platinum.
+const LP_DIV = 33;
+const LP_RANK_TIERS = [
+  {id:'wood',     label:'Wood',     threshold:0    },  // 100 LP wide → 33/div
+  {id:'iron',     label:'Iron',     threshold:100  },  // 100 LP wide → 33/div
+  {id:'bronze',   label:'Bronze',   threshold:200  },  // 100 LP wide → 33/div
+  {id:'silver',   label:'Silver',   threshold:300  },  // 100 LP wide → 33/div
+  {id:'gold',     label:'Gold',     threshold:400  },  // 200 LP wide → 67/div (gate)
+  {id:'platinum', label:'Platinum', threshold:600  },  // 100 LP wide → 33/div
+  {id:'sapphire', label:'Sapphire', threshold:700  },  // 100 LP wide → 33/div
+  {id:'diamond',  label:'Diamond',  threshold:800  },  // 150 LP wide → 50/div
+  {id:'amethyst', label:'Amethyst', threshold:950  },  // 200 LP wide → 67/div
+  {id:'emerald',  label:'Emerald',  threshold:1150 },  // 250 LP wide → 83/div
+  {id:'ruby',     label:'Ruby',     threshold:1400 },  // 350 LP wide → 117/div
+  {id:'iridium',  label:'Iridium',  threshold:1750 },  // top tier
+];
+
+function lpToTierDiv(lp){
+  let idx=0;
+  for(let i=0;i<LP_RANK_TIERS.length;i++) if(lp>=LP_RANK_TIERS[i].threshold) idx=i;
+  const tier=LP_RANK_TIERS[idx], next=LP_RANK_TIERS[idx+1];
+  const tierWidth=next?next.threshold-tier.threshold:300;
+  const divWidth=Math.round(tierWidth/3); // LP per division (varies by tier)
+  const lpInTier=lp-tier.threshold;
+  const div=Math.min(Math.floor(lpInTier/divWidth)+1,3);
+  const pct=lpInTier%divWidth; // actual LP within division (0 to divWidth-1)
+  return{tierIdx:idx,tier,div,pct,divWidth,nextTier:next||tier,nextDiv:div===3?1:div+1,isMaxDiv:idx===LP_RANK_TIERS.length-1&&div===3};
+}
+
+// Intensity multiplier: how close to PR weight this set was
+function _intensityMult(weight, prWeight){
+  if(!prWeight||!weight) return 1;
+  const pct=weight/prWeight;
+  if(pct>=0.95) return 2.5;
+  if(pct>=0.85) return 2.0;
+  if(pct>=0.75) return 1.6;
+  if(pct>=0.60) return 1.3;
+  return 1.0;
+}
+
+// Returns LP breakdown for a given day string ('YYYY-MM-DD')
+function calcSessionLp(day){
+  const hist=(db.history||[]).filter(h=>h.day===day&&!h._cardio);
+  if(!hist.length) return null;
+
+  // Group entries by exercise
+  const byEx={};
+  hist.forEach(h=>{if(!byEx[h.name])byEx[h.name]=[];byEx[h.name].push(h);});
+
+  let setLp=0, progressLp=0, totalSets=0;
+  const details=[];
+
+  for(const [name,entries] of Object.entries(byEx)){
+    const pr=db.prs?.[name];
+    const prWeight=pr?.weight||0;
+
+    // 3 LP per set × intensity multiplier
+    let exSetLp=0;
+    for(const e of entries){
+      const sets=e.sets||1;
+      totalSets+=sets;
+      const mult=_intensityMult(e.weight||0, prWeight);
+      exSetLp+=Math.round(sets*3*mult);
+    }
+    setLp+=exSetLp;
+
+    // Progress bonus: beat last session for this exercise
+    const todayBest=Math.max(...entries.map(e=>e.weight||0));
+    const lastEntry=(db.history||[])
+      .filter(h=>h.name===name&&h.day<day&&!h._cardio)
+      .sort((a,b)=>(b.day||'').localeCompare(a.day||''))[0];
+    let prog=0;
+    if(lastEntry&&todayBest>(lastEntry.weight||0)){
+      const imp=(todayBest-(lastEntry.weight||0))/(lastEntry.weight||1);
+      prog=imp>=0.05?20:10;
+      progressLp+=prog;
+    }
+    details.push({name,sets:entries.reduce((s,e)=>s+(e.sets||1),0),exSetLp,prog});
+  }
+
+  // Streak: +5 if 3rd+ session this week
+  const weekStart=_weekStart(day);
+  const weekSessions=[...new Set((db.history||[])
+    .filter(h=>h.day&&h.day>=weekStart&&h.day<=day&&!h._cardio)
+    .map(h=>h.day))];
+  const streak=weekSessions.length>=3?5:0;
+
+  const raw=setLp+progressLp+streak;
+  const total=Math.min(raw,250);
+  return{total,setLp,progressLp,streak,totalSets,details,capped:raw>250};
+}
+
+function _dayMinus(day,n){
+  const d=new Date(day+'T12:00:00Z');
+  d.setUTCDate(d.getUTCDate()-n);
+  return d.toISOString().slice(0,10);
+}
+function _weekStart(day){
+  const d=new Date(day+'T12:00:00Z');
+  const dow=d.getUTCDay()||7; // Mon=1..Sun=7
+  d.setUTCDate(d.getUTCDate()-(dow-1));
+  return d.toISOString().slice(0,10);
+}
+
+// Rolling 30-day LP total → tier/div
 function calcOverallRank(){
   const p=db.profile;
   if(!p?.weight)return null;
-  const prs=Object.entries(db.prs||{}).filter(([n,pr])=>!pr._cardio);
-  if(!prs.length)return{...scoreToTierDiv(0),count:0};
-  const scores=prs.map(([n,pr])=>calcExScore(pr,p,n));
-  const avg=scores.reduce((a,b)=>a+b,0)/scores.length;
-  return{...scoreToTierDiv(avg),count:prs.length};
+  const today=new Date().toISOString().slice(0,10);
+  const cutoff=_dayMinus(today,30);
+  const days=[...new Set((db.history||[]).filter(h=>h.day&&h.day>=cutoff&&!h._cardio).map(h=>h.day))];
+  if(!days.length)return{...lpToTierDiv(0),totalLp:0,sessionCount:0};
+  const totalLp=days.reduce((s,d)=>s+(calcSessionLp(d)?.total||0),0);
+  return{...lpToTierDiv(totalLp),totalLp,sessionCount:days.length};
+}
+
+// LP earned in today's session (for session summary card)
+function calcTodayLp(){
+  const today=new Date().toISOString().slice(0,10);
+  return calcSessionLp(today);
 }
 
 function recomputePR(name, onlyIfBetter=false){
@@ -1547,21 +1663,24 @@ function renderRankCard(){
     </div>`;
     return;
   }
-  const{tier,div,pct,nextTier,nextDiv,isMaxDiv,count}=r;
+  const{tier,div,pct,divWidth,nextTier,nextDiv,isMaxDiv,totalLp,sessionCount}=r;
   const color=TIER_COLORS[tier.id];
   const curLabel=`${tier.label} ${ROMAN[div-1]}`;
   const nextLabel=isMaxDiv?'Iridium III · Max':div===3?`${nextTier.label} I`:`${tier.label} ${ROMAN[div]}`;
-  const subtitle=count>0?`Based on ${count} exercise${count!==1?'s':''}`:'Log exercises to rank up';
+  const subtitle=sessionCount>0?`${sessionCount} session${sessionCount!==1?'s':''} · last 30 days`:'Log sessions to rank up';
+  const todayLp=calcTodayLp();
+  const todayBadge=todayLp?`<span style="font-family:'DM Mono',monospace;font-size:10px;font-weight:600;color:${color};background:color-mix(in srgb,${color} 12%,transparent);border:1px solid color-mix(in srgb,${color} 25%,transparent);border-radius:6px;padding:2px 7px;margin-left:6px">+${todayLp.total} LP today</span>`:'';
+  const barPct=Math.round(pct/divWidth*100);
   el.innerHTML=`<div class="card" style="cursor:pointer" onclick="openRankBreakdown()">
     <div class="rank-card" style="--tc:${color}">
       <div class="rank-hex-wrap" style="width:72px;height:72px">
         ${rankIconSvg(tier.id,color,{size:72,div})}
       </div>
       <div class="rank-info">
-        <div class="rank-sub">${subtitle}</div>
+        <div class="rank-sub" style="display:flex;align-items:center;flex-wrap:wrap;gap:2px">${subtitle}${todayBadge}</div>
         <div class="rank-name">${curLabel}</div>
-        <div class="rank-percentile" style="margin-top:2px;margin-bottom:4px;font-variant-numeric:tabular-nums">${pct} LP</div>
-        <div class="rank-bar-wrap"><div class="rank-bar-fill" style="width:${pct}%"></div></div>
+        <div class="rank-percentile" style="margin-top:2px;margin-bottom:4px;font-variant-numeric:tabular-nums"><strong>${pct} LP</strong> <span style="opacity:.6">/ ${divWidth} LP</span> &nbsp;·&nbsp; <span style="opacity:.5;font-size:.85em">${totalLp} total</span></div>
+        <div class="rank-bar-wrap"><div class="rank-bar-fill" style="width:${barPct}%"></div></div>
         <div class="rank-bar-lbls"><span>${curLabel}</span><span>${nextLabel}</span></div>
       </div>
     </div>
@@ -1606,7 +1725,7 @@ async function _fetchMyWorldRank(){
     snap.forEach(doc=>{
       const d=doc.data();
       if(!d.rankTier) return;
-      const ti=RANK_TIERS.findIndex(t=>t.id===d.rankTier);
+      const ti=LP_RANK_TIERS.findIndex(t=>t.id===d.rankTier);
       if(ti<0) return;
       const lp=d.rankLp??null;
       rows.push({uid:doc.id,name:d.name||'Athlete',avatar:d.avatar||null,heroBg:d.heroBg||null,rankTier:d.rankTier,rankDiv:d.rankDiv||1,rankLp:lp,step:ti*3+(d.rankDiv||1)-1,recentPRs:d.recentPRs||[],prsCount:d.prsCount,workoutDays:d.workoutDays,friendsCount:d.friendsCount});
@@ -1647,7 +1766,7 @@ async function openGlobalRanking(){
     snap.forEach(doc=>{
       const d=doc.data();
       if(!d.rankTier) return;
-      const ti=RANK_TIERS.findIndex(t=>t.id===d.rankTier);
+      const ti=LP_RANK_TIERS.findIndex(t=>t.id===d.rankTier);
       if(ti<0) return;
       const lp=d.rankLp??null;
       rows.push({uid:doc.id,name:d.name||'Athlete',avatar:d.avatar||null,heroBg:d.heroBg||null,rankTier:d.rankTier,rankDiv:d.rankDiv||1,rankLp:lp,step:ti*3+(d.rankDiv||1)-1,recentPRs:d.recentPRs||[],prsCount:d.prsCount,workoutDays:d.workoutDays,friendsCount:d.friendsCount});
@@ -1804,7 +1923,7 @@ function openRankBreakdown(){
   const prs=db.prs||{};
   if(!Object.keys(prs).length){showToast('Log exercises to see breakdown');return;}
   const overall=calcOverallRank();
-  const overallStep=overall?tierDivToStep(overall.tier,overall.div):0;
+  const overallStep=overall?(LP_RANK_TIERS.findIndex(t=>t.id===overall.tier.id)*3+(overall.div-1)):0;
   const overallLabel=overall?`${overall.tier.label} ${ROMAN[overall.div-1]}`:'—';
   const overallColor=overall?TIER_COLORS[overall.tier.id]:'#6c757d';
 
@@ -1866,6 +1985,9 @@ const TIER_SHORT = {wood:'Wood',iron:'Iron',bronze:'Brz',silver:'Slv',gold:'Gold
 
 function todayKey(){return DAY_KEYS[[6,0,1,2,3,4,5][new Date().getDay()]];}
 function uid(){return Math.random().toString(36).slice(2)+Date.now().toString(36);}
+// Escapes a value for use as a single-quoted JS string argument inside an HTML onclick attribute.
+// Covers backslash, single-quote, and angle-bracket (prevents </script> injection).
+function escAttr(s){return String(s??'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/</g,'\\x3C');}
 function fmtWeight(w,name){return BODYWEIGHT_EX.has(name)?(w===0?'BW':`+${w} kg`):`${w} kg`;}
 function fmtCardio(ex){
   const dist=ex.distance||0, dur=ex.duration||0;
@@ -1987,6 +2109,14 @@ function renderTodaySession(){
   // no usual exercises — show logged session if something exists, otherwise empty state
   const addExBtnHtml=`<button class="add-row" style="border-radius:0 0 12px 12px;border-top:1px solid var(--bdr)" onclick="openExModal('${today}',null)"><span class="add-ic">+</span>Add exercise</button>`;
 
+  const todayLp=calcTodayLp();
+  const finished=_isSessionFinished(today);
+  const finishBtn=(!finished&&todayLp)?`<button class="finish-session-btn" onclick="finishSession()">
+    <span>Finish Session</span>
+    <span class="finish-lp-badge">+${todayLp.total} LP</span>
+  </button>`:'';
+  const finishedTag=finished?`<span class="session-done-tag">Done · +${todayLp?.total||0} LP</span>`:'';
+
   if(!usualExs.length){
     const loggedNames=Object.keys(loggedMap);
     if(!loggedNames.length){
@@ -2009,8 +2139,8 @@ function renderTodaySession(){
     }).join('');
     el.innerHTML=`<div class="session-hd" style="margin-bottom:10px">
       <span class="lbl">Today · ${dayName}</span>
-      <span class="smeta">${loggedNames.length} logged</span>
-    </div><div class="card">${rows}${addExBtnHtml}</div>`;
+      <span style="display:flex;align-items:center;gap:8px"><span class="smeta">${loggedNames.length} logged</span>${finishedTag}</span>
+    </div><div class="card">${rows}${addExBtnHtml}${finishBtn}</div>`;
     return;
   }
 
@@ -2048,9 +2178,9 @@ function renderTodaySession(){
 
   el.innerHTML=`<div class="session-hd" style="margin-bottom:10px">
     <span class="lbl">Today · ${dayName}</span>
-    <span class="smeta">${subtitle}</span>
+    <span style="display:flex;align-items:center;gap:8px"><span class="smeta">${subtitle}</span>${finishedTag}</span>
   </div>
-  <div class="card">${rows}${addExBtnHtml}</div>`;
+  <div class="card">${rows}${addExBtnHtml}${finishBtn}</div>`;
 }
 
 /* ── WEEK ── */
@@ -2102,7 +2232,9 @@ function renderWeekDay(dir){
   const dayName=DAY_SHORT_S[((d.getDay()+6)%7)];
   const lbl=`${dayName[0]}${dayName.slice(1).toLowerCase()}, ${MONTHS_S[d.getMonth()]} ${d.getDate()}${dateStr===today?' — Today':''}`;
 
-  el.innerHTML=`<div class="wsec">${lbl}</div><div class="card" id="weekCard"></div>`;
+  const dayLp=dateStr!==today?calcSessionLp(dateStr):null;
+  const lpBadge=dayLp?`<span class="session-lp-badge">+${dayLp.total} LP</span>`:'';
+  el.innerHTML=`<div class="wsec" style="display:flex;align-items:center;justify-content:space-between">${lbl}${lpBadge}</div><div class="card" id="weekCard"></div>`;
   const card=el.querySelector('#weekCard');
 
   function makeExRow(ex,editable){
@@ -2659,8 +2791,162 @@ function buildProgChart(name){
   container.innerHTML=buildYouVsOthers(name,p)+`<div class="card" style="margin:0 0 24px;border-radius:14px;overflow:hidden">${rows}</div>`;
 }
 
+/* ── FINISH SESSION ── */
+let _sessionFinished={}; // date → true, persisted in localStorage
+function _loadFinishedSessions(){
+  try{return JSON.parse(localStorage.getItem('gymlog_finished_sessions')||'{}');}catch{return {};}
+}
+function _markSessionFinished(dateStr){
+  _sessionFinished=_loadFinishedSessions();
+  _sessionFinished[dateStr]=true;
+  // keep only last 60 days
+  const cutoff=_dayMinus(todayDateStr(),60);
+  Object.keys(_sessionFinished).forEach(k=>{if(k<cutoff)delete _sessionFinished[k];});
+  localStorage.setItem('gymlog_finished_sessions',JSON.stringify(_sessionFinished));
+}
+function _isSessionFinished(dateStr){
+  if(!_sessionFinished[dateStr]) _sessionFinished=_loadFinishedSessions();
+  return !!_sessionFinished[dateStr];
+}
+
+function finishSession(){
+  const today=todayDateStr();
+  const lp=calcTodayLp();
+  if(!lp) return;
+  const prevRank=calcOverallRankBefore(today);
+  _markSessionFinished(today);
+  // remove persistent chip if open
+  document.getElementById('sessionLpChip')?.remove();
+  renderTodaySession();
+  renderRankCard();
+  syncPublicProfile();
+  _fetchMyWorldRank();
+  const newRank=calcOverallRank();
+  showSessionComplete(lp, prevRank, newRank);
+}
+
+// calcOverallRank excluding a specific day (to get "before" snapshot)
+function calcOverallRankBefore(excludeDay){
+  const p=db.profile;
+  if(!p?.weight) return null;
+  const today=new Date().toISOString().slice(0,10);
+  const cutoff=_dayMinus(today,30);
+  const days=[...new Set((db.history||[]).filter(h=>h.day&&h.day>=cutoff&&!h._cardio&&h.day!==excludeDay).map(h=>h.day))];
+  const totalLp=days.reduce((s,d)=>s+(calcSessionLp(d)?.total||0),0);
+  return{...lpToTierDiv(totalLp),totalLp,sessionCount:days.length};
+}
+
+function showSessionComplete(lp, prevRank, newRank){
+  // create overlay
+  let ol=document.getElementById('sessionCompleteOverlay');
+  if(ol) ol.remove();
+  ol=document.createElement('div');
+  ol.id='sessionCompleteOverlay';
+  const color=newRank?TIER_COLORS[newRank.tier.id]:'#A78BFA';
+  const rankedUp=newRank&&prevRank&&(newRank.tierIdx>prevRank.tierIdx||(newRank.tierIdx===prevRank.tierIdx&&newRank.div>prevRank.div));
+  const rankLabel=newRank?`${newRank.tier.label} ${ROMAN[newRank.div-1]}`:'';
+  const prevLabel=prevRank?`${prevRank.tier.label} ${ROMAN[prevRank.div-1]}`:'';
+  // bar pct
+  const barBefore=prevRank?Math.round(prevRank.pct/prevRank.divWidth*100):0;
+  const barAfter=newRank?Math.round(newRank.pct/newRank.divWidth*100):0;
+  // breakdown rows
+  const parts=[];
+  if(lp.setLp) parts.push({label:`${lp.totalSets} sets`,val:`+${lp.setLp} LP`});
+  if(lp.progressLp) parts.push({label:'Progress bonus',val:`+${lp.progressLp} LP`});
+  if(lp.streak) parts.push({label:'Streak',val:'+5 LP'});
+  if(lp.capped) parts.push({label:'Cap applied','val':'(250 max)'});
+  const rowsHtml=parts.map(p=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:13px">
+    <span style="color:rgba(255,255,255,.5)">${p.label}</span>
+    <span style="font-weight:700;color:#fff">${p.val}</span>
+  </div>`).join('');
+
+  ol.style.cssText=`position:fixed;inset:0;z-index:12000;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,.92);backdrop-filter:blur(20px);padding:24px;opacity:0;transition:opacity .3s`;
+  ol.innerHTML=`
+    <div style="width:100%;max-width:360px;text-align:center">
+      <div style="font-size:10px;font-weight:800;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:20px">Session Complete</div>
+      <div id="scLpNum" style="font-family:'Barlow Condensed',sans-serif;font-size:72px;font-weight:900;color:${color};line-height:1;transform:scale(.7);opacity:0;transition:transform .4s cubic-bezier(.34,1.56,.64,1),opacity .3s">+${lp.total} LP</div>
+      <div style="font-size:13px;color:rgba(255,255,255,.5);margin:8px 0 28px;opacity:0;transition:opacity .4s .2s" id="scLpSub">across ${lp.totalSets} sets</div>
+
+      ${rankedUp?`<div id="scRankUp" style="background:color-mix(in srgb,${color} 15%,transparent);border:1px solid color-mix(in srgb,${color} 30%,transparent);border-radius:12px;padding:10px 18px;margin-bottom:20px;opacity:0;transition:opacity .4s .5s">
+        <div style="font-size:10px;font-weight:700;letter-spacing:2px;color:${color};text-transform:uppercase;margin-bottom:2px">Rank Up!</div>
+        <div style="font-size:18px;font-weight:800;color:#fff">${prevLabel} → <span style="color:${color}">${rankLabel}</span></div>
+      </div>`:''}
+
+      ${rankLabel?`<div style="margin-bottom:16px;opacity:0;transition:opacity .4s .35s" id="scRankRow">
+        <div style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:8px">${rankedUp?'New rank':'Current rank'}</div>
+        <div style="font-size:20px;font-weight:900;color:${color};margin-bottom:10px">${rankLabel}</div>
+        <div style="background:rgba(255,255,255,.08);border-radius:6px;height:8px;overflow:hidden;margin-bottom:4px">
+          <div id="scBar" style="height:100%;border-radius:6px;background:${color};width:${barBefore}%;transition:width .7s cubic-bezier(.4,0,.2,1) .6s"></div>
+        </div>
+        <div style="font-size:11px;color:rgba(255,255,255,.4);text-align:right">${newRank?newRank.pct:0} / ${newRank?newRank.divWidth:33} LP</div>
+      </div>`:''}
+
+      <div style="background:rgba(255,255,255,.04);border-radius:12px;padding:4px 16px 4px;margin-bottom:28px;opacity:0;transition:opacity .4s .4s" id="scBreakdown">
+        ${rowsHtml}
+      </div>
+
+      <button onclick="document.getElementById('sessionCompleteOverlay').remove()" style="background:rgba(255,255,255,.1);border:none;border-radius:12px;padding:14px 40px;font-size:15px;font-weight:700;color:#fff;font-family:inherit;cursor:pointer;transition:background .15s" onmousedown="this.style.background='rgba(255,255,255,.18)'" onmouseup="this.style.background='rgba(255,255,255,.1)'">Done</button>
+    </div>
+  `;
+  document.body.appendChild(ol);
+  requestAnimationFrame(()=>{
+    ol.style.opacity='1';
+    setTimeout(()=>{
+      const num=document.getElementById('scLpNum');
+      if(num){num.style.transform='scale(1)';num.style.opacity='1';}
+      const sub=document.getElementById('scLpSub');
+      if(sub) sub.style.opacity='1';
+      const bd=document.getElementById('scBreakdown');
+      if(bd) bd.style.opacity='1';
+      const rr=document.getElementById('scRankRow');
+      if(rr) rr.style.opacity='1';
+      const ru=document.getElementById('scRankUp');
+      if(ru) ru.style.opacity='1';
+      // animate bar to new value
+      setTimeout(()=>{
+        const bar=document.getElementById('scBar');
+        if(bar) bar.style.width=barAfter+'%';
+      }, 650);
+    },50);
+  });
+  // close on backdrop tap
+  ol.addEventListener('click',e=>{if(e.target===ol)ol.remove();});
+}
+
+/* ── SESSION LP SUMMARY ── */
+let _sessionLpToast=null;
+function showSessionLpSummary(){
+  const lp=calcTodayLp();
+  if(!lp) return;
+  // reuse or create a persistent summary chip at bottom of screen
+  let chip=document.getElementById('sessionLpChip');
+  if(!chip){
+    chip=document.createElement('div');
+    chip.id='sessionLpChip';
+    chip.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:9000;font-family:"DM Sans",sans-serif;cursor:pointer;transition:opacity .2s,transform .2s;';
+    chip.addEventListener('click',()=>{ chip.style.opacity='0'; chip.style.transform='translateX(-50%) translateY(8px)'; setTimeout(()=>chip.remove(),220); });
+    document.body.appendChild(chip);
+  }
+  const r=calcOverallRank();
+  const color=r?TIER_COLORS[r.tier.id]:'#A78BFA';
+  const parts=[];
+  if(lp.setLp) parts.push(`${lp.totalSets} sets +${lp.setLp}`);
+  if(lp.progressLp) parts.push(`progress +${lp.progressLp}`);
+  if(lp.streak) parts.push('streak +5');
+  if(lp.capped) parts.push('capped at 250');
+  const detail=parts.length?`<div style="font-size:10px;color:rgba(255,255,255,.5);margin-top:3px">${parts.join(' · ')}</div>`:'';
+  chip.innerHTML=`<div style="background:color-mix(in srgb,${color} 18%,rgba(10,10,20,.92));border:1px solid color-mix(in srgb,${color} 35%,transparent);backdrop-filter:blur(14px);border-radius:18px;padding:9px 16px;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,.5)">
+    <div style="font-size:13px;font-weight:700;color:#fff">Session · <span style="color:${color}">+${lp.total} LP</span></div>
+    ${detail}
+  </div>`;
+  chip.style.opacity='1';
+  chip.style.transform='translateX(-50%) translateY(0)';
+  clearTimeout(_sessionLpToast);
+  _sessionLpToast=setTimeout(()=>{ if(chip.parentNode){chip.style.opacity='0';chip.style.transform='translateX(-50%) translateY(8px)';setTimeout(()=>chip.remove(),220);} },5000);
+}
+
 /* ── RANK-UP / DERANK ANIMATION ── */
-function showRankUp(oldTier,oldDiv,newTier,newDiv,isDerank=false,exName=''){
+function showRankUp(oldTier,oldDiv,newTier,newDiv,isDerank=false,exName='',stepDiff=1){
   const ol=document.getElementById('rankUpOverlay');
   if(!ol) return;
   const newColor=TIER_COLORS[newTier]||'#9333EA';
@@ -2669,12 +2955,18 @@ function showRankUp(oldTier,oldDiv,newTier,newDiv,isDerank=false,exName=''){
   ol.dataset.mode=isDerank?'derank':'rankup';
   // exercise name
   document.getElementById('rankUpExName').textContent=exName;
-  // label
+  // label — double/triple rank-up gets special treatment
   const labelEl=document.getElementById('rankUpLabel');
-  labelEl.textContent=isDerank?'RANK LOST':(newTier!==oldTier?'RANK UP':'DIVISION UP');
-  labelEl.style.color=isDerank?'#e11d48':'';
+  let labelText;
+  if(isDerank) labelText='RANK LOST';
+  else if(stepDiff>=6) labelText='TRIPLE RANK UP';
+  else if(stepDiff>=3) labelText='DOUBLE RANK UP';
+  else if(newTier!==oldTier) labelText='RANK UP';
+  else labelText='DIVISION UP';
+  labelEl.textContent=labelText;
+  labelEl.style.color=isDerank?'#e11d48':(stepDiff>=3?newColor:'');
   // title (JS-controlled)
-  const tierLabel=RANK_TIERS.find(t=>t.id===newTier)?.label||newTier;
+  const tierLabel=RANK_TIERS.find(t=>t.id===newTier)?.label||LP_RANK_TIERS.find(t=>t.id===newTier)?.label||newTier;
   const titleEl=document.getElementById('rankUpTitle');
   titleEl.textContent=`${tierLabel} ${ROMAN[newDiv-1]}`;
   titleEl.style.color=newColor;
@@ -2978,10 +3270,11 @@ document.getElementById('exSave').addEventListener('click',()=>{
   if(!name){showToast('Pick or type an exercise name');return;}
   if(!db.history) db.history=[];
   if(!db.schedule[exDay]) db.schedule[exDay]=[];
-  // capture per-exercise rank before save
+  // capture ranks before save
   const p=db.profile;
   const wasEdit=!!exId;
   const _prevExRank=(!isCardio(name)&&db.prs[name]&&p?.weight)?scoreToTierDiv(calcExScore(db.prs[name],p,name)):null;
+  const _prevGlobalRank=calcOverallRank();
 
   // use the schedule entry's id as the stable link to its history row
   const entryId = exId || uid();
@@ -3015,6 +3308,8 @@ document.getElementById('exSave').addEventListener('click',()=>{
   renderPRs();
   renderBestPRs();
   showToast(exId?'Exercise updated':'Exercise added');
+  // show session LP summary after a short delay (non-edit saves only)
+  if(!exId&&!cardio) setTimeout(showSessionLpSummary,600);
   // check for per-exercise rank change
   const _newExRank=(!cardio&&db.prs[name]&&p?.weight)?scoreToTierDiv(calcExScore(db.prs[name],p,name)):null;
   if(_newExRank){
@@ -3027,6 +3322,20 @@ document.getElementById('exSave').addEventListener('click',()=>{
       const isDown=newIdx<prevIdx||(newIdx===prevIdx&&_newExRank.div<_prevExRank.div);
       if(isUp) setTimeout(()=>showRankUp(_prevExRank.tier.id,_prevExRank.div,_newExRank.tier.id,_newExRank.div,false,name),400);
       else if(isDown) setTimeout(()=>showRankUp(_prevExRank.tier.id,_prevExRank.div,_newExRank.tier.id,_newExRank.div,true,name),400);
+    }
+  }
+  // check for global rank change (session LP system)
+  if(!exId&&!cardio){
+    const _newGlobal=calcOverallRank();
+    if(_prevGlobalRank&&_newGlobal){
+      const prevStep=LP_RANK_TIERS.findIndex(t=>t.id===_prevGlobalRank.tier.id)*3+(_prevGlobalRank.div-1);
+      const newStep=LP_RANK_TIERS.findIndex(t=>t.id===_newGlobal.tier.id)*3+(_newGlobal.div-1);
+      const stepDiff=newStep-prevStep;
+      if(stepDiff>=1){
+        // delay past the per-exercise animation if one fired
+        const delay=_newExRank?2200:600;
+        setTimeout(()=>showRankUp(_prevGlobalRank.tier.id,_prevGlobalRank.div,_newGlobal.tier.id,_newGlobal.div,false,'',stepDiff),delay);
+      }
     }
   }
 });
@@ -3400,8 +3709,9 @@ applyTheme(localStorage.getItem(THEME_KEY)||'carbon');
   // pre-render all tabs while splash is showing
   renderTodaySession(); renderWeek(); renderPRs(); renderBestPRs(); renderRankCard(); renderGlobalRankCard(); renderFriendsTab(); renderProfileTab();
 
-  // safety: if bar animationend never fires (reduced-motion, hidden tab), force dismiss after 5s
-  setTimeout(()=>{barDone=true;tryDismiss();},8000);
+  // safety: if bar animationend never fires (reduced-motion, hidden tab), force dismiss
+  const SPLASH_FALLBACK_MS = 8000;
+  setTimeout(()=>{barDone=true;tryDismiss();},SPLASH_FALLBACK_MS);
 
   const unsub=_auth.onAuthStateChanged(()=>{
     unsub();
