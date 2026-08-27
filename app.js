@@ -1554,7 +1554,7 @@ function calcSessionLp(day){
   hist.forEach(h=>{if(!byEx[h.name])byEx[h.name]=[];byEx[h.name].push(h);});
 
   const bw=db.profile?.weight||70;
-  let setLp=0, progressLp=0, totalSets=0, totalTonnage=0;
+  let totalTonnage=0, totalSets=0, progressLp=0, intensityLp=0;
   const details=[];
 
   for(const [name,entries] of Object.entries(byEx)){
@@ -1563,21 +1563,22 @@ function calcSessionLp(day){
     const isBW=BODYWEIGHT_EX.has(name);
     const bwFrac=BW_FRACTION[name]??1;
 
-    // 3 LP per set × intensity mult × strength mult
-    let exSetLp=0;
+    let exTonnage=0, exIntLp=0;
     for(const e of entries){
       const sets=e.sets||1;
-      totalSets+=sets;
+      const reps=e.reps||1;
       const addedW=e.weight||0;
       const effW=isBW?(bw*bwFrac+addedW):addedW;
+      totalSets+=sets;
+      exTonnage+=sets*reps*effW;
+      // small intensity bonus per set (secondary, not a multiplier on everything)
       const intMult=_intensityMult(addedW||effW, prWeight||effW);
-      const strMult=_strengthMult(effW, bw);
-      exSetLp+=Math.round(sets*9*intMult*strMult);
-      totalTonnage+=sets*(e.reps||1)*effW;
+      exIntLp+=Math.round(sets*3*(intMult-1));
     }
-    setLp+=exSetLp;
+    totalTonnage+=exTonnage;
+    intensityLp+=exIntLp;
 
-    // Progress bonus: beat last session for this exercise
+    // Progress bonus: beat last session weight for this exercise
     const todayBest=Math.max(...entries.map(e=>e.weight||0));
     const lastEntry=(db.history||[])
       .filter(h=>h.name===name&&h.day<day&&!h._cardio)
@@ -1585,25 +1586,28 @@ function calcSessionLp(day){
     let prog=0;
     if(lastEntry&&todayBest>(lastEntry.weight||0)){
       const imp=(todayBest-(lastEntry.weight||0))/(lastEntry.weight||1);
-      prog=imp>=0.05?60:30;
+      prog=imp>=0.05?30:15;
       progressLp+=prog;
     }
-    details.push({name,sets:entries.reduce((s,e)=>s+(e.sets||1),0),exSetLp,prog});
+    details.push({name,sets:entries.reduce((s,e)=>s+(e.sets||1),0),tonnage:exTonnage,prog});
   }
 
-  // Streak: +5 if 3rd+ session this week
+  // PRIMARY: tonnage normalized by bodyweight — heaviest absolute lifters earn most LP
+  const tonnageLp=bw>0?Math.floor(totalTonnage/(bw*0.35)):0;
+
+  // SECONDARY: flat per-set bonus — small reward for session volume
+  const setLp=totalSets*3;
+
+  // Streak: 3rd+ session this week
   const weekStart=_weekStart(day);
   const weekSessions=[...new Set((db.history||[])
     .filter(h=>h.day&&h.day>=weekStart&&h.day<=day&&!h._cardio)
     .map(h=>h.day))];
   const streak=weekSessions.length>=3?15:0;
 
-  // Tonnage bonus: rewards total absolute weight moved, normalized by bodyweight.
-  // Heavier lifters moving more total kg naturally earn more LP here.
-  const tonnageLp=bw>0?Math.floor(totalTonnage/(bw*2)):0;
-  const raw=setLp+progressLp+streak+tonnageLp;
+  const raw=tonnageLp+setLp+progressLp+intensityLp+streak;
   const total=Math.min(raw,750);
-  return{total,setLp,progressLp,streak,tonnageLp,totalSets,details,capped:raw>250};
+  return{total,tonnageLp,setLp,progressLp,intensityLp,streak,totalSets,totalTonnage,details,capped:raw>750};
 }
 
 function _dayMinus(day,n){
