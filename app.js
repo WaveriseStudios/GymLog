@@ -1537,6 +1537,14 @@ function _intensityMult(weight, prWeight){
   return 1.0;
 }
 
+// Strength multiplier: rewards lifting heavy in absolute terms relative to bodyweight.
+// Lifters moving 2× BW get up to 2× more LP per set than someone lifting 0.5× BW.
+function _strengthMult(effectiveWeight, bodyweight){
+  if(!bodyweight||!effectiveWeight) return 1;
+  const ratio=effectiveWeight/bodyweight;
+  return 1+Math.min(Math.max(ratio-0.5,0),2.0)*0.5;
+}
+
 // Returns LP breakdown for a given day string ('YYYY-MM-DD')
 function calcSessionLp(day){
   const hist=(db.history||[]).filter(h=>h.day===day&&!h._cardio);
@@ -1546,20 +1554,26 @@ function calcSessionLp(day){
   const byEx={};
   hist.forEach(h=>{if(!byEx[h.name])byEx[h.name]=[];byEx[h.name].push(h);});
 
+  const bw=db.profile?.weight||70;
   let setLp=0, progressLp=0, totalSets=0;
   const details=[];
 
   for(const [name,entries] of Object.entries(byEx)){
     const pr=db.prs?.[name];
     const prWeight=pr?.weight||0;
+    const isBW=BODYWEIGHT_EX.has(name);
+    const bwFrac=BW_FRACTION[name]??1;
 
-    // 3 LP per set × intensity multiplier
+    // 3 LP per set × intensity mult × strength mult
     let exSetLp=0;
     for(const e of entries){
       const sets=e.sets||1;
       totalSets+=sets;
-      const mult=_intensityMult(e.weight||0, prWeight);
-      exSetLp+=Math.round(sets*3*mult);
+      const addedW=e.weight||0;
+      const effW=isBW?(bw*bwFrac+addedW):addedW;
+      const intMult=_intensityMult(addedW||effW, prWeight||effW);
+      const strMult=_strengthMult(effW, bw);
+      exSetLp+=Math.round(sets*3*intMult*strMult);
     }
     setLp+=exSetLp;
 
