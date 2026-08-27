@@ -1530,10 +1530,10 @@ function lpToTierDiv(lp){
 function _intensityMult(weight, prWeight){
   if(!prWeight||!weight) return 1;
   const pct=weight/prWeight;
-  if(pct>=0.95) return 2.5;
-  if(pct>=0.85) return 2.0;
-  if(pct>=0.75) return 1.6;
-  if(pct>=0.60) return 1.3;
+  if(pct>=0.95) return 1.3;
+  if(pct>=0.85) return 1.2;
+  if(pct>=0.75) return 1.1;
+  if(pct>=0.60) return 1.05;
   return 1.0;
 }
 
@@ -1556,7 +1556,7 @@ function calcSessionLp(day){
   hist.forEach(h=>{if(!byEx[h.name])byEx[h.name]=[];byEx[h.name].push(h);});
 
   const bw=db.profile?.weight||70;
-  let setLp=0, progressLp=0, totalSets=0;
+  let setLp=0, progressLp=0, totalSets=0, totalTonnage=0;
   const details=[];
 
   for(const [name,entries] of Object.entries(byEx)){
@@ -1575,6 +1575,7 @@ function calcSessionLp(day){
       const intMult=_intensityMult(addedW||effW, prWeight||effW);
       const strMult=_strengthMult(effW, bw);
       exSetLp+=Math.round(sets*3*intMult*strMult);
+      totalTonnage+=sets*(e.reps||1)*effW;
     }
     setLp+=exSetLp;
 
@@ -1599,9 +1600,12 @@ function calcSessionLp(day){
     .map(h=>h.day))];
   const streak=weekSessions.length>=3?5:0;
 
-  const raw=setLp+progressLp+streak;
+  // Tonnage bonus: rewards total absolute weight moved, normalized by bodyweight.
+  // Heavier lifters moving more total kg naturally earn more LP here.
+  const tonnageLp=bw>0?Math.floor(totalTonnage/(bw*6)):0;
+  const raw=setLp+progressLp+streak+tonnageLp;
   const total=Math.min(raw,250);
-  return{total,setLp,progressLp,streak,totalSets,details,capped:raw>250};
+  return{total,setLp,progressLp,streak,tonnageLp,totalSets,details,capped:raw>250};
 }
 
 function _dayMinus(day,n){
@@ -2867,6 +2871,7 @@ function showSessionComplete(lp, prevRank, newRank){
   // breakdown rows
   const parts=[];
   if(lp.setLp) parts.push({label:`${lp.totalSets} sets`,val:`+${lp.setLp} LP`});
+  if(lp.tonnageLp) parts.push({label:'Tonnage bonus',val:`+${lp.tonnageLp} LP`});
   if(lp.progressLp) parts.push({label:'Progress bonus',val:`+${lp.progressLp} LP`});
   if(lp.streak) parts.push({label:'Streak',val:'+5 LP'});
   if(lp.capped) parts.push({label:'Cap applied','val':'(250 max)'});
@@ -2946,6 +2951,7 @@ function showSessionLpSummary(){
   const color=r?TIER_COLORS[r.tier.id]:'#A78BFA';
   const parts=[];
   if(lp.setLp) parts.push(`${lp.totalSets} sets +${lp.setLp}`);
+  if(lp.tonnageLp) parts.push(`tonnage +${lp.tonnageLp}`);
   if(lp.progressLp) parts.push(`progress +${lp.progressLp}`);
   if(lp.streak) parts.push('streak +5');
   if(lp.capped) parts.push('capped at 250');
