@@ -3004,18 +3004,38 @@ function showSessionComplete(lp, prevRank, newRank){
       const laps=divsEnd-divsStart;
       const LAP_DUR=500, LAP_GAP=140;
 
-      const applyRankVisuals=(linearPos)=>{
+      const applyRankVisuals=(linearPos,animate=true)=>{
         const ti=Math.min(Math.floor(linearPos/3),LP_RANK_TIERS.length-1);
         const dv=(linearPos%3)+1;
         const tier=LP_RANK_TIERS[ti];
         const c=TIER_COLORS[tier.id];
         ol.style.setProperty('--sc-color',c);
         elBarFill.style.background=c;
-        if(elBg) elBg.innerHTML=`<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;opacity:.15;filter:blur(6px);transform:scale(1.3);pointer-events:none">${rankIconSvg(tier.id,c,{size:220,glow:false,div:dv})}</div>`;
         const _nx=dv===3?LP_RANK_TIERS[ti+1]:tier;
         const _nd=dv===3?1:dv+1;
         elBarFrom.textContent=`${tier.label} ${ROMAN[dv-1]}`;
         elBarTo.textContent=_nx?`${_nx.label} ${ROMAN[_nd-1]}`:'Max';
+        if(!elBg) return;
+        if(!animate){
+          elBg.innerHTML=`<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;opacity:.15;filter:blur(6px);transform:scale(1.3);pointer-events:none">${rankIconSvg(tier.id,c,{size:220,glow:false,div:dv})}</div>`;
+          return;
+        }
+        // crossfade: fade+shrink old icon, fade+grow new icon
+        const old=elBg.firstElementChild;
+        const neu=document.createElement('div');
+        neu.style.cssText='position:absolute;inset:0;display:flex;align-items:center;justify-content:center;opacity:0;filter:blur(6px);transform:scale(1.05);pointer-events:none;transition:opacity .4s ease,transform .4s ease';
+        neu.innerHTML=rankIconSvg(tier.id,c,{size:220,glow:false,div:dv});
+        elBg.appendChild(neu);
+        if(old){
+          old.style.transition='opacity .35s ease,transform .35s ease';
+          old.style.opacity='0';
+          old.style.transform='scale(1.55) translateY(-4%)';
+        }
+        requestAnimationFrame(()=>requestAnimationFrame(()=>{
+          neu.style.opacity='.15';
+          neu.style.transform='scale(1.3)';
+        }));
+        setTimeout(()=>{ if(old&&old.parentNode) old.remove(); },400);
       };
 
       if(laps<=0){
@@ -3027,7 +3047,7 @@ function showSessionComplete(lp, prevRank, newRank){
         },80);
       } else {
         // start with prevRank visuals before sweeping forward
-        applyRankVisuals(divsStart);
+        applyRankVisuals(divsStart,false);
         let t=0;
         elBarFill.style.transition='none';
         elBarFill.style.width=barBefore+'%';
