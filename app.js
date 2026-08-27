@@ -7,7 +7,11 @@ function loadDB() {
 function defDB() {
   return { profile: { name:'', weight:null, height:null, age:null, gender:'m' }, schedule:{}, prs:{}, history:[], dayTags:{}, notif:{enabled:false} };
 }
+let _sessionLpCache=new Map(); // day → result; cleared on every persist()
+let _overallRankCache=null;    // cleared on persist() and session-finish changes
 function persist() {
+  _sessionLpCache.clear();
+  _overallRankCache=null;
   localStorage.setItem(STORE, JSON.stringify(db));
   debouncedFirestoreSave();
 }
@@ -1546,8 +1550,9 @@ function _strengthMult(effectiveWeight, bodyweight){
 
 // Returns LP breakdown for a given day string ('YYYY-MM-DD')
 function calcSessionLp(day){
+  if(_sessionLpCache.has(day)) return _sessionLpCache.get(day);
   const hist=(db.history||[]).filter(h=>h.day===day&&!h._cardio);
-  if(!hist.length) return null;
+  if(!hist.length){_sessionLpCache.set(day,null);return null;}
 
   // Group entries by exercise
   const byEx={};
@@ -1607,7 +1612,9 @@ function calcSessionLp(day){
 
   const raw=tonnageLp+setLp+progressLp+intensityLp+streak;
   const total=Math.min(raw,750);
-  return{total,tonnageLp,setLp,progressLp,intensityLp,streak,totalSets,totalTonnage,details,capped:raw>750};
+  const result={total,tonnageLp,setLp,progressLp,intensityLp,streak,totalSets,totalTonnage,details,capped:raw>750};
+  _sessionLpCache.set(day,result);
+  return result;
 }
 
 function _dayMinus(day,n){
@@ -1625,6 +1632,7 @@ function _weekStart(day){
 // Rolling 30-day LP total → tier/div
 // Today's session is only counted once the user clicks "Finish Session"
 function calcOverallRank(){
+  if(_overallRankCache) return _overallRankCache;
   const p=db.profile;
   if(!p?.weight)return null;
   const today=new Date().toISOString().slice(0,10);
@@ -1632,9 +1640,9 @@ function calcOverallRank(){
   const days=[...new Set((db.history||[]).filter(h=>h.day&&h.day>=cutoff&&!h._cardio).map(h=>h.day))];
   // exclude today unless session is finished
   const countedDays=days.filter(d=>d!==today||_isSessionFinished(d));
-  if(!countedDays.length)return{...lpToTierDiv(0),totalLp:0,sessionCount:0};
+  if(!countedDays.length)return(_overallRankCache={...lpToTierDiv(0),totalLp:0,sessionCount:0});
   const totalLp=countedDays.reduce((s,d)=>s+(calcSessionLp(d)?.total||0),0);
-  return{...lpToTierDiv(totalLp),totalLp,sessionCount:countedDays.length};
+  return(_overallRankCache={...lpToTierDiv(totalLp),totalLp,sessionCount:countedDays.length});
 }
 
 // LP earned in today's session (for session summary card)
@@ -2298,8 +2306,8 @@ function renderWeekDay(dir){
             db.history=db.history.filter(h=>h._entryId!==ex.id);
             recomputePR(ex.name);
             const _newRk=(!isCardio(ex.name)&&db.prs[ex.name]&&_p?.weight)?scoreToTierDiv(calcExScore(db.prs[ex.name],_p,ex.name)):null;
-            if(_isSessionFinished(dateStr)){const _rlp=calcSessionLp(dateStr);if(_rlp)_markSessionFinished(dateStr,_rlp.total);else{const _sf=_loadFinishedSessions();delete _sf[dateStr];localStorage.setItem('gymlog_finished_sessions',JSON.stringify(_sf));}}
-            persist();renderWeek();renderTodaySession();renderRankCard();renderPRs();renderBestPRs();showToast('Exercise removed');syncPublicProfile();_fetchMyWorldRank();
+            persist();if(_isSessionFinished(dateStr))_refreshSessionLp(dateStr);
+            renderWeek();renderTodaySession();renderRankCard();renderPRs();renderBestPRs();showToast('Exercise removed');syncPublicProfile();_fetchMyWorldRank();
             if(_prevRk&&_newRk){const pi=RANK_TIERS.findIndex(t=>t.id===_prevRk.tier.id),ni=RANK_TIERS.findIndex(t=>t.id===_newRk.tier.id);if(ni<pi||(ni===pi&&_newRk.div<_prevRk.div))setTimeout(()=>showRankUp(_prevRk.tier.id,_prevRk.div,_newRk.tier.id,_newRk.div,true,ex.name),400);}
             else if(_prevRk&&!_newRk)setTimeout(()=>showRankUp(_prevRk.tier.id,_prevRk.div,'wood',1,true,ex.name),400);
           },200);
@@ -2638,8 +2646,8 @@ function openExPicker(dateStr, g) {
           db.history = (db.history||[]).filter(h => h._entryId !== ex.id);
           recomputePR(g.name);
           const _newRk=(!isCardio(g.name)&&db.prs[g.name]&&_p?.weight)?scoreToTierDiv(calcExScore(db.prs[g.name],_p,g.name)):null;
-          if(_isSessionFinished(dateStr)){const _rlp=calcSessionLp(dateStr);if(_rlp)_markSessionFinished(dateStr,_rlp.total);else{const _sf=_loadFinishedSessions();delete _sf[dateStr];localStorage.setItem('gymlog_finished_sessions',JSON.stringify(_sf));}}
-          persist(); renderWeek(); renderTodaySession(); renderRankCard(); renderPRs(); renderBestPRs(); syncPublicProfile(); _fetchMyWorldRank();
+          persist();if(_isSessionFinished(dateStr))_refreshSessionLp(dateStr);
+          renderWeek(); renderTodaySession(); renderRankCard(); renderPRs(); renderBestPRs(); syncPublicProfile(); _fetchMyWorldRank();
           if(_prevRk&&_newRk){const pi=RANK_TIERS.findIndex(t=>t.id===_prevRk.tier.id),ni=RANK_TIERS.findIndex(t=>t.id===_newRk.tier.id);if(ni<pi||(ni===pi&&_newRk.div<_prevRk.div))setTimeout(()=>showRankUp(_prevRk.tier.id,_prevRk.div,_newRk.tier.id,_newRk.div,true,g.name),400);}
           else if(_prevRk&&!_newRk)setTimeout(()=>showRankUp(_prevRk.tier.id,_prevRk.div,'wood',1,true,g.name),400);
           card.remove();
@@ -2820,25 +2828,34 @@ function buildProgChart(name){
 }
 
 /* ── FINISH SESSION ── */
-let _sessionFinished={}; // date → true, persisted in localStorage
 function _loadFinishedSessions(){
   try{return JSON.parse(localStorage.getItem('gymlog_finished_sessions')||'{}');}catch{return {};}
 }
+// Eager-loaded cache — always warm; never needs a full reload after init
+let _sessionFinished=_loadFinishedSessions();
+function _sfVal(dateStr){
+  // Use `in` (not truthiness) so a deleted key always triggers a reload
+  if(!(dateStr in _sessionFinished)) _sessionFinished=_loadFinishedSessions();
+  return _sessionFinished[dateStr];
+}
+function _isSessionFinished(dateStr){ return !!_sfVal(dateStr); }
+function _sessionFinishedLp(dateStr){ const v=_sfVal(dateStr); return typeof v==='number'?v:0; }
 function _markSessionFinished(dateStr, lpTotal){
-  _sessionFinished=_loadFinishedSessions();
   _sessionFinished[dateStr]=lpTotal||true;
+  _overallRankCache=null;
   const cutoff=_dayMinus(todayDateStr(),60);
   Object.keys(_sessionFinished).forEach(k=>{if(k<cutoff)delete _sessionFinished[k];});
   localStorage.setItem('gymlog_finished_sessions',JSON.stringify(_sessionFinished));
 }
-function _isSessionFinished(dateStr){
-  if(!_sessionFinished[dateStr]) _sessionFinished=_loadFinishedSessions();
-  return !!_sessionFinished[dateStr];
+function _unmarkSessionFinished(dateStr){
+  delete _sessionFinished[dateStr];
+  _overallRankCache=null;
+  localStorage.setItem('gymlog_finished_sessions',JSON.stringify(_sessionFinished));
 }
-function _sessionFinishedLp(dateStr){
-  if(!_sessionFinished[dateStr]) _sessionFinished=_loadFinishedSessions();
-  const v=_sessionFinished[dateStr];
-  return typeof v==='number'?v:0;
+function _refreshSessionLp(dateStr){
+  const lp=calcSessionLp(dateStr);
+  if(lp) _markSessionFinished(dateStr,lp.total);
+  else _unmarkSessionFinished(dateStr);
 }
 
 function finishSession(){
@@ -2858,16 +2875,6 @@ function finishSession(){
   showSessionComplete(lp, prevRank, newRank);
 }
 
-// calcOverallRank excluding a specific day (to get "before" snapshot)
-function calcOverallRankBefore(excludeDay){
-  const p=db.profile;
-  if(!p?.weight) return null;
-  const today=new Date().toISOString().slice(0,10);
-  const cutoff=_dayMinus(today,30);
-  const days=[...new Set((db.history||[]).filter(h=>h.day&&h.day>=cutoff&&!h._cardio&&h.day!==excludeDay).map(h=>h.day))];
-  const totalLp=days.reduce((s,d)=>s+(calcSessionLp(d)?.total||0),0);
-  return{...lpToTierDiv(totalLp),totalLp,sessionCount:days.length};
-}
 
 function closeSessionComplete(){
   const ol=document.getElementById('sessionCompleteOverlay');
@@ -2887,12 +2894,22 @@ function showSessionComplete(lp, prevRank, newRank){
   const barBefore=prevRank?Math.round(prevRank.pct/LP_DIV*100):0;
   const barAfter=newRank?Math.round(newRank.pct/LP_DIV*100):0;
 
+  // cache element refs — avoids repeated getElementById across setup + animation callbacks
+  const elBg=document.getElementById('scBg');
+  const elRows=document.getElementById('scRows');
+  const elTotal=document.getElementById('scTotal');
+  const elBarWrap=document.getElementById('scBarWrap');
+  const elBarFill=document.getElementById('scBarFill');
+  const elBarLbls=document.getElementById('scBarLbls');
+  const elBarFrom=document.getElementById('scBarFrom');
+  const elBarTo=document.getElementById('scBarTo');
+  const elTitle=document.getElementById('scRankTitle');
+  const elHint=document.getElementById('scHint');
+
   ol.style.setProperty('--sc-color',color);
 
-  // blurred rank icon in background
-  const scBg=document.getElementById('scBg');
-  if(scBg&&newRank){
-    scBg.innerHTML=`<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;opacity:.15;filter:blur(6px);transform:scale(1.3);pointer-events:none">${rankIconSvg(newRank.tier.id,color,{size:220,glow:false,div:newRank.div})}</div>`;
+  if(elBg&&newRank){
+    elBg.innerHTML=`<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;opacity:.15;filter:blur(6px);transform:scale(1.3);pointer-events:none">${rankIconSvg(newRank.tier.id,color,{size:220,glow:false,div:newRank.div})}</div>`;
   }
 
   // build LP rows
@@ -2904,23 +2921,21 @@ function showSessionComplete(lp, prevRank, newRank){
   if(lp.streak) rows.push({label:'Streak',val:`+${lp.streak} LP`});
   if(lp.capped) rows.push({label:'Session cap applied',val:'750 max'});
 
-  const rowsEl=document.getElementById('scRows');
-  rowsEl.innerHTML=rows.map(r=>`<div class="sc-row"><span class="sc-row-label">${r.label}</span><span class="sc-row-val">${r.val}</span></div>`).join('');
+  elRows.innerHTML=rows.map(r=>`<div class="sc-row"><span class="sc-row-label">${r.label}</span><span class="sc-row-val">${r.val}</span></div>`).join('');
 
   // reset state
-  document.getElementById('scTotal').textContent=`+${lp.total} LP`;
-  document.getElementById('scTotal').style.cssText='opacity:0;transform:scale(.6)';
-  document.getElementById('scBarFill').style.width='0%';
-  document.getElementById('scBarFill').style.background=color;
-  document.getElementById('scBarWrap').style.opacity='0';
-  document.getElementById('scBarLbls').style.opacity='0';
-  document.getElementById('scBarFrom').textContent=prevLabel;
-  document.getElementById('scBarTo').textContent=rankedUp?newLabel:`${newRank?newRank.pct:0} / ${LP_DIV} LP`;
-  const titleEl=document.getElementById('scRankTitle');
-  titleEl.textContent=rankedUp?`RANK UP · ${newLabel}`:'';
-  titleEl.style.cssText='opacity:0;transform:translateY(20px) scale(.9)';
-  document.getElementById('scHint').style.opacity='0';
-  rowsEl.querySelectorAll('.sc-row').forEach(r=>{r.style.opacity='0';r.style.transform='translateX(-14px)';});
+  elTotal.textContent=`+${lp.total} LP`;
+  elTotal.style.cssText='opacity:0;transform:scale(.6)';
+  elBarFill.style.width='0%';
+  elBarFill.style.background=color;
+  elBarWrap.style.opacity='0';
+  elBarLbls.style.opacity='0';
+  elBarFrom.textContent=prevLabel;
+  elBarTo.textContent=rankedUp?newLabel:`${newRank?newRank.pct:0} / ${LP_DIV} LP`;
+  elTitle.textContent=rankedUp?`RANK UP · ${newLabel}`:'';
+  elTitle.style.cssText='opacity:0;transform:translateY(20px) scale(.9)';
+  elHint.style.opacity='0';
+  elRows.querySelectorAll('.sc-row').forEach(r=>{r.style.opacity='0';r.style.transform='translateX(-14px)';});
 
   ol.style.display='flex';
   ol.classList.remove('sc-out');
@@ -2928,36 +2943,35 @@ function showSessionComplete(lp, prevRank, newRank){
     ol.classList.add('sc-in');
 
     // stagger rows in
-    rowsEl.querySelectorAll('.sc-row').forEach((r,i)=>{
+    elRows.querySelectorAll('.sc-row').forEach((r,i)=>{
       setTimeout(()=>{r.style.opacity='1';r.style.transform='translateX(0)';},420+i*130);
     });
 
     // total slams in
     const totalDelay=420+rows.length*130+80;
     setTimeout(()=>{
-      const t=document.getElementById('scTotal');
-      t.style.opacity='1';
-      t.style.transform='scale(1)';
+      elTotal.style.opacity='1';
+      elTotal.style.transform='scale(1)';
     },totalDelay);
 
     // bar
     setTimeout(()=>{
-      document.getElementById('scBarWrap').style.opacity='1';
-      document.getElementById('scBarLbls').style.opacity='1';
-      document.getElementById('scBarFill').style.width=barBefore+'%';
-      setTimeout(()=>{document.getElementById('scBarFill').style.width=barAfter+'%';},200);
+      elBarWrap.style.opacity='1';
+      elBarLbls.style.opacity='1';
+      elBarFill.style.width=barBefore+'%';
+      setTimeout(()=>{elBarFill.style.width=barAfter+'%';},200);
     },totalDelay+280);
 
     // rank-up title
     if(rankedUp){
       setTimeout(()=>{
-        titleEl.style.opacity='1';
-        titleEl.style.transform='translateY(0) scale(1)';
+        elTitle.style.opacity='1';
+        elTitle.style.transform='translateY(0) scale(1)';
       },totalDelay+700);
     }
 
     // hint
-    setTimeout(()=>{document.getElementById('scHint').style.opacity='1';},totalDelay+(rankedUp?1000:600));
+    setTimeout(()=>{elHint.style.opacity='1';},totalDelay+(rankedUp?1000:600));
   });
 }
 
@@ -3348,11 +3362,7 @@ document.getElementById('exSave').addEventListener('click',()=>{
   if(histIdx>=0) db.history[histIdx]=histEntry; else db.history.push(histEntry);
 
   // unfinish session if a NEW exercise is added to an already-finished day
-  if(isNewEntry&&!cardio&&_isSessionFinished(exDay)){
-    const _sf=_loadFinishedSessions();delete _sf[exDay];
-    localStorage.setItem('gymlog_finished_sessions',JSON.stringify(_sf));
-    _sessionFinished=_sf;
-  }
+  if(isNewEntry&&!cardio&&_isSessionFinished(exDay)) _unmarkSessionFinished(exDay);
 
   recomputePR(name);
   if(oldName&&oldName!==name) recomputePR(oldName);
