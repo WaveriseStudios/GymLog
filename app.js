@@ -593,7 +593,7 @@ function syncPublicProfile() {
     avatar: p?.avatar || null,
     rankTier: r?.tier?.id || null,
     rankDiv: r?.div || null,
-    rankLp: r?.pct ?? null,
+    rankLp: r?.totalLp ?? null,
     prsCount: entries.length,
     workoutDays: new Set((db.history||[]).map(h=>h.day||h.date).filter(Boolean)).size,
     friendsCount: (db.friends||[]).length,
@@ -1518,12 +1518,10 @@ function lpToTierDiv(lp){
   let idx=0;
   for(let i=0;i<LP_RANK_TIERS.length;i++) if(lp>=LP_RANK_TIERS[i].threshold) idx=i;
   const tier=LP_RANK_TIERS[idx], next=LP_RANK_TIERS[idx+1];
-  const tierWidth=next?next.threshold-tier.threshold:300;
-  const divWidth=Math.round(tierWidth/3); // LP per division (varies by tier)
   const lpInTier=lp-tier.threshold;
-  const div=Math.min(Math.floor(lpInTier/divWidth)+1,3);
-  const pct=lpInTier%divWidth; // actual LP within division (0 to divWidth-1)
-  return{tierIdx:idx,tier,div,pct,divWidth,nextTier:next||tier,nextDiv:div===3?1:div+1,isMaxDiv:idx===LP_RANK_TIERS.length-1&&div===3};
+  const div=Math.min(Math.floor(lpInTier/LP_DIV)+1,3);
+  const pct=lpInTier%LP_DIV; // LP within current division (0–32)
+  return{tierIdx:idx,tier,div,pct,divWidth:LP_DIV,nextTier:next||tier,nextDiv:div===3?1:div+1,isMaxDiv:idx===LP_RANK_TIERS.length-1&&div===3};
 }
 
 // Intensity multiplier: how close to PR weight this set was
@@ -1842,7 +1840,7 @@ function _renderGlobalList(body,rows){
           `<img src="${RANK_ICONS[u.rankTier]}" style="width:28px;height:28px;flex-shrink:0;image-rendering:pixelated;filter:drop-shadow(0 0 4px ${color}99)">`+
           `<div>`+
             `<div class="ex-name">${u.name}</div>`+
-            `<div style="font-size:11px;color:var(--t3);margin-top:2px;font-variant-numeric:tabular-nums">${label}${u.rankLp!=null?' · '+u.rankLp+' LP':''}</div>`+
+            `<div style="font-size:11px;color:var(--t3);margin-top:2px;font-variant-numeric:tabular-nums">${label}${u.rankLp!=null?' · '+u.rankLp+' LP total':''}</div>`+
           `</div>`+
         `</div>`+
         `<div class="ex-nums">${right}</div>`;
